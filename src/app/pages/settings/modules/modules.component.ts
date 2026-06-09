@@ -7,7 +7,8 @@ interface ModuleInfo {
   accent: 'blue' | 'green' | 'navy' | 'orange' | 'pink' | 'purple' | 'red' | 'teal' | 'yellow'; // icon + surface accent pair
   tagline: string;       // one-line summary of the module
   features: string[];    // what's included — rendered as a checklist
-  active: boolean;       // true = owned/active, false = available
+  active: boolean;       // true = owned/active; false = available (requestable)
+  pending?: boolean;     // requested and awaiting review — shown in Active under a full-card overlay
 }
 
 interface ModuleSection {
@@ -100,10 +101,51 @@ export class ModulesComponent {
     },
   ];
 
+  // The request-based "Custom module" card. It isn't an owned or pre-built module,
+  // so it lives outside `modules` and is pinned to the front of Available. It renders
+  // through the same available-card path (icon tile, "What's included" list, "Learn
+  // more"). Body copy is filler — to be replaced.
+  private readonly customModule: ModuleInfo = {
+    id: 'custom',
+    name: 'Custom module',
+    icon: 'dashboard_customize',
+    accent: 'pink',
+    tagline: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.',
+    features: [
+      'Lorem ipsum dolor sit amet',
+      'Consectetur adipiscing elit',
+      'Sed do eiusmod tempor incididunt',
+      'Ut labore et dolore magna aliqua',
+    ],
+    active: false,
+  };
+
+  // A custom module that's been requested and is awaiting approval. It sits in the
+  // Active section among the owned modules, set apart by a full-card "Under review"
+  // overlay (not a status pill) so the pending state is unmistakable. It's appended
+  // explicitly rather than filtered in, since it isn't active yet. Body copy is
+  // filler — to be replaced.
+  private readonly pendingModule: ModuleInfo = {
+    id: 'pending-custom',
+    name: 'Custom module',
+    icon: 'dashboard_customize',
+    accent: 'pink',
+    tagline: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.',
+    features: [
+      'Lorem ipsum dolor sit amet',
+      'Consectetur adipiscing elit',
+      'Sed do eiusmod tempor incididunt',
+      'Ut labore et dolore magna aliqua',
+    ],
+    active: false,
+    pending: true,
+  };
+
   // The two on-page sections. Active/available membership is fixed, so this is
-  // computed once.
+  // computed once. The pending request trails the owned modules in Active; the
+  // Custom module card always leads Available.
   readonly sections: ModuleSection[] = [
-    { title: 'Active modules',    modules: this.modules.filter(m => m.active) },
-    { title: 'Available modules', modules: this.modules.filter(m => !m.active) },
+    { title: 'Active modules',    modules: [...this.modules.filter(m => m.active), this.pendingModule] },
+    { title: 'Available modules', modules: [this.customModule, ...this.modules.filter(m => !m.active)] },
   ];
 }

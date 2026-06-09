@@ -156,3 +156,51 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
 .modules__learn-more {
   width: 100%;
 }
+
+// Pending request — a frosted overlay covers the whole card so the "under review"
+// state is unmistakable. The module's content stays faintly visible beneath the frost.
+.modules__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  text-align: center;
+  border-radius: inherit;
+  overflow: hidden;
+
+  // Frosting layer: the card's own surface at partial opacity dims the content
+  // beneath, while the centered status text (which sits above it) stays crisp.
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-color: var(--color-surface-default);
+    opacity: 0.85;
+  }
+
+  // Keep the status content above the frosting layer.
+  > * {
+    position: relative;
+  }
+}
+
+.modules__overlay-icon {
+  color: var(--color-text-brand);
+  margin-bottom: var(--spacing-xs);
+}
+
+.modules__overlay-title {
+  @include ds.type-title-h4;
+  color: var(--color-text-primary);
+}
+
+.modules__overlay-text {
+  @include ds.type-body-small;
+  max-width: 30ch;
+  color: var(--color-text-secondary);
+}

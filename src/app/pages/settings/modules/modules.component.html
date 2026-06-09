@@ -22,6 +22,14 @@
                   <span class="ds-label ds-label--green ds-label--outline ds-label--xs ds-label--pill ds-label--has-dot modules__status">
                     <span class="ds-label__dot" aria-hidden="true"></span>Active
                   </span>
+                } @else if (m.pending) {
+                  <!-- Pending request: a frosted overlay covers the whole card so the
+                       under-review state is unmistakable. -->
+                  <div class="modules__overlay" role="status">
+                    <span class="ds-icon ds-icon--filled ds-icon--lg modules__overlay-icon" aria-hidden="true">hourglass_top</span>
+                    <span class="modules__overlay-title">Under review</span>
+                    <span class="modules__overlay-text">Your request is being reviewed. You'll be notified once it's approved.</span>
+                  </div>
                 }
 
                 <div class="ds-card__header">
@@ -49,7 +57,7 @@
                   </ul>
                 </div>
 
-                @if (!m.active) {
+                @if (!m.active && !m.pending) {
                   <div class="ds-card__actions modules__card-footer">
                     <!-- TODO eng: wire "Learn more" to the module detail / request flow -->
                     <button class="ds-button ds-button--outlined ds-button--md modules__learn-more" type="button">Learn more</button>
