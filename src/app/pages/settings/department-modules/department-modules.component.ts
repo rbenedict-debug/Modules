@@ -28,110 +28,124 @@ export class DepartmentModulesComponent {
   // All cards live in one reactive list so confirming a request can flip a module to
   // pending — moving it into Active under the "Under review" overlay. Section membership
   // is derived (see `sections`), not stored.
+  //
+  // Card copy follows one pattern so each card sells activating it: a benefit-led tagline
+  // (the team's own focused space), then features covering the module's own tools, the
+  // classic core it's built on, reuse of your existing integrations/SIS data, and tickets
+  // flowing to/from other teams. Classic frames as the shared foundation; Custom stays light.
   private readonly modules = signal<ModuleInfo[]>([
+    // Classic — Onflo's original product and the shared foundation every other module
+    // builds on and connects to.
     {
       id: 'classic',
       name: 'Classic',
       icon: 'star',
       accent: 'blue',
-      tagline: 'Reach families and staff across email, SMS, and voice — announcements, alerts, and everyday updates.',
+      tagline: 'The classic Onflo service desk your district runs on — the foundation every other module builds on and connects to.',
       features: [
-        'Mass messaging across email, SMS, and voice',
-        'District-wide announcements and emergency alerts',
-        'Family and staff contact management',
-        'Reusable message templates and scheduling',
-        'Delivery tracking and engagement reports',
+        'Ticketing and service-desk queues',
+        'Workflow automation',
+        'Landing pages and request forms',
+        'Contact and user management',
+        'Reporting and analytics',
+        'The shared home for your integrations and SIS data — every module builds on it',
       ],
       active: true,
     },
+    // IT — Classic's core plus IT asset management, in a space that's just IT's.
     {
       id: 'it',
       name: 'IT',
       icon: 'computer',
       accent: 'purple',
-      tagline: 'Technology service desk — tickets, assets, and support workflows for your IT team.',
+      tagline: "Give your IT team a service desk that's all their own — without rebuilding what you've already set up.",
       features: [
-        'Hardware and software asset inventory',
+        'IT asset and inventory management',
         'Device provisioning and lifecycle tracking',
-        'IT service-desk workflows with SLAs',
-        'Network and access request forms',
-        'Integration with device-management tools',
+        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
+        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
+        'Tickets pass seamlessly to and from your other teams',
       ],
       active: false,
     },
+    // HR — Classic, tailored for HR with confidential, restricted-access queues.
     {
       id: 'hr',
       name: 'HR',
       icon: 'groups',
       accent: 'orange',
-      tagline: 'Staff case management — onboarding, requests, and confidential HR workflows.',
+      tagline: "Give HR a private, focused space of its own — without rebuilding what you've already set up.",
       features: [
-        'Confidential staff case management',
-        'Onboarding and offboarding workflows',
-        'Restricted-access HR ticket queues',
-        'Benefits, leave, and document requests',
+        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
+        'Confidential, restricted-access queues for sensitive cases',
+        "Reporting and analytics for HR's work alone",
+        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
+        'Tickets pass seamlessly to and from your other teams',
       ],
       active: false,
     },
+    // Transportation — Classic, tailored to how the transportation team works.
     {
       id: 'transportation',
       name: 'Transportation',
       icon: 'directions_bus',
       accent: 'yellow',
-      tagline: 'Routing, fleet, and bus service requests for your transportation team.',
+      tagline: "Give your transportation team a focused space of its own — up and running on the data you've already set up.",
       features: [
-        'Route planning and assignment',
-        'Fleet and vehicle maintenance tracking',
-        'Bus service and field-trip requests',
-        'Driver scheduling and dispatch',
-        'Incident and safety reporting',
+        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
+        'Queues and request forms tuned to how transportation works',
+        "Reporting and analytics for your team's work alone",
+        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
+        'Tickets pass seamlessly to and from your other teams',
       ],
       active: true,
     },
+    // Facilities — Classic's core plus asset management for buildings, equipment, and grounds.
     {
       id: 'facilities',
       name: 'Facilities',
       icon: 'apartment',
       accent: 'teal',
-      tagline: 'Work orders and maintenance tracking for buildings and grounds.',
+      tagline: "Give your facilities team a service desk that's all their own — without rebuilding what you've already set up.",
       features: [
-        'Work order creation and tracking',
+        'Facilities asset and equipment tracking',
         'Preventive maintenance scheduling',
-        'Building and grounds asset registry',
-        'Vendor and contractor coordination',
+        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
+        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
+        'Tickets pass seamlessly to and from your other teams',
       ],
       active: false,
     },
-    // Requestable "Custom module" — always stays in Available. Requesting it spawns a
-    // named pending copy (see confirmRequest), rather than moving this card. Body copy
-    // is filler — to be replaced.
+    // Requestable "Custom module" — always stays in Available. Requesting it spawns a named
+    // pending copy (see confirmRequest). Kept intentionally light so the prebuilt modules
+    // stay the default, but it still plugs into the same shared foundation.
     {
       id: 'custom',
       name: 'Custom module',
       icon: 'settings',
       accent: 'grey',
-      tagline: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.',
+      tagline: "A lighter, build-your-own space for the occasional need a prebuilt module doesn't cover.",
       features: [
-        'Lorem ipsum dolor sit amet',
-        'Consectetur adipiscing elit',
-        'Sed do eiusmod tempor incididunt',
-        'Ut labore et dolore magna aliqua',
+        'Basic ticketing and a simple workflow',
+        'A landing page and request form',
+        'Plugs into the same integrations and SIS data — nothing to redo',
+        'Tickets still pass to and from your other teams',
       ],
       active: false,
     },
     // Pre-existing pending example — a custom module already awaiting review. Sits in
-    // Active under the "Under review" overlay. Body copy is filler — to be replaced.
+    // Active under the "Under review" overlay.
     {
       id: 'pending-custom',
       name: 'Custom module',
       icon: 'settings',
       accent: 'grey',
-      tagline: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore.',
+      tagline: "A lighter, build-your-own space for the occasional need a prebuilt module doesn't cover.",
       features: [
-        'Lorem ipsum dolor sit amet',
-        'Consectetur adipiscing elit',
-        'Sed do eiusmod tempor incididunt',
-        'Ut labore et dolore magna aliqua',
+        'Basic ticketing and a simple workflow',
+        'A landing page and request form',
+        'Plugs into the same integrations and SIS data — nothing to redo',
+        'Tickets still pass to and from your other teams',
       ],
       active: false,
       pending: true,
