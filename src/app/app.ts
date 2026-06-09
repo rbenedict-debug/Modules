@@ -30,10 +30,12 @@ export class App implements AfterViewInit, OnDestroy {
     // Pre-boot script in index.html already applied the saved theme to <html>
     this.theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     this._syncNavFromUrl(router.url);
+    this._syncSettingsFromUrl(router.url);
     this._routerSub = router.events.pipe(
       filter(e => e instanceof NavigationEnd)
     ).subscribe(e => {
       this._syncNavFromUrl((e as NavigationEnd).urlAfterRedirects);
+      this._syncSettingsFromUrl((e as NavigationEnd).urlAfterRedirects);
       if (this.activeNav === 'settings') setTimeout(() => this._setupSettingsScrollbar(), 0);
     });
   }
@@ -60,6 +62,19 @@ export class App implements AfterViewInit, OnDestroy {
   setNav(section: NavSection): void {
     this.subNavOpen = true;
     this.router.navigate([section]);
+  }
+
+  /** Navigate to a routed settings sub-page, e.g. /settings/modules. */
+  goSettings(id: string): void {
+    this.router.navigate(['/settings', id]);
+  }
+
+  /** Keep the highlighted settings item in sync with the URL (mirrors _syncNavFromUrl). */
+  private _syncSettingsFromUrl(url: string): void {
+    const segments = url.split('?')[0].split('/').filter(Boolean);
+    if (segments[0] === 'settings' && segments[1]) {
+      this.settingsNavItem = segments[1];
+    }
   }
 
   get activeNavLabel(): string {
@@ -199,7 +214,7 @@ export class App implements AfterViewInit, OnDestroy {
   ];
 
   // ── Settings ─────────────────────────────────────────────────────────────
-  settingsNavItem = 'district-profile';
+  settingsNavItem = 'modules';
   settingsSearchQuery = '';
 
   settingsExpanded: Record<string, boolean> = {
@@ -242,11 +257,11 @@ export class App implements AfterViewInit, OnDestroy {
     { id: 'cs-score-templates',     label: 'CS Score Templates',     section: 'global',           subheaderParent: 'communications' },
     { id: 'email',                  label: 'Email',                  section: 'global',           subheaderParent: 'communications' },
     { id: 'response-templates',     label: 'Response Templates',     section: 'global',           subheaderParent: 'communications' },
-    { id: 'departments',            label: 'Departments',            section: 'global' },
     { id: 'keyword-alerts',         label: 'Keyword Alerts',         section: 'global' },
     { id: 'languages',              label: 'Languages',              section: 'global' },
     { id: 'live-agent',             label: 'Live Agent',             section: 'global' },
     { id: 'locations',              label: 'Locations',              section: 'global' },
+    { id: 'modules',                label: 'Modules',                section: 'global' },
     { id: 'tags',                   label: 'Tags',                   section: 'global',           isSubheader: true },
     { id: 'tags-tickets',           label: 'Tickets',                section: 'global',           subheaderParent: 'tags' },
     { id: 'tags-assets',            label: 'Assets',                 section: 'global',           subheaderParent: 'tags' },

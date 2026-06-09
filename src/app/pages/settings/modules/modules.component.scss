@@ -1,0 +1,158 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// ds-page-content__main is an unpadded card shell, so the page pads its own content.
+.modules {
+  padding: var(--spacing-xl);
+}
+
+.modules__intro {
+  @include ds.type-body-large;
+  margin: 0 0 var(--spacing-xl);
+  max-width: 65ch;
+  color: var(--color-text-primary);
+}
+
+// Two stacked sections (Active / Available), with breathing room between them.
+.modules__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+
+  & + & {
+    margin-top: var(--spacing-xl);
+  }
+}
+
+// Section heading (H3 type, brand) with an inline count badge.
+.modules__section-title {
+  @include ds.type-title-h3;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  color: var(--color-text-brand);
+}
+
+// Cards laid out side by side; they wrap to fill the row.
+.modules__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+// Equal-height cards so the status/action footer lines up across a row.
+.modules__card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  // Single-line title now (subtitle moved into the body), so center it against
+  // the icon tile rather than the design system's default top alignment.
+  .ds-card__header {
+    align-items: center;
+  }
+
+  // Card title → Title H3 (design-system default is Title H4).
+  .ds-card__title {
+    @include ds.type-title-h3;
+  }
+
+  .ds-card__body {
+    flex: 1 1 auto;
+  }
+
+  // Remove the divider line above the footer.
+  .ds-card__actions {
+    border-top: none;
+  }
+}
+
+// "Active" status pill pinned to the card's top-right corner.
+.modules__status {
+  position: absolute;
+  top: var(--spacing-md);
+  right: var(--spacing-md);
+}
+
+// Leading icon sits in a rounded tile with a subtle surface fill. Token-based
+// padding around the 24px icon sizes the tile (no fixed px).
+.modules__icon-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+
+  // The DS header-icon nudges itself down 2px to cap-align a bare icon; the tile
+  // centers it instead, so reset that nudge.
+  .ds-card__header-icon {
+    margin-top: 0;
+  }
+}
+
+// Each module gets a paired accent tile: surface-accent background + the matching
+// icon-accent glyph. The `accent` field on each module (component .ts) picks which.
+$module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+
+@each $accent in $module-accents {
+  .modules__icon-box--#{$accent} {
+    background-color: var(--color-surface-accent-#{$accent});
+
+    .ds-card__header-icon {
+      color: var(--color-icon-accent-#{$accent});
+    }
+  }
+}
+
+
+// Lead description — now the first line of the card body (Body Medium, primary text).
+.modules__tagline {
+  @include ds.type-body-medium;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+// Divider inside the body, inset to the card's content padding — separates the
+// description from the "What's included" checklist.
+.modules__divider {
+  margin: var(--spacing-lg) 0;
+}
+
+.modules__feature-label {
+  @include ds.type-body-medium;
+  margin: 0 0 var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+// "What's included" checklist — a vertical list inside each card.
+.modules__features {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  color: var(--color-text-primary);
+}
+
+.modules__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.modules__feature-check {
+  color: var(--color-icon-success);
+  flex-shrink: 0;
+}
+
+// Status pill / "Learn more" sits at the start of the card footer.
+.modules__card-footer {
+  justify-content: flex-start;
+}
+
+// Full-width "Learn more" action.
+.modules__learn-more {
+  width: 100%;
+}

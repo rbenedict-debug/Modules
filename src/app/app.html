@@ -222,7 +222,7 @@
                   </button>
                   <div class="ds-subnav-header__children">
                     @if (!filter || filter.has('district-profile')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'district-profile'" (click)="settingsNavItem = 'district-profile'">District Profile</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'district-profile'">District Profile</button>
                     }
                     @if (!filter || filter.has('activity-log-onflo') || filter.has('activity-log-assets')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['activity-log'] || !!filter">
@@ -234,20 +234,20 @@
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
                             @if (!filter || filter.has('activity-log-onflo')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-onflo'" (click)="settingsNavItem = 'activity-log-onflo'">Onflo</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-onflo'">Onflo</button>
                             }
                             @if (!filter || filter.has('activity-log-assets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-assets'" (click)="settingsNavItem = 'activity-log-assets'">Assets</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-assets'">Assets</button>
                             }
                           </div>
                         </div>
                       </div>
                     }
                     @if (!filter || filter.has('ai-training')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ai-training'" (click)="settingsNavItem = 'ai-training'">AI Training Resources</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ai-training'">AI Training Resources</button>
                     }
                     @if (!filter || filter.has('chatbot')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'chatbot'" (click)="settingsNavItem = 'chatbot'">Chatbot</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'chatbot'">Chatbot</button>
                     }
                     @if (!filter || filter.has('cs-score-templates') || filter.has('email') || filter.has('response-templates')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['communications'] || !!filter">
@@ -259,32 +259,32 @@
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
                             @if (!filter || filter.has('cs-score-templates')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'cs-score-templates'" (click)="settingsNavItem = 'cs-score-templates'">CS Score Templates</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'cs-score-templates'">CS Score Templates</button>
                             }
                             @if (!filter || filter.has('email')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'email'" (click)="settingsNavItem = 'email'">Email</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'email'">Email</button>
                             }
                             @if (!filter || filter.has('response-templates')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'response-templates'" (click)="settingsNavItem = 'response-templates'">Response Templates</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'response-templates'">Response Templates</button>
                             }
                           </div>
                         </div>
                       </div>
                     }
-                    @if (!filter || filter.has('departments')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'departments'" (click)="settingsNavItem = 'departments'">Departments</button>
-                    }
                     @if (!filter || filter.has('keyword-alerts')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'" (click)="settingsNavItem = 'keyword-alerts'">Keyword Alerts</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'">Keyword Alerts</button>
                     }
                     @if (!filter || filter.has('languages')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'languages'" (click)="settingsNavItem = 'languages'">Languages</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'languages'">Languages</button>
                     }
                     @if (!filter || filter.has('live-agent')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'live-agent'" (click)="settingsNavItem = 'live-agent'">Live Agent</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'live-agent'">Live Agent</button>
                     }
                     @if (!filter || filter.has('locations')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations'" (click)="settingsNavItem = 'locations'">Locations</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations'">Locations</button>
+                    }
+                    @if (!filter || filter.has('modules')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'modules'" (click)="goSettings('modules')">Modules</button>
                     }
                     @if (!filter || filter.has('tags-tickets') || filter.has('tags-assets')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['tags'] || !!filter">
@@ -296,17 +296,17 @@
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
                             @if (!filter || filter.has('tags-tickets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-tickets'" (click)="settingsNavItem = 'tags-tickets'">Tickets</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-tickets'">Tickets</button>
                             }
                             @if (!filter || filter.has('tags-assets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-assets'" (click)="settingsNavItem = 'tags-assets'">Assets</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-assets'">Assets</button>
                             }
                           </div>
                         </div>
                       </div>
                     }
                     @if (!filter || filter.has('user-management')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'user-management'" (click)="settingsNavItem = 'user-management'">User Management</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'user-management'">User Management</button>
                     }
                   </div>
                 </div>
@@ -321,16 +321,16 @@
                   </button>
                   <div class="ds-subnav-header__children">
                     @if (!filter || filter.has('api-tokens')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'api-tokens'" (click)="settingsNavItem = 'api-tokens'">API Tokens</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'api-tokens'">API Tokens</button>
                     }
                     @if (!filter || filter.has('webhooks')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'webhooks'" (click)="settingsNavItem = 'webhooks'">Webhooks</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'webhooks'">Webhooks</button>
                     }
                     @if (!filter || filter.has('marketplace')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'marketplace'" (click)="settingsNavItem = 'marketplace'">Marketplace</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'marketplace'">Marketplace</button>
                     }
                     @if (!filter || filter.has('installed-apps')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'installed-apps'" (click)="settingsNavItem = 'installed-apps'">Installed Apps</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'installed-apps'">Installed Apps</button>
                     }
                   </div>
                 </div>
@@ -345,13 +345,13 @@
                   </button>
                   <div class="ds-subnav-header__children">
                     @if (!filter || filter.has('workflows-tickets')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'workflows-tickets'" (click)="settingsNavItem = 'workflows-tickets'">Tickets</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'workflows-tickets'">Tickets</button>
                     }
                     @if (!filter || filter.has('workflows-assets')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'workflows-assets'" (click)="settingsNavItem = 'workflows-assets'">Assets</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'workflows-assets'">Assets</button>
                     }
                     @if (!filter || filter.has('lookup-tables')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'lookup-tables'" (click)="settingsNavItem = 'lookup-tables'">Lookup Tables</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'lookup-tables'">Lookup Tables</button>
                     }
                   </div>
                 </div>
@@ -375,26 +375,26 @@
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
                             @if (!filter || filter.has('portals-it-service')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-it-service'" (click)="settingsNavItem = 'portals-it-service'">IT Service</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-it-service'">IT Service</button>
                             }
                             @if (!filter || filter.has('portals-landing-page')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-landing-page'" (click)="settingsNavItem = 'portals-landing-page'">Landing Page / Tab</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-landing-page'">Landing Page / Tab</button>
                             }
                           </div>
                         </div>
                       </div>
                     }
                     @if (!filter || filter.has('forms')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'forms'" (click)="settingsNavItem = 'forms'">Forms</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'forms'">Forms</button>
                     }
                     @if (!filter || filter.has('saved-exports')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'saved-exports'" (click)="settingsNavItem = 'saved-exports'">Saved Exports</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'saved-exports'">Saved Exports</button>
                     }
                     @if (!filter || filter.has('slas')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'slas'" (click)="settingsNavItem = 'slas'">SLAs</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'slas'">SLAs</button>
                     }
                     @if (!filter || filter.has('ticket-schedules')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ticket-schedules'" (click)="settingsNavItem = 'ticket-schedules'">Ticket Schedules</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ticket-schedules'">Ticket Schedules</button>
                     }
                     @if (!filter || filter.has('topics') || filter.has('success-messages')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['topics-manager'] || !!filter">
@@ -406,10 +406,10 @@
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
                             @if (!filter || filter.has('topics')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'topics'" (click)="settingsNavItem = 'topics'">Topics</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'topics'">Topics</button>
                             }
                             @if (!filter || filter.has('success-messages')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'success-messages'" (click)="settingsNavItem = 'success-messages'">Success Messages</button>
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'success-messages'">Success Messages</button>
                             }
                           </div>
                         </div>
@@ -428,31 +428,31 @@
                   </button>
                   <div class="ds-subnav-header__children">
                     @if (!filter || filter.has('archived-assets')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'archived-assets'" (click)="settingsNavItem = 'archived-assets'">Archived Assets</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'archived-assets'">Archived Assets</button>
                     }
                     @if (!filter || filter.has('asset-fields')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'asset-fields'" (click)="settingsNavItem = 'asset-fields'">Asset Fields</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'asset-fields'">Asset Fields</button>
                     }
                     @if (!filter || filter.has('asset-hierarchy')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'asset-hierarchy'" (click)="settingsNavItem = 'asset-hierarchy'">Asset Hierarchy</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'asset-hierarchy'">Asset Hierarchy</button>
                     }
                     @if (!filter || filter.has('funding-sources')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'funding-sources'" (click)="settingsNavItem = 'funding-sources'">Funding Sources</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'funding-sources'">Funding Sources</button>
                     }
                     @if (!filter || filter.has('manufacturers')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'manufacturers'" (click)="settingsNavItem = 'manufacturers'">Manufacturers</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'manufacturers'">Manufacturers</button>
                     }
                     @if (!filter || filter.has('models')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'models'" (click)="settingsNavItem = 'models'">Models</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'models'">Models</button>
                     }
                     @if (!filter || filter.has('purchase-order-details')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'purchase-order-details'" (click)="settingsNavItem = 'purchase-order-details'">Purchase Order Details</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'purchase-order-details'">Purchase Order Details</button>
                     }
                     @if (!filter || filter.has('statuses')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'statuses'" (click)="settingsNavItem = 'statuses'">Statuses</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'statuses'">Statuses</button>
                     }
                     @if (!filter || filter.has('suppliers')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'suppliers'" (click)="settingsNavItem = 'suppliers'">Suppliers</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'suppliers'">Suppliers</button>
                     }
                   </div>
                 </div>
@@ -467,28 +467,28 @@
                   </button>
                   <div class="ds-subnav-header__children">
                     @if (!filter || filter.has('business-hours')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'business-hours'" (click)="settingsNavItem = 'business-hours'">Business Hours</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'business-hours'">Business Hours</button>
                     }
                     @if (!filter || filter.has('calendar')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'calendar'" (click)="settingsNavItem = 'calendar'">Calendar</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'calendar'">Calendar</button>
                     }
                     @if (!filter || filter.has('call-notes')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'call-notes'" (click)="settingsNavItem = 'call-notes'">Call Notes</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'call-notes'">Call Notes</button>
                     }
                     @if (!filter || filter.has('contact-numbers')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'contact-numbers'" (click)="settingsNavItem = 'contact-numbers'">Contact Numbers</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'contact-numbers'">Contact Numbers</button>
                     }
                     @if (!filter || filter.has('greetings')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'greetings'" (click)="settingsNavItem = 'greetings'">Greetings</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'greetings'">Greetings</button>
                     }
                     @if (!filter || filter.has('ivr')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ivr'" (click)="settingsNavItem = 'ivr'">IVR</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ivr'">IVR</button>
                     }
                     @if (!filter || filter.has('queues')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'queues'" (click)="settingsNavItem = 'queues'">Queues</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'queues'">Queues</button>
                     }
                     @if (!filter || filter.has('texting')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'texting'" (click)="settingsNavItem = 'texting'">Texting</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'texting'">Texting</button>
                     }
                   </div>
                 </div>

@@ -1,0 +1,65 @@
+<div class="ds-page-content__heading">
+  <h1 class="ds-page-content__title">Modules</h1>
+</div>
+<div class="ds-page-content__main">
+  <div class="modules">
+    <p class="modules__intro">
+      Modules give each team their own space in Onflo to focus on their work. It's all still one system underneath, so your teams stay connected.
+    </p>
+
+    @for (section of sections; track section.title) {
+      @if (section.modules.length) {
+        <section class="modules__section">
+          <h2 class="ds-form-section-title modules__section-title">
+            {{ section.title }}
+            <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ section.modules.length }}</span>
+            <span class="ds-sr-only">, {{ section.modules.length }}</span>
+          </h2>
+          <div class="modules__grid">
+            @for (m of section.modules; track m.id) {
+              <div class="ds-card ds-card--elevated modules__card">
+                @if (m.active) {
+                  <span class="ds-label ds-label--green ds-label--outline ds-label--xs ds-label--pill ds-label--has-dot modules__status">
+                    <span class="ds-label__dot" aria-hidden="true"></span>Active
+                  </span>
+                }
+
+                <div class="ds-card__header">
+                  <span class="modules__icon-box modules__icon-box--{{ m.accent }}" aria-hidden="true">
+                    <span class="ds-icon ds-icon--filled ds-card__header-icon">{{ m.icon }}</span>
+                  </span>
+                  <div class="ds-card__header-text">
+                    <h3 class="ds-card__title">{{ m.name }}</h3>
+                  </div>
+                </div>
+
+                <div class="ds-card__body">
+                  <p class="modules__tagline">{{ m.tagline }}</p>
+
+                  <hr class="ds-divider modules__divider" />
+
+                  <p class="modules__feature-label">What's included</p>
+                  <ul class="modules__features">
+                    @for (f of m.features; track f) {
+                      <li class="modules__feature">
+                        <span class="ds-icon ds-icon--filled ds-icon--sm modules__feature-check" aria-hidden="true">check_circle</span>
+                        <span>{{ f }}</span>
+                      </li>
+                    }
+                  </ul>
+                </div>
+
+                @if (!m.active) {
+                  <div class="ds-card__actions modules__card-footer">
+                    <!-- TODO eng: wire "Learn more" to the module detail / request flow -->
+                    <button class="ds-button ds-button--outlined ds-button--md modules__learn-more" type="button">Learn more</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>
