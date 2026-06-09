@@ -64,7 +64,7 @@ export class App implements AfterViewInit, OnDestroy {
     this.router.navigate([section]);
   }
 
-  /** Navigate to a routed settings sub-page, e.g. /settings/modules. */
+  /** Navigate to a routed settings sub-page, e.g. /settings/department-modules. */
   goSettings(id: string): void {
     this.router.navigate(['/settings', id]);
   }
@@ -214,7 +214,7 @@ export class App implements AfterViewInit, OnDestroy {
   ];
 
   // ── Settings ─────────────────────────────────────────────────────────────
-  settingsNavItem = 'modules';
+  settingsNavItem = 'department-modules';
   settingsSearchQuery = '';
 
   settingsExpanded: Record<string, boolean> = {
@@ -257,11 +257,11 @@ export class App implements AfterViewInit, OnDestroy {
     { id: 'cs-score-templates',     label: 'CS Score Templates',     section: 'global',           subheaderParent: 'communications' },
     { id: 'email',                  label: 'Email',                  section: 'global',           subheaderParent: 'communications' },
     { id: 'response-templates',     label: 'Response Templates',     section: 'global',           subheaderParent: 'communications' },
+    { id: 'department-modules',     label: 'Department Modules',     section: 'global' },
     { id: 'keyword-alerts',         label: 'Keyword Alerts',         section: 'global' },
     { id: 'languages',              label: 'Languages',              section: 'global' },
     { id: 'live-agent',             label: 'Live Agent',             section: 'global' },
     { id: 'locations',              label: 'Locations',              section: 'global' },
-    { id: 'modules',                label: 'Modules',                section: 'global' },
     { id: 'tags',                   label: 'Tags',                   section: 'global',           isSubheader: true },
     { id: 'tags-tickets',           label: 'Tickets',                section: 'global',           subheaderParent: 'tags' },
     { id: 'tags-assets',            label: 'Assets',                 section: 'global',           subheaderParent: 'tags' },

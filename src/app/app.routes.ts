@@ -4,7 +4,7 @@ import { AssetsComponent } from './pages/assets/assets.component';
 import { UsersComponent } from './pages/users/users.component';
 import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { SettingsComponent } from './pages/settings/settings.component';
-import { ModulesComponent } from './pages/settings/modules/modules.component';
+import { DepartmentModulesComponent } from './pages/settings/department-modules/department-modules.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'tickets', pathMatch: 'full' },
@@ -16,8 +16,8 @@ export const routes: Routes = [
     path: 'settings',
     component: SettingsComponent,
     children: [
-      { path: '', redirectTo: 'modules', pathMatch: 'full' },
-      { path: 'modules', component: ModulesComponent },
+      { path: '', redirectTo: 'department-modules', pathMatch: 'full' },
+      { path: 'department-modules', component: DepartmentModulesComponent },
     ],
   },
 ];

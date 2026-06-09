@@ -5,11 +5,12 @@
   padding: var(--spacing-xl);
 }
 
-.modules__intro {
-  @include ds.type-body-large;
-  margin: 0 0 var(--spacing-xl);
+.modules__subtitle {
+  @include ds.type-body-medium;
+  margin: var(--spacing-xs) 0 0;
+  padding-left: var(--spacing-lg); // match the page title's 16px left padding
   max-width: 65ch;
-  color: var(--color-text-primary);
+  color: var(--color-text-secondary);
 }
 
 // Two stacked sections (Active / Available), with breathing room between them.
@@ -36,7 +37,7 @@
 .modules__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
 }
 
 // Equal-height cards so the status/action footer lines up across a row.
@@ -105,6 +106,17 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   }
 }
 
+// "grey" sits outside the accent palette (there are no accent-grey tokens) — a neutral
+// tile for the generic Custom module cards: the card surface itself with a subtle grey
+// glyph, so it reads as understated rather than a colored accent.
+.modules__icon-box--grey {
+  background-color: var(--color-surface-default);
+
+  .ds-card__header-icon {
+    color: var(--color-icon-subtle);
+  }
+}
+
 
 // Lead description — now the first line of the card body (Body Medium, primary text).
 .modules__tagline {
@@ -125,68 +137,70 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   color: var(--color-text-primary);
 }
 
-// "What's included" checklist — a vertical list inside each card.
+// "What's included" — a plain bulleted list inside each card.
 .modules__features {
-  list-style: none;
   margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
+  padding-left: var(--spacing-lg); // room for the bullet markers
+  list-style: disc;
   color: var(--color-text-primary);
 }
 
-.modules__feature {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-sm);
+.modules__feature + .modules__feature {
+  margin-top: var(--spacing-sm);
 }
 
-.modules__feature-check {
-  color: var(--color-icon-success);
-  flex-shrink: 0;
-}
-
-// Status pill / "Learn more" sits at the start of the card footer.
+// Request button sits at the start of the card footer.
 .modules__card-footer {
   justify-content: flex-start;
 }
 
-// Full-width "Learn more" action.
-.modules__learn-more {
+// Full-width "Request department module" action.
+.modules__request {
   width: 100%;
 }
 
-// Pending request — a frosted overlay covers the whole card so the "under review"
-// state is unmistakable. The module's content stays faintly visible beneath the frost.
+// Pending request — a scrim layer darkens the whole card so the under-review state reads
+// as suspended, with the accent-blue panel centered on top of (in front of) the scrim.
 .modules__overlay {
   position: absolute;
-  inset: 0;
+  // -1px (not 0) so the scrim covers the card's 1px border and reaches the outer edge —
+  // absolute insets resolve to the padding box, which sits just inside that border.
+  inset: -1px;
   z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--spacing-xs);
   padding: var(--spacing-lg);
   text-align: center;
   border-radius: inherit;
   overflow: hidden;
 
-  // Frosting layer: the card's own surface at partial opacity dims the content
-  // beneath, while the centered status text (which sits above it) stays crisp.
+  // Scrim: the modal-backdrop token darkens the card content beneath. The blue panel
+  // (a positioned child) sits above this layer, so only the card — not the under-review
+  // message — is dimmed.
   &::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: var(--color-surface-default);
-    opacity: 0.85;
+    background-color: var(--color-surface-scrim);
   }
+}
 
-  // Keep the status content above the frosting layer.
-  > * {
-    position: relative;
-  }
+// The under-review message sits in an accent-blue panel — blue surface + matching blue
+// border — layered on top of the card. The accent treatment moved here from the card
+// itself, so the panel (not the whole card) now carries the pending state.
+.modules__overlay-panel {
+  position: relative; // lift above the scrim ::before so the panel itself isn't dimmed
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-lg);
+  text-align: center;
+  background-color: var(--color-surface-accent-blue);
+  border: 2px solid var(--color-border-accent-blue);
+  border-radius: var(--radius-md);
 }
 
 .modules__overlay-icon {
@@ -200,7 +214,18 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
 }
 
 .modules__overlay-text {
-  @include ds.type-body-small;
+  @include ds.type-body-medium;
   max-width: 30ch;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
+}
+
+// Request confirmation dialog — a comfortable fixed width; the custom-module name field
+// fills it. The backdrop scrim/centering come from the DS `ds-dialog-backdrop` class.
+.modules__request-dialog {
+  width: 420px;
+  max-width: 100%;
+
+  .ds-input {
+    width: 100%;
+  }
 }

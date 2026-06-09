@@ -5,7 +5,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-settings',
   imports: [RouterOutlet],
   templateUrl: './settings.component.html',
-  // Transparent shell — child settings pages (e.g. ModulesComponent) carry their own
+  // Transparent shell — child settings pages (e.g. DepartmentModulesComponent) carry their own
   // ds-page-content; display:contents keeps this wrapper out of the layout.
   host: { style: 'display: contents' }
 })

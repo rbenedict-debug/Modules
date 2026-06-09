@@ -1,0 +1,110 @@
+<div class="ds-page-content__heading">
+  <h1 class="ds-page-content__title">Department Modules</h1>
+  <p class="modules__subtitle">
+    Modules give each team their own space in Onflo to focus on their work. It's all still one system underneath, so your teams stay connected.
+  </p>
+</div>
+<div class="ds-page-content__main">
+  <div class="modules">
+
+    @for (section of sections(); track section.title) {
+      @if (section.modules.length) {
+        <section class="modules__section">
+          <h2 class="ds-form-section-title modules__section-title">
+            {{ section.title }}
+            <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ section.modules.length }}</span>
+            <span class="ds-sr-only">, {{ section.modules.length }}</span>
+          </h2>
+          <div class="modules__grid">
+            @for (m of section.modules; track m.id) {
+              <div class="ds-card ds-card--elevated modules__card">
+                @if (m.active) {
+                  <span class="ds-label ds-label--green ds-label--outline ds-label--xs ds-label--pill ds-label--has-dot modules__status">
+                    <span class="ds-label__dot" aria-hidden="true"></span>Active
+                  </span>
+                } @else if (m.pending) {
+                  <!-- Pending request: the card keeps its normal style; the under-review
+                       message sits in an accent-blue panel layered on top. -->
+                  <div class="modules__overlay" role="status">
+                    <div class="modules__overlay-panel">
+                      <span class="ds-icon ds-icon--filled ds-icon--lg modules__overlay-icon" aria-hidden="true">hourglass_top</span>
+                      <span class="modules__overlay-title">Under review</span>
+                      <span class="modules__overlay-text">Your request is being reviewed. You'll be notified once it's approved.</span>
+                    </div>
+                  </div>
+                }
+
+                <div class="ds-card__header">
+                  <span class="modules__icon-box modules__icon-box--{{ m.accent }}" aria-hidden="true">
+                    <span class="ds-icon ds-icon--filled ds-card__header-icon">{{ m.icon }}</span>
+                  </span>
+                  <div class="ds-card__header-text">
+                    <h3 class="ds-card__title">{{ m.name }}</h3>
+                  </div>
+                </div>
+
+                <div class="ds-card__body">
+                  <p class="modules__tagline">{{ m.tagline }}</p>
+
+                  <hr class="ds-divider modules__divider" />
+
+                  <p class="modules__feature-label">What's included</p>
+                  <ul class="modules__features">
+                    @for (f of m.features; track f) {
+                      <li class="modules__feature">{{ f }}</li>
+                    }
+                  </ul>
+                </div>
+
+                @if (!m.active && !m.pending) {
+                  <div class="ds-card__actions modules__card-footer">
+                    <button class="ds-button ds-button--outlined ds-button--md modules__request" type="button" (click)="openRequest(m)">Request department module</button>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </section>
+      }
+    }
+  </div>
+</div>
+
+<!-- Request confirmation dialog — opens from any available card's "Request department
+     module" button. The Custom module variant adds a required name field. -->
+@if (requestTarget(); as target) {
+  <div class="ds-dialog-backdrop" (click)="closeRequest()">
+    <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
+    <div class="ds-dialog modules__request-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="request-dialog-title" (click)="$event.stopPropagation()">
+      <div class="ds-dialog__body">
+        <h2 class="ds-dialog__title" id="request-dialog-title">
+          @if (isCustomRequest) { Request a custom module } @else { Request {{ target.name }}? }
+        </h2>
+        <p class="ds-dialog__text">
+          @if (isCustomRequest) {
+            Name the module you'd like, and our customer support team will reach out to help get it set up for your district.
+          } @else {
+            Our customer support team will reach out to help get {{ target.name }} set up for your district.
+          }
+        </p>
+        @if (isCustomRequest) {
+          <div class="ds-input">
+            <label class="ds-input__label" for="request-module-name">Module name<span class="ds-input__required" aria-hidden="true">*</span></label>
+            <div class="ds-input__field">
+              <input id="request-module-name" class="ds-input__control" type="text" placeholder="e.g. Athletics" [(ngModel)]="customName" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="ds-dialog__divider" aria-hidden="true"></div>
+      <div class="ds-dialog__actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeRequest()">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button"
+                [disabled]="isCustomRequest && !customName.trim()"
+                [class.is-disabled]="isCustomRequest && !customName.trim()"
+                (click)="confirmRequest()">Send request</button>
+      </div>
+    </div>
+  </div>
+}

@@ -271,6 +271,9 @@
                         </div>
                       </div>
                     }
+                    @if (!filter || filter.has('department-modules')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'department-modules'" (click)="goSettings('department-modules')">Department Modules</button>
+                    }
                     @if (!filter || filter.has('keyword-alerts')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'">Keyword Alerts</button>
                     }
@@ -282,9 +285,6 @@
                     }
                     @if (!filter || filter.has('locations')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations'">Locations</button>
-                    }
-                    @if (!filter || filter.has('modules')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'modules'" (click)="goSettings('modules')">Modules</button>
                     }
                     @if (!filter || filter.has('tags-tickets') || filter.has('tags-assets')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['tags'] || !!filter">
