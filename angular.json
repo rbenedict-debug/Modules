@@ -31,11 +31,13 @@
             ],
             "styles": [
               "node_modules/@onflo/design-system/dist/onflo-design.css",
+              "node_modules/@onflo/design-system/dist/table-sim.css",
               "src/styles.scss"
             ],
             "scripts": [
               "node_modules/@onflo/design-system/runtime/focus-ring.js",
-              "node_modules/@onflo/design-system/runtime/select.js"
+              "node_modules/@onflo/design-system/runtime/select.js",
+              "node_modules/@onflo/design-system/runtime/table-init.js"
             ],
             "externalDependencies": ["ag-grid-community", "highcharts"]
           },
