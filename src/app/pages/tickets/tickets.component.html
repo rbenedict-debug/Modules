@@ -2,5 +2,140 @@
   <h1 class="ds-page-content__title">Tickets</h1>
 </div>
 <div class="ds-page-content__main">
-  <!-- Build your page content here -->
+  <div class="inbox">
+
+    <!-- View tabs: My Tickets / My Team / All Tickets / Closed. Each carries a count
+         badge for its module-scoped bucket and drives the activeTab signal. -->
+    <div class="ds-tabs inbox__tabs" role="tablist" aria-label="Ticket views">
+      @for (tab of tabs; track tab.id) {
+        <button
+          class="ds-tabs__tab"
+          [class.is-selected]="activeTab() === tab.id"
+          role="tab"
+          type="button"
+          [attr.aria-selected]="activeTab() === tab.id"
+          [tabindex]="activeTab() === tab.id ? 0 : -1"
+          (click)="setTab(tab.id)">
+          {{ tab.label }}
+          <span class="inbox__tab-count" aria-hidden="true">{{ counts()[tab.id] }}</span>
+          <span class="ds-sr-only">, {{ counts()[tab.id] }} tickets</span>
+        </button>
+      }
+    </div>
+
+    <!-- Keyword search across subject + customer name. -->
+    <div class="inbox__toolbar">
+      <div class="ds-input ds-search inbox__search" role="search">
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input
+            class="ds-input__control"
+            type="search"
+            placeholder="Search by subject or customer…"
+            aria-label="Search tickets by subject or customer"
+            [ngModel]="search()"
+            (ngModelChange)="search.set($event)" />
+          @if (search()) {
+            <button class="ds-input__action" type="button" aria-label="Clear search" (click)="clearSearch()">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Ticket list. Fixed leading checkbox column; the remaining columns mirror the
+         Onflo inbox. Selection checkboxes are visual only in design mode. -->
+    <div class="inbox__table-wrap">
+      <table class="ds-table inbox__table">
+        <thead>
+          <tr>
+            <th class="inbox__col-select" scope="col">
+              <label class="ds-checkbox">
+                <input type="checkbox" class="ds-checkbox__control" aria-label="Select all tickets" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+              </label>
+            </th>
+            <th scope="col">Subject</th>
+            <th scope="col">Customer</th>
+            <th scope="col">Priority</th>
+            <th scope="col">Status</th>
+            <th scope="col">Owner</th>
+            <th scope="col">Received</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of rows(); track t.id) {
+            <tr>
+              <td class="inbox__col-select">
+                <label class="ds-checkbox">
+                  <input type="checkbox" class="ds-checkbox__control" [attr.aria-label]="'Select ticket ' + t.number" />
+                  <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                </label>
+              </td>
+
+              <td class="inbox__col-subject">
+                <span class="inbox__number">#{{ t.number }}</span>
+                <span class="inbox__subject">{{ t.subject }}</span>
+                <span class="inbox__preview">{{ t.description }}</span>
+              </td>
+
+              <td>
+                <div class="inbox__customer">
+                  <span class="inbox__customer-name">{{ t.customerName }}</span>
+                  <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--{{ roleColor(t.customerRole) }}">{{ t.customerRole }}</span>
+                </div>
+              </td>
+
+              <td>
+                <span class="ds-label ds-label--xs ds-label--pill ds-label--{{ priorityColor(t.priority) }}">{{ t.priority }}</span>
+              </td>
+
+              <td>
+                <span class="ds-label ds-label--xs ds-label--pill ds-label--has-dot ds-label--{{ statusColor(t.status) }}">
+                  <span class="ds-label__dot" aria-hidden="true"></span>{{ t.status }}
+                </span>
+              </td>
+
+              <td>
+                <div class="inbox__owner">
+                  <span class="ds-avatar ds-avatar--xs" aria-hidden="true">
+                    <span class="ds-avatar__initials">{{ initials(t.ownerName) }}</span>
+                  </span>
+                  <span class="inbox__owner-name">{{ t.ownerName }}</span>
+                </div>
+              </td>
+
+              <td class="inbox__col-received">{{ formatReceived(t.receivedAt) }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="inbox__empty">
+                <div class="ds-empty-state">
+                  <div class="ds-empty-state__graphic" aria-hidden="true">
+                    <svg viewBox="0 0 98 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M10.085 31.25C12.3158 31.25 14.2877 32.0431 16.002 33.627C15.9403 34.4958 15.9092 35.3768 15.9092 36.2695C15.9093 42.3347 17.3358 47.8519 20.1709 52.7402V87.5C20.1709 90.9375 19.183 93.8802 17.208 96.3281C15.233 98.776 12.8584 100 10.085 100C7.31173 99.9999 4.93781 98.7758 2.96289 96.3281C0.987877 93.8802 1.0228e-05 90.9375 0 87.5V43.75C0 40.3125 0.987867 37.3698 2.96289 34.9219C4.93782 32.4741 7.31171 31.2501 10.085 31.25ZM30.2559 63.5752C35.6318 67.2693 41.8436 69.1289 48.7695 69.1289C49.3251 69.1289 49.8771 69.1137 50.4258 69.0869V87.5C50.4258 90.9374 49.4388 93.8802 47.4639 96.3281C45.4888 98.776 43.1143 100 40.3408 100C37.5675 100 35.1937 98.7758 33.2188 96.3281C31.2437 93.8802 30.2559 90.9375 30.2559 87.5V63.5752ZM80.6816 80.709V87.5C80.6816 90.9374 79.6947 93.8802 77.7197 96.3281C75.7447 98.776 73.3701 100 70.5967 100C67.8232 100 65.4487 98.776 63.4736 96.3281C61.4987 93.8802 60.5117 90.9374 60.5117 87.5V66.8896C62.0032 66.2906 63.426 65.5962 64.7744 64.8008L80.6816 80.709ZM40.3408 0C43.0242 0 45.3316 1.14788 47.2676 3.43945C41.1397 3.68239 35.5952 5.42309 30.7227 8.64648C31.1952 6.8081 32.0265 5.14963 33.2188 3.67188C35.1937 1.22416 37.5675 4.37684e-05 40.3408 0Z" fill="currentColor"/>
+                      <ellipse cx="48.8636" cy="36.3636" rx="21.5909" ry="21.5909" style="fill: var(--color-surface-subtle)"/>
+                      <path d="M48.769 64.5833C40.8555 64.5833 34.158 61.8427 28.6767 56.3613C23.1953 50.8799 20.4546 44.1825 20.4546 36.269C20.4546 28.3555 23.1953 21.658 28.6767 16.1766C34.158 10.6953 40.8555 7.95459 48.769 7.95459C56.6825 7.95459 63.3799 10.6953 68.8613 16.1766C74.3427 21.658 77.0834 28.3555 77.0834 36.269C77.0834 39.4634 76.5752 42.4763 75.5588 45.3078C74.5424 48.1392 73.1629 50.644 71.4205 52.822L95.8145 77.2159C96.6131 78.0145 97.0124 79.0309 97.0124 80.2652C97.0124 81.4994 96.6131 82.5158 95.8145 83.3144C95.0158 84.113 93.9994 84.5123 92.7652 84.5123C91.531 84.5123 90.5146 84.113 89.716 83.3144L65.322 58.9205C63.144 60.6629 60.6393 62.0423 57.8078 63.0587C54.9764 64.0751 51.9634 64.5833 48.769 64.5833ZM48.769 55.8712C54.2141 55.8712 58.8424 53.9655 62.6539 50.1539C66.4655 46.3423 68.3713 41.714 68.3713 36.269C68.3713 30.8239 66.4655 26.1956 62.6539 22.384C58.8424 18.5725 54.2141 16.6667 48.769 16.6667C43.3239 16.6667 38.6956 18.5725 34.884 22.384C31.0725 26.1956 29.1667 30.8239 29.1667 36.269C29.1667 41.714 31.0725 46.3423 34.884 50.1539C38.6956 53.9655 43.3239 55.8712 48.769 55.8712Z" fill="currentColor"/>
+                    </svg>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__heading">No tickets to display</p>
+                    <p class="ds-empty-state__description">Try a different view or clear your search.</p>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+      <!-- TODO eng: replace with AG Grid + onfloTheme (sort, filter, resize, selection) -->
+    </div>
+
+    <!-- Result count for the current view. -->
+    <div class="inbox__footer">
+      <span class="inbox__count">{{ rows().length }} {{ rows().length === 1 ? 'ticket' : 'tickets' }}</span>
+    </div>
+
+  </div>
 </div>
