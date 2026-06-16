@@ -1,1 +1,570 @@
-<div>Users</div>
+<!-- Users tab — reactive directory grid. Rendered inside the parent's
+     ds-page-content__main, so this owns only the toolbar + table + overlays
+     (no page shell / heading — the parent supplies those). -->
+<!-- TODO eng: a click on the document closes open menus/popovers; wire a real
+     CDK overlay / outside-click on handoff instead of this catch-all. -->
+<div class="users" (click)="onDocumentClick()">
+
+  <!-- ── Toolbar ──────────────────────────────────────────────────────────── -->
+  <div class="users__toolbar">
+    <div class="users__toolbar-left">
+      <!-- Quick search — filters by name/email -->
+      <div class="ds-input ds-search users__search" role="search">
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input class="ds-input__control" type="search" placeholder="Search by name or email…"
+                 aria-label="Search users" [ngModel]="search()" (ngModelChange)="search.set($event)" />
+        </div>
+      </div>
+    </div>
+
+    <div class="users__toolbar-right">
+      <!-- Bulk delete — only when ≥1 row is selected -->
+      @if (selectedCount() > 0) {
+        <button class="ds-button ds-button--outlined ds-button--md users__bulk-delete" type="button"
+                (click)="requestDeleteSelected(); $event.stopPropagation()">
+          <span class="ds-icon ds-icon--sm" aria-hidden="true">delete</span>
+          Delete ({{ selectedCount() }})
+        </button>
+      }
+
+      <!-- Filter popover (Status + Roles) -->
+      <div class="users__popover-anchor">
+        <button class="ds-button ds-button--outlined ds-button--md" type="button"
+                aria-haspopup="true" [attr.aria-expanded]="openPopover() === 'filter'"
+                (click)="togglePopover('filter'); $event.stopPropagation()">
+          <span class="ds-icon ds-icon--sm" aria-hidden="true">filter_list</span>
+          Filter
+          @if (activeFilterCount() > 0) {
+            <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ activeFilterCount() }}</span>
+          }
+        </button>
+
+        @if (openPopover() === 'filter') {
+          <div class="ds-menu users__popover" role="menu" (click)="$event.stopPropagation()">
+            <div class="ds-menu__section-label">Status</div>
+            @for (s of allStatuses; track s) {
+              <label class="ds-checkbox ds-menu__item ds-menu__item--indent">
+                <input type="checkbox" class="ds-checkbox__control" [checked]="isStatusChecked(s)" (change)="toggleStatus(s)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                <span class="ds-checkbox__label">{{ s }}</span>
+              </label>
+            }
+            <div class="ds-menu__section-label">Roles</div>
+            @for (r of allRoles; track r) {
+              <label class="ds-checkbox ds-menu__item ds-menu__item--indent">
+                <input type="checkbox" class="ds-checkbox__control" [checked]="isRoleChecked(r)" (change)="toggleRole(r)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                <span class="ds-checkbox__label">{{ r }}</span>
+              </label>
+            }
+            @if (activeFilterCount() > 0) {
+              <hr class="ds-menu__divider" />
+              <button class="ds-menu__item" role="menuitem" type="button" (click)="clearFilters()">
+                <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">close</span>
+                Clear filters
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Column visibility popover -->
+      <div class="users__popover-anchor">
+        <button class="ds-icon-button ds-icon-button--outlined" type="button" aria-label="Show or hide columns"
+                aria-haspopup="true" [attr.aria-expanded]="openPopover() === 'columns'"
+                (click)="togglePopover('columns'); $event.stopPropagation()">
+          <span class="ds-icon ds-icon--sm">view_column</span>
+        </button>
+
+        @if (openPopover() === 'columns') {
+          <div class="ds-menu users__popover" role="menu" (click)="$event.stopPropagation()">
+            <div class="ds-menu__section-label">Columns</div>
+            @for (col of toggleableColumns(); track col.key) {
+              <label class="ds-checkbox ds-menu__item ds-menu__item--indent">
+                <input type="checkbox" class="ds-checkbox__control" [checked]="isColumnVisible(col.key)" (change)="toggleColumn(col.key)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                <span class="ds-checkbox__label">{{ col.label }}</span>
+              </label>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Export CSV -->
+      <button class="ds-icon-button ds-icon-button--outlined" type="button" aria-label="Export to CSV"
+              (click)="exportCsv(); $event.stopPropagation()">
+        <span class="ds-icon ds-icon--sm">download</span>
+      </button>
+
+      <!-- Create User — Global context only -->
+      @if (canCreateUsers()) {
+        <button class="ds-button ds-button--filled ds-button--md" type="button"
+                (click)="openCreate(); $event.stopPropagation()">
+          <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">person_add</span>
+          Create User
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ── Grid ─────────────────────────────────────────────────────────────── -->
+  <div class="users__table-scroll">
+    <table class="ds-table users__table">
+      <thead>
+        <tr>
+          <!-- Leading select-all checkbox -->
+          <th class="users__col-select">
+            <label class="ds-checkbox" (click)="$event.stopPropagation()">
+              <input type="checkbox" class="ds-checkbox__control" aria-label="Select all users"
+                     [checked]="allVisibleSelected()"
+                     [indeterminate]="someVisibleSelected()"
+                     (change)="toggleSelectAll()" />
+              <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+            </label>
+          </th>
+
+          @for (col of visibleColumns(); track col.key) {
+            <th>
+              <div class="ds-table__header-content">
+                <span class="ds-table__header-label">{{ col.label }}</span>
+                @if (col.sortable) {
+                  <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn"
+                          type="button" [attr.aria-label]="'Sort by ' + col.label"
+                          (click)="toggleSort(col.key); $event.stopPropagation()">
+                    <span class="ds-icon"
+                          [class.ds-table__sort-icon--none]="sortKey() !== col.key">{{ sortIconFor(col.key) }}</span>
+                  </button>
+                }
+              </div>
+            </th>
+          }
+
+          <!-- Trailing actions column -->
+          <th class="users__col-actions" aria-label="Actions"></th>
+        </tr>
+      </thead>
+
+      <!-- TODO eng: replace with AG Grid + onfloTheme -->
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr [class.is-selected]="isSelected(row.id)">
+            <!-- Selection -->
+            <td class="users__col-select">
+              <label class="ds-checkbox" (click)="$event.stopPropagation()">
+                <input type="checkbox" class="ds-checkbox__control"
+                       [attr.aria-label]="'Select ' + fullName(row)"
+                       [checked]="isSelected(row.id)" (change)="toggleRowSelection(row.id)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+              </label>
+            </td>
+
+            @for (col of visibleColumns(); track col.key) {
+              @switch (col.key) {
+                @case ('name') {
+                  <td>
+                    <div class="users__name">
+                      <span class="users__name-primary">{{ fullName(row) }}</span>
+                      <span class="users__name-email">{{ row.email }}</span>
+                    </div>
+                  </td>
+                }
+                @case ('roles') {
+                  <td>
+                    @if (row.roles.length) {
+                      <div class="users__chips">
+                        @for (r of visibleRoles(row); track r) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ r }}</span>
+                        }
+                        @if (roleOverflow(row) > 0) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey users__chip-overflow">+{{ roleOverflow(row) }}</span>
+                        }
+                      </div>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('status') {
+                  <td>
+                    <span class="ds-label ds-label--pill ds-label--xs ds-label--has-dot"
+                          [class.ds-label--green]="statusColor(row.status) === 'green'"
+                          [class.ds-label--yellow]="statusColor(row.status) === 'yellow'"
+                          [class.ds-label--grey]="statusColor(row.status) === 'grey'">
+                      <span class="ds-label__dot" aria-hidden="true"></span>{{ row.status }}
+                    </span>
+                  </td>
+                }
+                @case ('modules') {
+                  <td>
+                    @if (moduleNames(row).length) {
+                      <span class="users__truncate">{{ moduleNames(row).join(', ') }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('teams') {
+                  <td>
+                    @if (teamNames(row).length) {
+                      <span class="users__truncate">{{ teamNames(row).join(', ') }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('locations') {
+                  <td>
+                    @if (row.locations.length) {
+                      <span class="users__truncate">{{ row.locations.join(', ') }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('phone') {
+                  <td>
+                    @if (row.phone) {
+                      <span class="users__truncate">{{ row.phone }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('source') {
+                  <td><span class="users__truncate">{{ row.source }}</span></td>
+                }
+                @case ('jobTitle') {
+                  <td>
+                    @if (row.jobTitle) {
+                      <span class="users__truncate">{{ row.jobTitle }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('lastLogin') {
+                  <td>
+                    @if (row.lastLogin) {
+                      <span class="users__truncate">{{ row.lastLogin | date: 'mediumDate' }}</span>
+                    } @else {
+                      <span class="users__empty">—</span>
+                    }
+                  </td>
+                }
+                @case ('dateAdded') {
+                  <td><span class="users__truncate">{{ row.dateAdded | date: 'mediumDate' }}</span></td>
+                }
+              }
+            }
+
+            <!-- Row actions -->
+            <td class="users__col-actions">
+              <div class="users__popover-anchor">
+                <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm" type="button"
+                        [attr.aria-label]="'Actions for ' + fullName(row)"
+                        aria-haspopup="true" [attr.aria-expanded]="openRowMenu() === row.id"
+                        (click)="toggleRowMenu(row.id); $event.stopPropagation()">
+                  <span class="ds-icon ds-icon--sm">more_vert</span>
+                </button>
+
+                @if (openRowMenu() === row.id) {
+                  <div class="ds-menu users__row-menu" role="menu" (click)="$event.stopPropagation()">
+                    <button class="ds-menu__item" role="menuitem" type="button" (click)="openEdit(row)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">edit</span>
+                      Edit
+                    </button>
+                    <button class="ds-menu__item" role="menuitem" type="button" (click)="emitViewProfile(row)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">person</span>
+                      View Profile
+                    </button>
+                    <hr class="ds-menu__divider" />
+                    <button class="ds-menu__item ds-menu__item--destructive" role="menuitem" type="button" (click)="requestDeleteOne(row)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">delete</span>
+                      Delete
+                    </button>
+                  </div>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="visibleColumns().length + 2" class="users__empty-row">
+              <div class="ds-empty-state">
+                <span class="ds-icon ds-icon--xl ds-empty-state__icon" aria-hidden="true">group_off</span>
+                <p class="ds-empty-state__title">No users found</p>
+                <p class="ds-empty-state__text">Try adjusting your search or filters.</p>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── Create / Edit dialog ─────────────────────────────────────────────────── -->
+@if (dialogMode(); as mode) {
+  <div class="ds-dialog-backdrop" (click)="closeDialog()">
+    <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
+    <div class="ds-modal users__modal" role="dialog" aria-modal="true"
+         aria-labelledby="user-dialog-title" (click)="$event.stopPropagation()">
+      <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="closeDialog()">
+        <span class="ds-icon" aria-hidden="true">close</span>
+      </button>
+      <header class="ds-modal__header">
+        <h2 class="ds-modal__title" id="user-dialog-title">
+          @if (isEditing) { Edit user } @else { Create user }
+        </h2>
+        <p class="ds-modal__subtitle">
+          @if (isEditing) { Update this person's details. } @else { Add a new person to your directory. }
+        </p>
+      </header>
+
+      <div class="ds-modal__body">
+        <div class="users__form">
+          <!-- Name row -->
+          <div class="users__form-row users__form-row--3">
+            <div class="ds-input" [class.is-error]="showError('firstName')">
+              <label class="ds-input__label" for="uf-first">First name<span class="ds-input__required" aria-hidden="true">*</span></label>
+              <div class="ds-input__field">
+                <input id="uf-first" class="ds-input__control" type="text" placeholder="First name"
+                       [attr.aria-invalid]="showError('firstName') ? 'true' : null"
+                       [ngModel]="form().firstName" (ngModelChange)="updateField('firstName', $event)" />
+                @if (showError('firstName')) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
+              </div>
+              @if (showError('firstName'); as msg) {
+                <span class="ds-input__helper" role="alert">{{ msg }}</span>
+              }
+            </div>
+
+            <div class="ds-input">
+              <label class="ds-input__label" for="uf-middle">Middle name</label>
+              <div class="ds-input__field">
+                <input id="uf-middle" class="ds-input__control" type="text" placeholder="Middle name"
+                       [ngModel]="form().middleName" (ngModelChange)="updateField('middleName', $event)" />
+              </div>
+            </div>
+
+            <div class="ds-input" [class.is-error]="showError('lastName')">
+              <label class="ds-input__label" for="uf-last">Last name<span class="ds-input__required" aria-hidden="true">*</span></label>
+              <div class="ds-input__field">
+                <input id="uf-last" class="ds-input__control" type="text" placeholder="Last name"
+                       [attr.aria-invalid]="showError('lastName') ? 'true' : null"
+                       [ngModel]="form().lastName" (ngModelChange)="updateField('lastName', $event)" />
+                @if (showError('lastName')) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
+              </div>
+              @if (showError('lastName'); as msg) {
+                <span class="ds-input__helper" role="alert">{{ msg }}</span>
+              }
+            </div>
+          </div>
+
+          <!-- Contact row -->
+          <div class="users__form-row users__form-row--2">
+            <div class="ds-input" [class.is-error]="showError('email')">
+              <label class="ds-input__label" for="uf-email">Email<span class="ds-input__required" aria-hidden="true">*</span></label>
+              <div class="ds-input__field">
+                <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">mail</span>
+                <input id="uf-email" class="ds-input__control" type="email" placeholder="user@district.edu"
+                       [attr.aria-invalid]="showError('email') ? 'true' : null"
+                       [ngModel]="form().email" (ngModelChange)="updateField('email', $event)" />
+                @if (showError('email')) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
+              </div>
+              @if (showError('email'); as msg) {
+                <span class="ds-input__helper" role="alert">{{ msg }}</span>
+              }
+            </div>
+
+            <div class="ds-input">
+              <label class="ds-input__label" for="uf-phone">Phone</label>
+              <div class="ds-input__field">
+                <input id="uf-phone" class="ds-input__control" type="tel" placeholder="(555) 000-0000"
+                       [ngModel]="form().phone" (ngModelChange)="updateField('phone', $event)" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Employee ID + Job Title -->
+          <div class="users__form-row users__form-row--2">
+            <div class="ds-input">
+              <label class="ds-input__label" for="uf-empid">Employee ID</label>
+              <div class="ds-input__field">
+                <input id="uf-empid" class="ds-input__control" type="text" placeholder="Optional"
+                       [ngModel]="form().employeeId" (ngModelChange)="updateField('employeeId', $event)" />
+              </div>
+            </div>
+
+            <div class="ds-input">
+              <label class="ds-input__label" for="uf-job">Job title</label>
+              <div class="ds-input__field">
+                <input id="uf-job" class="ds-input__control" type="text" placeholder="Optional"
+                       [ngModel]="form().jobTitle" (ngModelChange)="updateField('jobTitle', $event)" />
+              </div>
+            </div>
+          </div>
+
+          <div class="users__form-divider" role="separator"></div>
+
+          <!-- Modules (multi) — hidden & prefilled in module context -->
+          @if (isGlobal()) {
+            <div class="ds-select ds-select--multi users__form-select">
+              <label class="ds-select__label" for="uf-modules">Modules</label>
+              <div class="ds-select__field-row">
+                <div class="ds-select__field" (click)="toggleDialogSelect('modules'); $event.stopPropagation()">
+                  <input type="text" id="uf-modules" class="ds-select__control" readonly
+                         placeholder="Select module(s)…"
+                         [value]="formModuleLabel()"
+                         role="combobox" aria-haspopup="listbox"
+                         [attr.aria-expanded]="openDialogSelect() === 'modules'" aria-label="Modules" />
+                  <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+                </div>
+                @if (openDialogSelect() === 'modules') {
+                  <div class="ds-select__dropdown" role="listbox" aria-multiselectable="true" aria-label="Modules"
+                       (click)="$event.stopPropagation()">
+                    <div class="ds-menu">
+                      @for (m of moduleOptions(); track m.id) {
+                        <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                                [class.ds-menu__item--selected]="isFormModuleSelected(m.id)"
+                                [attr.aria-selected]="isFormModuleSelected(m.id)"
+                                (click)="toggleFormModule(m.id)">
+                          @if (isFormModuleSelected(m.id)) {
+                            <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                          }
+                          {{ m.name }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Locations (multi) -->
+          <div class="ds-select ds-select--multi users__form-select">
+            <label class="ds-select__label" for="uf-locations">Locations</label>
+            <div class="ds-select__field-row">
+              <div class="ds-select__field" (click)="toggleDialogSelect('locations'); $event.stopPropagation()">
+                <input type="text" id="uf-locations" class="ds-select__control" readonly
+                       placeholder="Select location(s)…"
+                       [value]="formLocationLabel()"
+                       role="combobox" aria-haspopup="listbox"
+                       [attr.aria-expanded]="openDialogSelect() === 'locations'" aria-label="Locations" />
+                <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+              </div>
+              @if (openDialogSelect() === 'locations') {
+                <div class="ds-select__dropdown" role="listbox" aria-multiselectable="true" aria-label="Locations"
+                     (click)="$event.stopPropagation()">
+                  <div class="ds-menu" style="max-height:240px; overflow-y:auto;">
+                    @for (loc of locationOptions(); track loc) {
+                      <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                              [class.ds-menu__item--selected]="isFormLocationSelected(loc)"
+                              [attr.aria-selected]="isFormLocationSelected(loc)"
+                              (click)="toggleFormLocation(loc)">
+                        @if (isFormLocationSelected(loc)) {
+                          <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                        }
+                        {{ loc }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Activation — new users only -->
+          @if (!isEditing) {
+            <div class="users__form-divider" role="separator"></div>
+            <div class="users__activation">
+              <span class="users__activation-label">Activation</span>
+              <div class="ds-radio-group">
+                <label class="ds-radio">
+                  <input type="radio" class="ds-radio__control" name="uf-activation" value="send-email"
+                         [checked]="form().activation === 'send-email'" (change)="updateField('activation', 'send-email')" />
+                  <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                  <span class="ds-radio__label">Send activation email</span>
+                </label>
+                <label class="ds-radio">
+                  <input type="radio" class="ds-radio__control" name="uf-activation" value="activate"
+                         [checked]="form().activation === 'activate'" (change)="updateField('activation', 'activate')" />
+                  <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                  <span class="ds-radio__label">Activate user</span>
+                </label>
+                <label class="ds-radio">
+                  <input type="radio" class="ds-radio__control" name="uf-activation" value="no-activation"
+                         [checked]="form().activation === 'no-activation'" (change)="updateField('activation', 'no-activation')" />
+                  <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                  <span class="ds-radio__label">Do not activate</span>
+                </label>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <footer class="ds-modal__actions">
+        @if (submitAttempted() && errorCount() > 0) {
+          <span class="users__form-error" role="alert">
+            <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">error</span>
+            {{ errorCount() }} {{ errorCount() === 1 ? 'field requires' : 'fields require' }} attention
+          </span>
+        }
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeDialog()">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="submitDialog()">
+          @if (isEditing) { Save changes } @else { Create user }
+        </button>
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- ── Delete confirmation ──────────────────────────────────────────────────── -->
+@if (deleteTargets().length) {
+  <div class="ds-dialog-backdrop" (click)="cancelDelete()">
+    <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
+    <div class="ds-dialog users__delete-dialog" role="dialog" aria-modal="true"
+         aria-labelledby="delete-dialog-title" (click)="$event.stopPropagation()">
+      <div class="ds-dialog__body">
+        <h2 class="ds-dialog__title" id="delete-dialog-title">
+          @if (deleteTargets().length === 1) { Delete user } @else { Delete {{ deleteTargets().length }} users }
+        </h2>
+        <p class="ds-dialog__text">
+          @if (deleteTargets().length === 1) {
+            Are you sure you want to delete the following user? This action cannot be undone.
+          } @else {
+            Are you sure you want to delete the following users? This action cannot be undone.
+          }
+        </p>
+        <ul class="users__delete-list">
+          @for (u of deleteTargets(); track u.id) {
+            <li class="users__delete-item">
+              <span class="ds-avatar ds-avatar--sm users__delete-avatar" aria-hidden="true">
+                <span class="ds-avatar__initials">{{ initials(u) }}</span>
+              </span>
+              <span class="users__delete-text">
+                <span class="users__delete-name">{{ fullName(u) }}</span>
+                <span class="users__delete-email">{{ u.email }}</span>
+              </span>
+            </li>
+          }
+        </ul>
+      </div>
+      <div class="ds-dialog__divider" aria-hidden="true"></div>
+      <div class="ds-dialog__actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancelDelete()">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="confirmDelete()">
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+}
