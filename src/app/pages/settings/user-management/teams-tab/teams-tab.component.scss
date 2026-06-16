@@ -36,43 +36,9 @@
   max-width: 100%;
 }
 
-// Filter wrapper (a <label> holding the mock select) and the select shell within it.
-.teams__filter {
-  display: inline-flex;
-}
-
+// The toolbar filter selects keep a sensible minimum width so their labels don't clip.
 .teams__filter-select {
   min-width: 160px;
-}
-
-// Mock native <select> dressed to read like a ds-select control. Transparent so the
-// ds-select__field shell behind it supplies the surface, border, and radius.
-// TODO eng: replace native selects with the ds-select runtime once filters are wired.
-.teams__native-select {
-  appearance: none;
-  width: 100%;
-  border: none;
-  background: transparent;
-  color: var(--color-text-primary);
-  cursor: pointer;
-  // Leave room for the absolutely-positioned arrow glyph at the right edge.
-  padding-right: var(--spacing-xl);
-  @include ds.type-body-medium;
-
-  &:focus {
-    outline: none;
-  }
-  &:focus-visible {
-    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
-    border-radius: var(--radius-sm);
-  }
-}
-
-// In the permission-set field the native control sits inside a bordered ds-select__field
-// shell; give it the input surface so it reads as an editable field, not flat text.
-.teams__native-field {
-  position: relative;
-  background-color: var(--color-surface-input);
 }
 
 // ── Grid ───────────────────────────────────────────────────────────────────────

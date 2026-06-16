@@ -68,6 +68,39 @@ export class TeamsTabComponent {
     this.modulesSvc.modules().map(m => ({ id: m.id, name: m.name })),
   );
 
+  // ── Toolbar filter dropdowns (ds-select) ──────────────────────────────────────
+  // Which toolbar filter dropdown is open ('module' | 'source' | null). The triggers
+  // stopPropagation; a transparent scrim closes whichever is open on an outside click.
+  readonly openFilter = signal<'module' | 'source' | null>(null);
+
+  toggleFilter(which: 'module' | 'source'): void {
+    this.openFilter.update(current => (current === which ? null : which));
+  }
+  closeFilters(): void {
+    this.openFilter.set(null);
+  }
+
+  // Display label for the module filter trigger ('All modules' when unset).
+  get moduleFilterLabel(): string {
+    if (!this.moduleFilter) return 'All modules';
+    return this.moduleNameById().get(this.moduleFilter) ?? this.moduleFilter;
+  }
+
+  selectModuleFilter(value: string): void {
+    this.onModuleFilter(value);
+    this.openFilter.set(null);
+  }
+
+  // Display label for the source filter trigger ('All sources' when unset).
+  get sourceFilterLabel(): string {
+    return this.sourceFilter || 'All sources';
+  }
+
+  selectSourceFilter(value: string): void {
+    this.onSourceFilter(value);
+    this.openFilter.set(null);
+  }
+
   // Fast id→name lookup for resolving module + permission-set names in `rows`.
   private readonly moduleNameById = computed(() => {
     const map = new Map<string, string>();
@@ -219,6 +252,12 @@ export class TeamsTabComponent {
     return this.formModules.map(id => names.get(id) ?? id).join(', ');
   }
 
+  // Resolve a single module id to its display name — used per iteration where a distinct
+  // chip per module is needed (e.g. the View Members module list), not the joined label.
+  moduleName(id: string): string {
+    return this.moduleNameById().get(id) ?? id;
+  }
+
   // The label shown in the permission-set select field.
   get permissionSetFieldLabel(): string {
     if (!this.formPermissionSetId) return 'None';
@@ -318,10 +357,11 @@ export class TeamsTabComponent {
   }
 
   // ── Topic + module multi-select handlers (mock multi-selects toggled inline) ──────
-  // Which inline multi-select dropdown is open in the dialog ('modules' | 'topics' | null).
-  readonly openPicker = signal<'modules' | 'topics' | null>(null);
+  // Which inline dropdown is open in the dialog. Modules/topics are multi-selects; the
+  // permission set is a single-select — all share the one open-at-a-time signal.
+  readonly openPicker = signal<'modules' | 'topics' | 'permSet' | null>(null);
 
-  togglePicker(which: 'modules' | 'topics'): void {
+  togglePicker(which: 'modules' | 'topics' | 'permSet'): void {
     this.openPicker.update(current => (current === which ? null : which));
   }
 

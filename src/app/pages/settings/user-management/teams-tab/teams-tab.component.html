@@ -21,47 +21,89 @@
 
       <!-- Module filter — only meaningful in a global (all-modules) context. -->
       @if (isGlobal()) {
-        <label class="teams__filter">
-          <span class="ds-sr-only">Filter by module</span>
-          <!-- TODO eng: replace native select with ds-select once filters are wired -->
-          <div class="ds-select teams__filter-select">
-            <div class="ds-select__field-row">
-              <div class="ds-select__field">
-                <select class="ds-select__control teams__native-select"
-                        [ngModel]="moduleFilter" (ngModelChange)="onModuleFilter($event)"
-                        aria-label="Filter by module">
-                  <option value="">All modules</option>
+        <div class="ds-select teams__filter-select" (click)="$event.stopPropagation()">
+          <span class="ds-sr-only" id="teams-module-filter-label">Filter by module</span>
+          <div class="ds-select__field-row">
+            <button class="ds-select__field teams__picker-trigger" type="button"
+                    aria-haspopup="listbox" [attr.aria-expanded]="openFilter() === 'module'"
+                    aria-labelledby="teams-module-filter-label"
+                    (click)="toggleFilter('module')">
+              <span class="teams__picker-value" [class.teams__picker-placeholder]="!moduleFilter">
+                {{ moduleFilterLabel }}
+              </span>
+              <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+            </button>
+            @if (openFilter() === 'module') {
+              <div class="ds-select__dropdown teams__picker-dropdown" role="listbox" aria-label="Filter by module">
+                <div class="ds-menu">
+                  <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                          [class.ds-menu__item--selected]="!moduleFilter"
+                          [attr.aria-selected]="!moduleFilter"
+                          (click)="selectModuleFilter('')">
+                    @if (!moduleFilter) {
+                      <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                    }
+                    All modules
+                  </button>
                   @for (m of moduleOptions(); track m.id) {
-                    <option [value]="m.id">{{ m.name }}</option>
+                    <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                            [class.ds-menu__item--selected]="moduleFilter === m.id"
+                            [attr.aria-selected]="moduleFilter === m.id"
+                            (click)="selectModuleFilter(m.id)">
+                      @if (moduleFilter === m.id) {
+                        <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                      }
+                      {{ m.name }}
+                    </button>
                   }
-                </select>
-                <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+                </div>
               </div>
-            </div>
+            }
           </div>
-        </label>
+        </div>
       }
 
       <!-- Source filter. -->
-      <label class="teams__filter">
-        <span class="ds-sr-only">Filter by source</span>
-        <!-- TODO eng: replace native select with ds-select once filters are wired -->
-        <div class="ds-select teams__filter-select">
-          <div class="ds-select__field-row">
-            <div class="ds-select__field">
-              <select class="ds-select__control teams__native-select"
-                      [ngModel]="sourceFilter" (ngModelChange)="onSourceFilter($event)"
-                      aria-label="Filter by source">
-                <option value="">All sources</option>
+      <div class="ds-select teams__filter-select" (click)="$event.stopPropagation()">
+        <span class="ds-sr-only" id="teams-source-filter-label">Filter by source</span>
+        <div class="ds-select__field-row">
+          <button class="ds-select__field teams__picker-trigger" type="button"
+                  aria-haspopup="listbox" [attr.aria-expanded]="openFilter() === 'source'"
+                  aria-labelledby="teams-source-filter-label"
+                  (click)="toggleFilter('source')">
+            <span class="teams__picker-value" [class.teams__picker-placeholder]="!sourceFilter">
+              {{ sourceFilterLabel }}
+            </span>
+            <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+          </button>
+          @if (openFilter() === 'source') {
+            <div class="ds-select__dropdown teams__picker-dropdown" role="listbox" aria-label="Filter by source">
+              <div class="ds-menu">
+                <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                        [class.ds-menu__item--selected]="!sourceFilter"
+                        [attr.aria-selected]="!sourceFilter"
+                        (click)="selectSourceFilter('')">
+                  @if (!sourceFilter) {
+                    <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                  }
+                  All sources
+                </button>
                 @for (s of sources; track s) {
-                  <option [value]="s">{{ s }}</option>
+                  <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                          [class.ds-menu__item--selected]="sourceFilter === s"
+                          [attr.aria-selected]="sourceFilter === s"
+                          (click)="selectSourceFilter(s)">
+                    @if (sourceFilter === s) {
+                      <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                    }
+                    {{ s }}
+                  </button>
                 }
-              </select>
-              <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+              </div>
             </div>
-          </div>
+          }
         </div>
-      </label>
+      </div>
     </div>
 
     <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="openCreate()">
@@ -203,6 +245,11 @@
   @if (openMenuId()) {
     <div class="teams__menu-scrim" (click)="closeMenu()" aria-hidden="true"></div>
   }
+
+  <!-- Backdrop that closes an open toolbar filter dropdown on an outside click. -->
+  @if (openFilter()) {
+    <div class="teams__menu-scrim" (click)="closeFilters()" aria-hidden="true"></div>
+  }
 </div>
 
 <!-- ── Create / Edit / View Team dialog ─────────────────────────────────────────── -->
@@ -232,7 +279,7 @@
             @if (isGlobal() && formModules.length) {
               <div class="teams__chips">
                 @for (id of formModules; track id) {
-                  <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ moduleFieldLabel }}</span>
+                  <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ moduleName(id) }}</span>
                 }
               </div>
             }
@@ -359,18 +406,43 @@
 
           <!-- Permission set (single + None) -->
           <div class="ds-select teams__field" (click)="$event.stopPropagation()">
-            <span class="ds-select__label">Permission set</span>
+            <span class="ds-select__label" id="team-permset-label">Permission set</span>
             <div class="ds-select__field-row">
-              <!-- TODO eng: replace native single-select with ds-select runtime -->
-              <div class="ds-select__field teams__native-field" role="listbox" aria-label="Permission set">
-                <select class="ds-select__control teams__native-select" [(ngModel)]="formPermissionSetId" aria-label="Permission set">
-                  <option value="">None</option>
-                  @for (ps of permissionSetOptions(); track ps.id) {
-                    <option [value]="ps.id">{{ ps.name }}</option>
-                  }
-                </select>
+              <button class="ds-select__field teams__picker-trigger" type="button"
+                      aria-haspopup="listbox" [attr.aria-expanded]="openPicker() === 'permSet'"
+                      aria-labelledby="team-permset-label"
+                      (click)="togglePicker('permSet')">
+                <span class="teams__picker-value" [class.teams__picker-placeholder]="!formPermissionSetId">
+                  {{ permissionSetFieldLabel }}
+                </span>
                 <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
-              </div>
+              </button>
+              @if (openPicker() === 'permSet') {
+                <div class="ds-select__dropdown teams__picker-dropdown" role="listbox" aria-label="Permission set">
+                  <div class="ds-menu">
+                    <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                            [class.ds-menu__item--selected]="!formPermissionSetId"
+                            [attr.aria-selected]="!formPermissionSetId"
+                            (click)="selectPermissionSet('')">
+                      @if (!formPermissionSetId) {
+                        <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                      }
+                      None
+                    </button>
+                    @for (ps of permissionSetOptions(); track ps.id) {
+                      <button class="ds-menu__item ds-menu__item--indent" type="button" role="option"
+                              [class.ds-menu__item--selected]="formPermissionSetId === ps.id"
+                              [attr.aria-selected]="formPermissionSetId === ps.id"
+                              (click)="selectPermissionSet(ps.id)">
+                        @if (formPermissionSetId === ps.id) {
+                          <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                        }
+                        {{ ps.name }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           </div>
 

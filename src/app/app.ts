@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, HostListener, inject } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, HostListener, effect, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs';
@@ -42,6 +42,17 @@ export class App implements AfterViewInit, OnDestroy {
       this._syncNavFromUrl((e as NavigationEnd).urlAfterRedirects);
       this._syncSettingsFromUrl((e as NavigationEnd).urlAfterRedirects);
       if (this.activeNav === 'settings') setTimeout(() => this._setupSettingsScrollbar(), 0);
+    });
+
+    // ModuleContextService.select() only flips a signal — no router event fires — so the
+    // URL-driven redirect in _syncNavFromUrl won't run when the switcher moves to an
+    // agent-role module while Settings/Analytics is showing. Watch the role signal and
+    // bounce to Tickets if we're stranded on a restricted section. Navigating updates
+    // activeNav via the router sync, so the `_agentRestricted.includes` guard prevents loops.
+    effect(() => {
+      if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(this.activeNav)) {
+        this.router.navigate(['tickets']);
+      }
     });
   }
 

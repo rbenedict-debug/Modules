@@ -99,14 +99,43 @@ export class PermissionSetsTabComponent {
     if (!set) return;
     this.editingId.set(set.id);
     this.editingName.set(set.name);
-    // System sets and any locked set open read-only.
+    // Build the working copy BEFORE locking read-only, since applyPreset() bails when
+    // read-only. The seeded sets use a legacy capability vocabulary (manageUsers,
+    // ticketAccess, …) that shares no ids with the catalog perms (tk-*, as-*, …), so
+    // cloning them verbatim would render every section as No Access. Detect that case
+    // and seed the working copy from a sensible per-set preset across every section.
+    this.readOnly.set(false);
+    const usesCatalogKeys = this.catalog.some(section =>
+      section.perms.some(perm => perm.id in set.capabilities),
+    );
+    if (usesCatalogKeys) {
+      // Already catalog-keyed (e.g. a Custom set saved by this editor): clone as-is.
+      this.working.set({ ...set.capabilities });
+    } else {
+      // Legacy/seeded set: start from defaults, then apply the derived section preset.
+      this.working.set(this.defaultCapabilities());
+      const preset = this.presetForSet(set.id);
+      for (const section of this.catalog) this.applyPreset(section.id, preset);
+    }
+    // Now lock System/locked sets read-only (the derived preset still displays).
     this.readOnly.set(set.isLocked || set.type === 'System');
-    // Clone capabilities into the working copy so edits don't touch the service until Save.
-    this.working.set({ ...set.capabilities });
     this.seedManageSubs();
     this.activeSection.set(this.catalog[0]?.id ?? DATA_VISIBILITY_ID);
     this.clearSearch();
     this.collapsed.set({});
+  }
+
+  // Default whole-set preset for a seeded set whose capabilities predate the catalog.
+  // Privileged sets map to Full Access, standard members to View Only, everything else
+  // (including brand-new custom sets) to No Access.
+  private presetForSet(setId: string): Preset {
+    const fullAccess = new Set(['ps-sysadmin', 'ps-global-user', 'ps-it-desk-lead']);
+    const viewOnly = new Set([
+      'ps-team-member', 'ps-recorder', 'ps-readonly', 'ps-classic-triage',
+    ]);
+    if (fullAccess.has(setId)) return 'full-access';
+    if (viewOnly.has(setId)) return 'view-only';
+    return 'no-access';
   }
 
   // Create a new Custom set (system-wide, unlocked) and open its editor immediately.

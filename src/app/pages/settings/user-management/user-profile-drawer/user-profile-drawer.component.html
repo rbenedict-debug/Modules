@@ -263,7 +263,7 @@
                       <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ card.accent }}">{{ card.name }}</span>
                     } @empty {
                       @for (m of u.modules; track m) {
-                        <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ m }}</span>
+                        <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ moduleName(m) }}</span>
                       }
                     }
                   </div>

@@ -221,6 +221,12 @@ export class UserProfileDrawerComponent {
     });
   });
 
+  // Resolve a module id to its display name (e.g. 'classic' → 'Classic'). Used by the
+  // Details → Modules row, which for non-agent users has no permission cards to read from.
+  moduleName(id: string): string {
+    return this.modulesSvc.modules().find((m) => m.id === id)?.name ?? id;
+  }
+
   // ── Tickets tab ────────────────────────────────────────────────────────────
   readonly ticketFilter = signal<TicketFilter>('all');
   readonly ticketSearch = signal('');
@@ -263,16 +269,20 @@ export class UserProfileDrawerComponent {
     return list;
   });
 
+  // Status → DS label color. Mirrors the inbox (tickets.component statusColor) exactly:
+  // Unopened grey, In Progress blue, Waiting yellow, Closed green.
   ticketStatusColor(status: Ticket['status']): 'green' | 'grey' | 'yellow' | 'blue' {
     switch (status) {
-      case 'Closed':
+      case 'Unopened':
         return 'grey';
+      case 'In Progress':
+        return 'blue';
       case 'Waiting':
         return 'yellow';
-      case 'Unopened':
-        return 'blue';
-      default:
+      case 'Closed':
         return 'green';
+      default:
+        return 'grey';
     }
   }
 

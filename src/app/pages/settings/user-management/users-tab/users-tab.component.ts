@@ -4,6 +4,7 @@ import {
   EventEmitter,
   Output,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -108,6 +109,16 @@ export class UsersTabComponent {
   readonly canAdminActions = this.moduleCtx.canAdminActions;
 
   readonly fullName = fullName;
+
+  constructor() {
+    // Row selection is keyed by user id, but the visible rows change with the module
+    // switcher. Clear the selection whenever the module context changes so a stale
+    // cross-module id can never be picked up by the bulk "Delete (n)" action.
+    effect(() => {
+      this.moduleCtx.currentModuleId(); // track the signal
+      this.selectedIds.set(new Set<string>());
+    });
+  }
 
   // ── Columns ────────────────────────────────────────────────────────────────
   readonly allColumns: ColumnDef[] = [
