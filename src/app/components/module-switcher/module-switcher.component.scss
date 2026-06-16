@@ -1,0 +1,93 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+.module-switcher {
+  position: relative;
+  display: inline-flex;
+}
+
+// Trigger — a pill button showing the current context.
+.module-switcher__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  height: 32px;
+  padding: 0 var(--spacing-sm);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-default);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-surface-subtle);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+  }
+}
+
+.module-switcher__name {
+  @include ds.type-body-medium;
+  white-space: nowrap;
+}
+
+.module-switcher__caret {
+  color: var(--color-icon-subtle);
+}
+
+// Panel — anchored below the trigger, right-aligned to fit the top-nav actions area.
+.module-switcher__panel {
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  right: 0;
+  z-index: 100;
+  min-width: 280px;
+  box-shadow: var(--shadow-elevation-2);
+}
+
+.module-switcher__item {
+  align-items: center;
+}
+
+.module-switcher__item-name {
+  flex: 1 1 auto;
+  text-align: left;
+}
+
+.module-switcher__item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-left: var(--spacing-sm);
+}
+
+// Footer hint — secondary helper text under the module list.
+.module-switcher__hint {
+  @include ds.type-body-small;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-xs);
+  color: var(--color-text-secondary);
+}
+
+// Globe (Global) glyph uses the neutral subtle icon token.
+.module-switcher__icon--global {
+  color: var(--color-icon-subtle);
+}
+
+// Accent glyphs reuse the same accent-icon tokens as the module cards.
+$module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+
+@each $accent in $module-accents {
+  .module-switcher__accent--#{"" + $accent} {
+    color: var(--color-icon-accent-#{$accent});
+  }
+}
+
+// "grey" sits outside the accent palette — neutral subtle glyph.
+.module-switcher__accent--grey {
+  color: var(--color-icon-subtle);
+}

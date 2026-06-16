@@ -1,0 +1,63 @@
+<div class="module-switcher">
+  <!-- Trigger: shows the current context (accent module icon + name, or globe + "Global") -->
+  <button class="module-switcher__trigger" type="button"
+          aria-haspopup="menu" [attr.aria-expanded]="open()"
+          aria-label="Switch module context"
+          (click)="toggle()">
+    @if (moduleCtx.isGlobal()) {
+      <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__icon--global" aria-hidden="true">public</span>
+      <span class="module-switcher__name">Global</span>
+    } @else {
+      <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__accent--{{ moduleCtx.currentModule()?.accent }}"
+            aria-hidden="true">{{ moduleCtx.currentModule()?.icon }}</span>
+      <span class="module-switcher__name">{{ moduleCtx.currentModule()?.name }}</span>
+    }
+    <span class="ds-icon ds-icon--sm module-switcher__caret" aria-hidden="true">
+      {{ open() ? 'arrow_drop_up' : 'arrow_drop_down' }}
+    </span>
+  </button>
+
+  @if (open()) {
+    <div class="ds-menu module-switcher__panel" role="menu" aria-label="Module context">
+      <!-- Context -->
+      <div class="ds-menu__section-label">Context</div>
+      <button class="ds-menu__item ds-menu__item--indent module-switcher__item"
+              [class.ds-menu__item--selected]="moduleCtx.isGlobal()"
+              role="menuitemradio" [attr.aria-checked]="moduleCtx.isGlobal()"
+              (click)="select(null)">
+        @if (moduleCtx.isGlobal()) {
+          <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
+        }
+        <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__icon--global" aria-hidden="true">public</span>
+        <span class="module-switcher__item-name">Global Admin</span>
+      </button>
+
+      <!-- Modules -->
+      <div class="ds-menu__section-label">Modules</div>
+      @for (m of modulesSvc.modules(); track m.id) {
+        <button class="ds-menu__item ds-menu__item--indent module-switcher__item"
+                [class.ds-menu__item--selected]="moduleCtx.currentModuleId() === m.id"
+                role="menuitemradio" [attr.aria-checked]="moduleCtx.currentModuleId() === m.id"
+                (click)="select(m.id)">
+          @if (moduleCtx.currentModuleId() === m.id) {
+            <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
+          }
+          <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__accent--{{ m.accent }}"
+                aria-hidden="true">{{ m.icon }}</span>
+          <span class="module-switcher__item-name">{{ m.name }}</span>
+          <span class="module-switcher__item-meta">
+            <span class="ds-label ds-label--pill ds-label--xs"
+                  [class.ds-label--blue]="m.role === 'Admin'"
+                  [class.ds-label--grey]="m.role === 'Agent'">{{ m.role }}</span>
+            <span class="ds-badge-indicator ds-badge-indicator--grey" aria-hidden="true">
+              {{ m.ticketCount > 999 ? '999+' : m.ticketCount }}
+            </span>
+          </span>
+        </button>
+      }
+
+      <!-- Footer hint -->
+      <div class="module-switcher__hint">Switching context changes visible data.</div>
+    </div>
+  }
+</div>
