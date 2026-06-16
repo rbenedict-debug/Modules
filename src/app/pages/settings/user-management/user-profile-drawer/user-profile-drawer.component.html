@@ -1,3 +1,558 @@
-@if (userId) {
-  <div>Profile {{ userId }}</div>
+@if (user(); as u) {
+  <!-- Scrim behind the drawer; clicking it closes the panel. -->
+  <!-- TODO eng: focus trap + Escape-to-close (CDK overlay) on handoff -->
+  <div class="drawer__scrim" (click)="requestClose()"></div>
+
+  <aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-name"
+         (click)="$event.stopPropagation()">
+
+    <!-- ── Header ─────────────────────────────────────────────────────────── -->
+    <header class="drawer__header">
+      <div class="drawer__identity">
+        <div class="ds-avatar ds-avatar--lg drawer__avatar">
+          <span class="ds-avatar__initials">{{ initials() }}</span>
+        </div>
+        <div class="drawer__identity-text">
+          <div class="drawer__name-row">
+            <h2 class="drawer__name" id="drawer-name">{{ fullName() }}</h2>
+            <span class="ds-label ds-label--pill ds-label--sm ds-label--has-dot ds-label--{{ statusColor() }}">
+              <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
+            </span>
+          </div>
+          <p class="drawer__email">{{ u.email }}</p>
+        </div>
+      </div>
+
+      <div class="drawer__header-actions">
+        @if (editing()) {
+          <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancelEditing()">Cancel</button>
+          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="save()">Save</button>
+        } @else {
+          <button class="ds-button ds-button--outlined ds-button--md drawer__edit" type="button" (click)="startEditing()">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">edit</span>Edit
+          </button>
+        }
+        <button class="ds-icon-button ds-icon-button--icon" type="button" aria-label="Close profile" (click)="requestClose()">
+          <span class="ds-icon ds-icon--sm">close</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Tabs ───────────────────────────────────────────────────────────── -->
+    <div class="ds-tabs drawer__tabs" role="tablist" aria-label="Profile sections">
+      @for (tab of tabs; track tab.id) {
+        <button class="ds-tabs__tab" role="tab"
+                [class.is-selected]="activeTab() === tab.id"
+                [attr.aria-selected]="activeTab() === tab.id"
+                [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+                (click)="selectTab(tab.id)">{{ tab.label }}</button>
+      }
+    </div>
+
+    <!-- ── Body (scrolls) ─────────────────────────────────────────────────── -->
+    <div class="drawer__body">
+      @switch (activeTab()) {
+
+        <!-- ═══ Details ═══════════════════════════════════════════════════ -->
+        @case ('details') {
+          <div class="drawer__panel">
+
+            <!-- System Fields -->
+            <section class="drawer__card">
+              <header class="drawer__card-head">
+                <span class="ds-icon ds-icon--sm drawer__card-icon" aria-hidden="true">settings</span>
+                <h3 class="drawer__card-title">System Fields</h3>
+              </header>
+              <div class="drawer__grid">
+
+                <!-- User ID — always read-only -->
+                <div class="drawer__field">
+                  <span class="drawer__label">User ID</span>
+                  <span class="drawer__value">{{ formatUserId(u.id) }}</span>
+                </div>
+
+                <!-- First Name -->
+                <div class="drawer__field">
+                  <span class="drawer__label">First Name</span>
+                  @if (editing() && !isLocked('firstName')) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.firstName"
+                               (ngModelChange)="updateDraft('firstName', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">
+                      {{ u.firstName }}
+                      @if (isLocked('firstName')) {
+                        <span class="ds-icon ds-icon--xs drawer__sync" aria-hidden="true">sync</span>
+                      }
+                    </span>
+                    @if (isLocked('firstName')) {
+                      <span class="drawer__sync-hint">{{ sourceHint(u.source) }}</span>
+                    }
+                  }
+                </div>
+
+                <!-- Middle Name (never locked) -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Middle Name</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.middleName"
+                               (ngModelChange)="updateDraft('middleName', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.middleName || '—' }}</span>
+                  }
+                </div>
+
+                <!-- Last Name -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Last Name</span>
+                  @if (editing() && !isLocked('lastName')) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.lastName"
+                               (ngModelChange)="updateDraft('lastName', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">
+                      {{ u.lastName }}
+                      @if (isLocked('lastName')) {
+                        <span class="ds-icon ds-icon--xs drawer__sync" aria-hidden="true">sync</span>
+                      }
+                    </span>
+                    @if (isLocked('lastName')) {
+                      <span class="drawer__sync-hint">{{ sourceHint(u.source) }}</span>
+                    }
+                  }
+                </div>
+
+                <!-- Email -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Email</span>
+                  @if (editing() && !isLocked('email')) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="email"
+                               [ngModel]="draftValue?.email"
+                               (ngModelChange)="updateDraft('email', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">
+                      {{ u.email }}
+                      @if (isLocked('email')) {
+                        <span class="ds-icon ds-icon--xs drawer__sync" aria-hidden="true">sync</span>
+                      }
+                    </span>
+                    @if (isLocked('email')) {
+                      <span class="drawer__sync-hint">{{ sourceHint(u.source) }}</span>
+                    }
+                  }
+                </div>
+
+                <!-- Phone (never locked) -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Phone</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="tel"
+                               [ngModel]="draftValue?.phone"
+                               (ngModelChange)="updateDraft('phone', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.phone || '—' }}</span>
+                  }
+                </div>
+
+                <!-- Status -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Status</span>
+                  @if (editing() && !isLocked('status')) {
+                    <div class="ds-select drawer__input">
+                      <div class="ds-select__field-row">
+                        <div class="ds-select__field">
+                          <!-- TODO eng: wire ds-select.js (open/pick) on handoff -->
+                          <input type="text" class="ds-select__control" readonly
+                                 [value]="draftValue?.status"
+                                 role="combobox" aria-haspopup="listbox" aria-expanded="false"
+                                 aria-label="Status" />
+                          <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+                        </div>
+                        <div class="ds-select__dropdown" role="listbox" aria-label="Status">
+                          <div class="ds-menu">
+                            @for (opt of statusOptions; track opt) {
+                              <button class="ds-menu__item" type="button" role="option"
+                                      [class.ds-menu__item--selected]="draftValue?.status === opt"
+                                      [attr.aria-selected]="draftValue?.status === opt"
+                                      [attr.data-label]="opt"
+                                      (click)="setDraftStatus(opt)">
+                                @if (draftValue?.status === opt) {
+                                  <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                                }
+                                {{ opt }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--has-dot ds-label--{{ statusColor() }}">
+                        <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
+                      </span>
+                      @if (isLocked('status')) {
+                        <span class="ds-icon ds-icon--xs drawer__sync" aria-hidden="true">sync</span>
+                      }
+                    </span>
+                    @if (isLocked('status')) {
+                      <span class="drawer__sync-hint">{{ sourceHint(u.source) }}</span>
+                    }
+                  }
+                </div>
+
+                <!-- Roles (read-only display) -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Roles</span>
+                  <div class="drawer__chips">
+                    @for (role of u.roles; track role) {
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ role }}</span>
+                    } @empty {
+                      <span class="drawer__value">—</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Locations -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Locations</span>
+                  <div class="drawer__chips">
+                    @for (loc of u.locations; track loc) {
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ loc }}</span>
+                    } @empty {
+                      <span class="drawer__value">—</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Source — always read-only -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Source</span>
+                  <span class="drawer__value">
+                    <span class="ds-icon ds-icon--xs drawer__sync" aria-hidden="true">sync</span>
+                    {{ u.source }}
+                  </span>
+                </div>
+
+                <!-- Modules -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Modules</span>
+                  <div class="drawer__chips">
+                    @for (card of modulePermissionCards(); track card.id) {
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ card.accent }}">{{ card.name }}</span>
+                    } @empty {
+                      @for (m of u.modules; track m) {
+                        <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ m }}</span>
+                      }
+                    }
+                  </div>
+                </div>
+
+                <!-- Teams -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Teams</span>
+                  <div class="drawer__chips">
+                    @for (team of teamNames(); track team) {
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ team }}</span>
+                    } @empty {
+                      <span class="drawer__value">—</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Job Title (never locked) -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Job Title</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.jobTitle"
+                               (ngModelChange)="updateDraft('jobTitle', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.jobTitle || '—' }}</span>
+                  }
+                </div>
+
+                <!-- Topics -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Topics</span>
+                  <div class="drawer__chips">
+                    @for (topic of u.topics; track topic) {
+                      <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ topic }}</span>
+                    } @empty {
+                      <span class="drawer__value">—</span>
+                    }
+                  </div>
+                </div>
+
+                <!-- Last Login — read-only -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Last Login</span>
+                  <span class="drawer__value">{{ formatDate(u.lastLogin) }}</span>
+                </div>
+
+                <!-- Date Added — read-only -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Date Added</span>
+                  <span class="drawer__value">{{ formatDate(u.dateAdded) }}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Custom Fields -->
+            <section class="drawer__card">
+              <header class="drawer__card-head">
+                <span class="ds-icon ds-icon--sm drawer__card-icon" aria-hidden="true">tune</span>
+                <h3 class="drawer__card-title">Custom Fields</h3>
+              </header>
+              <div class="drawer__grid">
+
+                <!-- Employee ID -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Employee ID</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.employeeId"
+                               (ngModelChange)="updateDraft('employeeId', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.employeeId || '—' }}</span>
+                  }
+                </div>
+
+                <!-- Pronouns -->
+                <div class="drawer__field">
+                  <span class="drawer__label">Pronouns</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.pronouns"
+                               (ngModelChange)="updateDraft('pronouns', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.pronouns || '—' }}</span>
+                  }
+                </div>
+
+                <!-- Emergency Contact -->
+                <div class="drawer__field drawer__field--wide">
+                  <span class="drawer__label">Emergency Contact</span>
+                  @if (editing()) {
+                    <div class="ds-input drawer__input">
+                      <div class="ds-input__field">
+                        <input class="ds-input__control" type="text"
+                               [ngModel]="draftValue?.emergencyContact"
+                               (ngModelChange)="updateDraft('emergencyContact', $event)" />
+                      </div>
+                    </div>
+                  } @else {
+                    <span class="drawer__value">{{ u.emergencyContact || '—' }}</span>
+                  }
+                </div>
+              </div>
+            </section>
+          </div>
+        }
+
+        <!-- ═══ Permissions ═══════════════════════════════════════════════ -->
+        @case ('permissions') {
+          <div class="drawer__panel">
+            @if (isAgent()) {
+              @for (card of modulePermissionCards(); track card.id) {
+                <section class="drawer__card drawer__perm-card">
+                  <header class="drawer__card-head">
+                    <span class="drawer__module-icon drawer__module-icon--{{ card.accent }}" aria-hidden="true">
+                      <span class="ds-icon ds-icon--filled ds-icon--sm">{{ card.icon }}</span>
+                    </span>
+                    <h3 class="drawer__card-title">{{ card.name }}</h3>
+                  </header>
+                  <div class="drawer__perm-body">
+                    <div class="drawer__field">
+                      <span class="drawer__label">Permission set in {{ card.name }}</span>
+                      <span class="drawer__value">
+                        <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ card.permissionSetName }}</span>
+                      </span>
+                    </div>
+                    <div class="drawer__field">
+                      <span class="drawer__label">Teams in {{ card.name }}</span>
+                      <div class="drawer__chips">
+                        @for (team of card.teams; track team) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ team }}</span>
+                        } @empty {
+                          <span class="drawer__muted">Not assigned to any team</span>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              } @empty {
+                <div class="ds-empty-state drawer__empty">
+                  <div class="ds-empty-state__graphic drawer__empty-graphic" aria-hidden="true">
+                    <span class="ds-icon ds-icon--lg">badge</span>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__heading">No module permissions</p>
+                    <p class="ds-empty-state__description">This agent is not assigned to any module yet.</p>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="ds-empty-state drawer__empty">
+                <div class="ds-empty-state__graphic drawer__empty-graphic" aria-hidden="true">
+                  <span class="ds-icon ds-icon--lg">badge</span>
+                </div>
+                <div class="ds-empty-state__body">
+                  <p class="ds-empty-state__description">Non-agent users are not assigned module-level permissions.</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- ═══ Tickets ═══════════════════════════════════════════════════ -->
+        @case ('tickets') {
+          <div class="drawer__panel">
+            <div class="drawer__toolbar">
+              <div class="drawer__filter-group" role="group" aria-label="Filter tickets">
+                <button class="drawer__filter" type="button"
+                        [class.is-active]="ticketFilter() === 'all'"
+                        (click)="ticketFilter.set('all')">All ({{ ticketCounts().all }})</button>
+                <button class="drawer__filter" type="button"
+                        [class.is-active]="ticketFilter() === 'open'"
+                        (click)="ticketFilter.set('open')">Open ({{ ticketCounts().open }})</button>
+                <button class="drawer__filter" type="button"
+                        [class.is-active]="ticketFilter() === 'closed'"
+                        (click)="ticketFilter.set('closed')">Closed ({{ ticketCounts().closed }})</button>
+              </div>
+              <div class="ds-input ds-search drawer__search" role="search">
+                <div class="ds-input__field">
+                  <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                  <input class="ds-input__control" type="search" placeholder="Search tickets..."
+                         aria-label="Search tickets"
+                         [ngModel]="ticketSearch()" (ngModelChange)="ticketSearch.set($event)" />
+                </div>
+              </div>
+            </div>
+
+            <div class="drawer__rows">
+              @for (ticket of filteredTickets(); track ticket.id) {
+                <div class="drawer__row">
+                  <div class="drawer__row-main">
+                    <span class="drawer__row-title">{{ ticket.subject }}</span>
+                    <span class="drawer__row-sub">{{ ticket.number }}</span>
+                  </div>
+                  <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketStatusColor(ticket.status) }}">{{ ticket.status }}</span>
+                </div>
+              } @empty {
+                <div class="ds-empty-state drawer__empty">
+                  <div class="ds-empty-state__graphic drawer__empty-graphic" aria-hidden="true">
+                    <span class="ds-icon ds-icon--lg">confirmation_number</span>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__heading">No tickets</p>
+                    <p class="ds-empty-state__description">No tickets owned by this user.</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- ═══ Assets (mock) ═════════════════════════════════════════════ -->
+        @case ('assets') {
+          <!-- TODO eng: real assets -->
+          <div class="drawer__panel">
+            <div class="drawer__toolbar drawer__toolbar--end">
+              <div class="ds-input ds-search drawer__search" role="search">
+                <div class="ds-input__field">
+                  <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                  <input class="ds-input__control" type="search" placeholder="Search assets..."
+                         aria-label="Search assets"
+                         [ngModel]="assetSearch()" (ngModelChange)="assetSearch.set($event)" />
+                </div>
+              </div>
+            </div>
+
+            <div class="drawer__rows">
+              @for (asset of filteredAssets(); track asset.assetId) {
+                <div class="drawer__row drawer__row--asset">
+                  <span class="drawer__asset-icon" aria-hidden="true">
+                    <span class="ds-icon ds-icon--filled ds-icon--sm">laptop_chromebook</span>
+                  </span>
+                  <div class="drawer__asset-cols">
+                    <span class="drawer__row-title">{{ asset.name }}</span>
+                    <div class="drawer__asset-meta">
+                      <span><span class="drawer__meta-label">Asset ID</span> {{ asset.assetId }}</span>
+                      <span><span class="drawer__meta-label">Type</span> {{ asset.type }}</span>
+                      <span><span class="drawer__meta-label">Assigned</span> {{ formatDate(asset.assignedOn) }}</span>
+                    </div>
+                  </div>
+                  <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ asset.statusColor }}">{{ asset.status }}</span>
+                </div>
+              } @empty {
+                <div class="ds-empty-state drawer__empty">
+                  <div class="ds-empty-state__graphic drawer__empty-graphic" aria-hidden="true">
+                    <span class="ds-icon ds-icon--lg">devices</span>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__heading">No assets found</p>
+                    <p class="ds-empty-state__description">No assets match your search.</p>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- ═══ Activity (mock) ═══════════════════════════════════════════ -->
+        @case ('activity') {
+          <!-- TODO eng: real activity feed -->
+          <div class="drawer__panel">
+            <ol class="drawer__timeline">
+              @for (entry of activity; track $index) {
+                <li class="drawer__timeline-item">
+                  <span class="drawer__timeline-icon drawer__timeline-icon--{{ entry.type }}" aria-hidden="true">
+                    <span class="ds-icon ds-icon--xs">{{ activityIcon(entry.type) }}</span>
+                  </span>
+                  <div class="drawer__timeline-content">
+                    <p class="drawer__timeline-desc">{{ entry.description }}</p>
+                    <span class="drawer__timeline-date">{{ formatDate(entry.date) }}</span>
+                  </div>
+                </li>
+              }
+            </ol>
+          </div>
+        }
+      }
+    </div>
+  </aside>
 }

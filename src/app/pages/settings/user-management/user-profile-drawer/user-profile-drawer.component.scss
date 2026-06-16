@@ -1,0 +1,452 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// ── Scrim ──────────────────────────────────────────────────────────────────
+// Fixed full-viewport backdrop; the drawer sits above it. Lives inside
+// ds-page-content__main but escapes its bounds via fixed positioning.
+.drawer__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: var(--color-surface-scrim);
+}
+
+// ── Drawer panel ─────────────────────────────────────────────────────────────
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  max-width: 100vw;
+  background-color: var(--color-surface-default);
+  box-shadow: var(--shadow-elevation-3);
+  // Slide in from the right.
+  animation: drawer-slide-in 180ms ease-out;
+}
+
+@keyframes drawer-slide-in {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+.drawer__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawer__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  min-width: 0;
+}
+
+.drawer__avatar {
+  flex-shrink: 0;
+}
+
+.drawer__identity-text {
+  min-width: 0;
+}
+
+.drawer__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.drawer__name {
+  @include ds.type-title-h3;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.drawer__email {
+  @include ds.type-body-small;
+  margin: var(--spacing-xs) 0 0;
+  color: var(--color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.drawer__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-shrink: 0;
+}
+
+// Edit button: icon + label sit on one line.
+.drawer__edit {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────
+.drawer__tabs {
+  padding: 0 var(--spacing-xl);
+  flex-shrink: 0;
+}
+
+// ── Body (the one scroll region) ─────────────────────────────────────────────
+.drawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+
+  // DS overlay-scrollbar look: slim bar, surface-scroll thumb on a transparent track.
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  &::-webkit-scrollbar { width: var(--spacing-sm); }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+}
+
+.drawer__panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-xl);
+}
+
+// ── Card (Details + Permissions sections) ────────────────────────────────────
+.drawer__card {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-default);
+  overflow: hidden;
+}
+
+.drawer__card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.drawer__card-icon {
+  color: var(--color-icon-brand);
+}
+
+.drawer__card-title {
+  @include ds.type-title-h4;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+// Two-column field grid inside each card.
+.drawer__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+.drawer__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.drawer__field--wide {
+  grid-column: 1 / -1;
+}
+
+.drawer__label {
+  @include ds.type-label-small;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.drawer__value {
+  @include ds.type-body-medium;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.drawer__muted {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+// Synced-field affordance: a sync glyph + a small hint line under the value.
+.drawer__sync {
+  color: var(--color-icon-brand);
+}
+
+.drawer__sync-hint {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+.drawer__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.drawer__input {
+  width: 100%;
+}
+
+// ── Permissions: per-module cards ────────────────────────────────────────────
+.drawer__perm-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+// Accent icon tile (mirrors the Department Modules pattern): paired surface +
+// icon accent tokens, keyed off the module's accent.
+.drawer__module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+}
+
+$accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+
+@each $accent in $accents {
+  .drawer__module-icon--#{$accent} {
+    background-color: var(--color-surface-accent-#{$accent});
+    .ds-icon { color: var(--color-icon-accent-#{$accent}); }
+  }
+}
+
+// "grey" has no accent tokens — neutral tile.
+.drawer__module-icon--grey {
+  background-color: var(--color-surface-subtle);
+  .ds-icon { color: var(--color-icon-subtle); }
+}
+
+// ── Toolbar (Tickets / Assets) ───────────────────────────────────────────────
+.drawer__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.drawer__toolbar--end {
+  justify-content: flex-end;
+}
+
+.drawer__search {
+  width: 200px;
+  max-width: 100%;
+}
+
+// Pill filter buttons (All / Open / Closed).
+.drawer__filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.drawer__filter {
+  @include ds.type-label-medium;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-default);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover { background-color: var(--color-surface-subtle); }
+
+  &.is-active {
+    border-color: var(--color-border-brand);
+    background-color: var(--color-surface-brand);
+    color: var(--color-text-brand);
+  }
+
+  &:focus { outline: none; }
+  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
+}
+
+// ── Generic rows (tickets / assets) ──────────────────────────────────────────
+.drawer__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+.drawer__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-subtle);
+}
+
+.drawer__row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drawer__row-title {
+  @include ds.type-body-medium;
+  color: var(--color-text-primary);
+}
+
+.drawer__row-sub {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+// Asset row: leading icon tile + stacked columns of meta.
+.drawer__row--asset {
+  align-items: flex-start;
+}
+
+.drawer__asset-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-accent-blue);
+
+  .ds-icon { color: var(--color-icon-accent-blue); }
+}
+
+.drawer__asset-cols {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.drawer__asset-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-md);
+  @include ds.type-body-small;
+  color: var(--color-text-primary);
+}
+
+.drawer__meta-label {
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-right: var(--spacing-xs);
+}
+
+// ── Empty states ─────────────────────────────────────────────────────────────
+.drawer__empty {
+  margin-top: var(--spacing-lg);
+}
+
+// Icon glyph standing in for the default empty-state illustration (a single
+// design-mode-safe glyph rather than the catalog's multi-path SVG).
+.drawer__empty-graphic {
+  color: var(--color-icon-disabled);
+}
+
+// ── Activity timeline ────────────────────────────────────────────────────────
+.drawer__timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer__timeline-item {
+  position: relative;
+  display: flex;
+  gap: var(--spacing-md);
+  padding-bottom: var(--spacing-lg);
+
+  // Connector line between the icon dots.
+  &:not(:last-child) .drawer__timeline-icon::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 1px;
+    height: calc(var(--spacing-lg) + var(--spacing-xs));
+    transform: translateX(-50%);
+    background-color: var(--color-border-subtle);
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.drawer__timeline-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-icon-subtle);
+}
+
+// Type-coloured timeline dots, all on accent surface tokens.
+.drawer__timeline-icon--login   { background-color: var(--color-surface-subtle);       .ds-icon { color: var(--color-icon-subtle); } }
+.drawer__timeline-icon--profile { background-color: var(--color-surface-accent-blue);  .ds-icon { color: var(--color-icon-accent-blue); } }
+.drawer__timeline-icon--permission { background-color: var(--color-surface-accent-purple); .ds-icon { color: var(--color-icon-accent-purple); } }
+.drawer__timeline-icon--ticket  { background-color: var(--color-surface-accent-orange); .ds-icon { color: var(--color-icon-accent-orange); } }
+.drawer__timeline-icon--asset   { background-color: var(--color-surface-accent-green);  .ds-icon { color: var(--color-icon-accent-green); } }
+
+.drawer__timeline-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.drawer__timeline-desc {
+  @include ds.type-body-medium;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.drawer__timeline-date {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+// Single-column field grids on the narrow drawer width.
+@media (max-width: 540px) {
+  .drawer__grid,
+  .drawer__perm-body {
+    grid-template-columns: 1fr;
+  }
+}
