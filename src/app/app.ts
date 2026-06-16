@@ -3,7 +3,9 @@ import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs';
 import { ModuleSwitcherComponent } from './components/module-switcher/module-switcher.component';
+import { CommandPaletteComponent } from './components/command-palette/command-palette.component';
 import { ModuleContextService } from './data/module-context.service';
+import { PersonaService } from './data/persona.service';
 
 type NavSection = 'tickets' | 'assets' | 'users' | 'analytics' | 'settings';
 
@@ -17,13 +19,21 @@ interface SettingsItem {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ModuleSwitcherComponent],
+  imports: [RouterOutlet, ModuleSwitcherComponent, CommandPaletteComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App implements AfterViewInit, OnDestroy {
   // Public so app.html can gate Analytics/Settings nav on the current module role.
   readonly moduleCtx = inject(ModuleContextService);
+  // The active persona drives the shell; the top-nav avatar shows its initials.
+  readonly persona = inject(PersonaService);
+
+  /** Initials of the active persona, for the top-nav avatar. */
+  get personaInitials(): string {
+    const parts = this.persona.current().name.trim().split(/\s+/);
+    return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
+  }
 
   subNavOpen = true;
   activeNav: NavSection = 'tickets';

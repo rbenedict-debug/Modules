@@ -1,0 +1,42 @@
+@if (open()) {
+  <div class="cmdk" role="dialog" aria-modal="true" aria-label="Switch persona">
+    <div class="cmdk__scrim" (click)="close()"></div>
+
+    <div class="cmdk__panel">
+      <div class="cmdk__search">
+        <span class="ds-icon ds-icon--sm cmdk__search-icon" aria-hidden="true">badge</span>
+        <input #search class="cmdk__input" type="text" placeholder="Switch persona…"
+               aria-label="Search personas"
+               [ngModel]="query()" (ngModelChange)="onQueryChange($event)" />
+        <span class="cmdk__kbd" aria-hidden="true">{{ shortcutLabel }}</span>
+      </div>
+
+      <div class="cmdk__list" role="listbox" aria-label="Personas">
+        @for (p of filtered(); track p.id; let i = $index) {
+          <button class="cmdk__item" type="button"
+                  role="option" [attr.aria-selected]="i === highlighted()"
+                  [class.is-highlighted]="i === highlighted()"
+                  (mouseenter)="highlighted.set(i)"
+                  (click)="selectPersona(p)">
+            <span class="cmdk__avatar" aria-hidden="true">{{ initials(p) }}</span>
+            <span class="cmdk__text">
+              <span class="cmdk__name">{{ p.name }}</span>
+              <span class="cmdk__meta">{{ p.title }} · {{ accessSummary(p) }}</span>
+            </span>
+            @if (p.id === currentId()) {
+              <span class="ds-label ds-label--pill ds-label--xs ds-label--green cmdk__current">Viewing</span>
+            }
+          </button>
+        } @empty {
+          <div class="cmdk__empty">No personas match “{{ query() }}”.</div>
+        }
+      </div>
+
+      <div class="cmdk__footer">
+        <span class="cmdk__footer-hint"><span class="cmdk__kbd">↑</span><span class="cmdk__kbd">↓</span> navigate</span>
+        <span class="cmdk__footer-hint"><span class="cmdk__kbd">↵</span> select</span>
+        <span class="cmdk__footer-hint"><span class="cmdk__kbd">esc</span> close</span>
+      </div>
+    </div>
+  </div>
+}

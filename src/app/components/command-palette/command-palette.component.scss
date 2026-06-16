@@ -1,0 +1,167 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// Full-screen overlay; sits above everything (incl. the profile drawer's elevation-3).
+.cmdk {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+}
+
+.cmdk__scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-scrim);
+}
+
+.cmdk__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  width: min(560px, 92vw);
+  max-height: 64vh;
+  background: var(--color-surface-overlay);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevation-3);
+  overflow: hidden;
+}
+
+// ── Search row ───────────────────────────────────────────────────────────────
+.cmdk__search {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--color-border-primary);
+}
+
+.cmdk__search-icon {
+  color: var(--color-icon-subtle);
+  flex-shrink: 0;
+}
+
+.cmdk__input {
+  @include ds.type-body-large;
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  outline: none;
+
+  &::placeholder {
+    color: var(--color-text-secondary);
+  }
+}
+
+// ── List ───────────────────────────────────────────────────────────────────
+.cmdk__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--spacing-xs);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cmdk__item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-md);
+  text-align: left;
+  cursor: pointer;
+
+  &.is-highlighted {
+    background: var(--color-surface-subtle);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+  }
+}
+
+.cmdk__avatar {
+  @include ds.type-label-medium;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-page);
+  color: var(--color-text-primary);
+}
+
+.cmdk__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cmdk__name {
+  @include ds.type-body-medium;
+  color: var(--color-text-primary);
+}
+
+.cmdk__meta {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cmdk__current {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.cmdk__empty {
+  @include ds.type-body-medium;
+  padding: var(--spacing-xl);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+// ── Footer + kbd hints ───────────────────────────────────────────────────────
+.cmdk__footer {
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.cmdk__footer-hint {
+  @include ds.type-label-small;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--color-text-secondary);
+}
+
+.cmdk__kbd {
+  @include ds.type-label-small;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  padding: 0 var(--spacing-xs);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
