@@ -311,7 +311,7 @@
                       </div>
                     }
                     @if (!filter || filter.has('user-management')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'user-management'">User Management</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'user-management'" (click)="goSettings('user-management')">User Management</button>
                     }
                   </div>
                 </div>

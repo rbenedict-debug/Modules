@@ -1,0 +1,37 @@
+<div class="ds-page-content__heading">
+  <h1 class="ds-page-content__title">User Management</h1>
+</div>
+
+<div class="ds-page-content__main">
+  <div class="ds-inner-page-tabs" role="tablist" aria-label="User management sections">
+    <button class="ds-inner-page-tabs__tab" role="tab"
+            [class.is-selected]="activeTab() === 'users'"
+            [attr.aria-selected]="activeTab() === 'users'"
+            [attr.tabindex]="activeTab() === 'users' ? 0 : -1"
+            (click)="setTab('users')">Users</button>
+    <button class="ds-inner-page-tabs__tab" role="tab"
+            [class.is-selected]="activeTab() === 'teams'"
+            [attr.aria-selected]="activeTab() === 'teams'"
+            [attr.tabindex]="activeTab() === 'teams' ? 0 : -1"
+            (click)="setTab('teams')">Teams</button>
+    <button class="ds-inner-page-tabs__tab" role="tab"
+            [class.is-selected]="activeTab() === 'permission-sets'"
+            [attr.aria-selected]="activeTab() === 'permission-sets'"
+            [attr.tabindex]="activeTab() === 'permission-sets' ? 0 : -1"
+            (click)="setTab('permission-sets')">Permission Sets</button>
+  </div>
+
+  @switch (activeTab()) {
+    @case ('users') {
+      <app-users-tab (viewProfile)="selectedUserId.set($event)" />
+    }
+    @case ('teams') {
+      <app-teams-tab />
+    }
+    @case ('permission-sets') {
+      <app-permission-sets-tab />
+    }
+  }
+
+  <app-user-profile-drawer [userId]="selectedUserId()" (close)="selectedUserId.set(null)" />
+</div>
