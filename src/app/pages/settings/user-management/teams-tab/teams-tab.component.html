@@ -1,1 +1,474 @@
-<div>Teams</div>
+<!-- Teams tab. Renders inside the parent User Management page's ds-page-content__main card,
+     below the inner-page tabs — so this template owns no page heading or card shell. -->
+<div class="teams">
+
+  <!-- Toolbar: search by team name, optional Module / Source filters, and Create Team. -->
+  <div class="teams__toolbar">
+    <div class="teams__filters">
+      <div class="ds-input ds-search teams__search" role="search">
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input class="ds-input__control" type="search" placeholder="Search teams"
+                 aria-label="Search teams by name"
+                 [ngModel]="searchText" (ngModelChange)="onSearch($event)" />
+          @if (searchText) {
+            <button class="ds-input__action" type="button" aria-label="Clear search" (click)="clearSearch()">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Module filter — only meaningful in a global (all-modules) context. -->
+      @if (isGlobal()) {
+        <label class="teams__filter">
+          <span class="ds-sr-only">Filter by module</span>
+          <!-- TODO eng: replace native select with ds-select once filters are wired -->
+          <div class="ds-select teams__filter-select">
+            <div class="ds-select__field-row">
+              <div class="ds-select__field">
+                <select class="ds-select__control teams__native-select"
+                        [ngModel]="moduleFilter" (ngModelChange)="onModuleFilter($event)"
+                        aria-label="Filter by module">
+                  <option value="">All modules</option>
+                  @for (m of moduleOptions(); track m.id) {
+                    <option [value]="m.id">{{ m.name }}</option>
+                  }
+                </select>
+                <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+              </div>
+            </div>
+          </div>
+        </label>
+      }
+
+      <!-- Source filter. -->
+      <label class="teams__filter">
+        <span class="ds-sr-only">Filter by source</span>
+        <!-- TODO eng: replace native select with ds-select once filters are wired -->
+        <div class="ds-select teams__filter-select">
+          <div class="ds-select__field-row">
+            <div class="ds-select__field">
+              <select class="ds-select__control teams__native-select"
+                      [ngModel]="sourceFilter" (ngModelChange)="onSourceFilter($event)"
+                      aria-label="Filter by source">
+                <option value="">All sources</option>
+                @for (s of sources; track s) {
+                  <option [value]="s">{{ s }}</option>
+                }
+              </select>
+              <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+            </div>
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="openCreate()">
+      <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
+      Create team
+    </button>
+  </div>
+
+  <!-- Teams grid. Semantic ds-table; native thead/tbody/th/td are styled by the design system. -->
+  <div class="teams__table-scroll">
+    <table class="ds-table teams__table">
+      <thead>
+        <tr>
+          <th scope="col">
+            <div class="ds-table__header-content"><span class="ds-table__header-label">Team name</span></div>
+          </th>
+          @if (isGlobal()) {
+            <th scope="col">
+              <div class="ds-table__header-content"><span class="ds-table__header-label">Module(s)</span></div>
+            </th>
+          }
+          <th scope="col">
+            <div class="ds-table__header-content"><span class="ds-table__header-label">Topics</span></div>
+          </th>
+          <th scope="col" class="teams__col-count">
+            <div class="ds-table__header-content"><span class="ds-table__header-label">Members</span></div>
+          </th>
+          <th scope="col">
+            <div class="ds-table__header-content"><span class="ds-table__header-label">Permission set</span></div>
+          </th>
+          <th scope="col">
+            <div class="ds-table__header-content"><span class="ds-table__header-label">Source</span></div>
+          </th>
+          <th scope="col" class="teams__col-actions">
+            <div class="ds-table__header-content"><span class="ds-sr-only">Actions</span></div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr>
+            <td class="teams__cell-name">{{ row.name }}</td>
+
+            @if (isGlobal()) {
+              <td>
+                @if (row.moduleNames.length) {
+                  <div class="teams__chips">
+                    @for (name of row.moduleNames; track name) {
+                      <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ name }}</span>
+                    }
+                  </div>
+                } @else {
+                  <span class="teams__empty-cell" aria-hidden="true">—</span>
+                }
+              </td>
+            }
+
+            <td>
+              @if (row.topics.length) {
+                <div class="teams__chips">
+                  @for (topic of row.topics; track topic) {
+                    <span class="ds-label ds-label--blue ds-label--xs ds-label--pill">{{ topic }}</span>
+                  }
+                </div>
+              } @else {
+                <span class="teams__empty-cell" aria-hidden="true">—</span>
+              }
+            </td>
+
+            <td class="teams__col-count">{{ row.memberCount }}</td>
+
+            <td>
+              @if (row.permissionSetName !== 'None') {
+                {{ row.permissionSetName }}
+              } @else {
+                <span class="teams__muted">None</span>
+              }
+            </td>
+
+            <td><span class="teams__muted">{{ row.source }}</span></td>
+
+            <!-- Row actions: more_vert → Edit / View Members / Delete. -->
+            <td class="teams__col-actions">
+              <div class="teams__actions">
+                <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm" type="button"
+                        [attr.aria-label]="'Actions for ' + row.name"
+                        [attr.aria-expanded]="openMenuId() === row.id"
+                        aria-haspopup="menu"
+                        (click)="toggleMenu(row.id, $event)">
+                  <span class="ds-icon ds-icon--sm">more_vert</span>
+                </button>
+
+                @if (openMenuId() === row.id) {
+                  <!-- TODO eng: replace inline menu with ds-menu via CDK Overlay (positioning + focus) -->
+                  <div class="ds-menu teams__menu" role="menu">
+                    <button class="ds-menu__item" role="menuitem" type="button" (click)="openEdit(row.id)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">edit</span>
+                      Edit
+                    </button>
+                    <button class="ds-menu__item" role="menuitem" type="button" (click)="openView(row.id)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">group</span>
+                      View members
+                    </button>
+                    <hr class="ds-menu__divider" />
+                    <button class="ds-menu__item ds-menu__item--destructive" role="menuitem" type="button" (click)="askDelete(row.id)">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">delete</span>
+                      Delete
+                    </button>
+                  </div>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td class="teams__empty-row" [attr.colspan]="isGlobal() ? 7 : 6">
+              <div class="ds-empty-state ds-empty-state--horizontal">
+                <div class="ds-empty-state__graphic">
+                  <span class="ds-icon ds-icon--lg" aria-hidden="true">groups</span>
+                </div>
+                <div class="ds-empty-state__body">
+                  @if (isFiltered()) {
+                    <p class="ds-empty-state__heading">No teams match your filters</p>
+                    <p class="ds-empty-state__description">Try a different search term or clear the filters.</p>
+                  } @else {
+                    <p class="ds-empty-state__heading">No teams yet</p>
+                    <p class="ds-empty-state__description">Create a team to group members and route their work.</p>
+                  }
+                </div>
+              </div>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Backdrop that closes the open row menu on an outside click. -->
+  @if (openMenuId()) {
+    <div class="teams__menu-scrim" (click)="closeMenu()" aria-hidden="true"></div>
+  }
+</div>
+
+<!-- ── Create / Edit / View Team dialog ─────────────────────────────────────────── -->
+@if (dialogMode() !== 'closed') {
+  <div class="ds-modal-backdrop" (click)="closeDialog()">
+    <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
+    <div class="ds-modal teams__modal" role="dialog" aria-modal="true"
+         aria-labelledby="team-dialog-title" (click)="$event.stopPropagation(); closePickers()">
+      <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="closeDialog()">
+        <span class="ds-icon" aria-hidden="true">close</span>
+      </button>
+      <header class="ds-modal__header">
+        <h2 class="ds-modal__title" id="team-dialog-title">{{ dialogTitle() }}</h2>
+        @if (!isViewMode()) {
+          <p class="ds-modal__subtitle">
+            @if (isCreateMode()) { Group members and route their work. }
+            @else { Update this team's details and members. }
+          </p>
+        }
+      </header>
+
+      <div class="ds-modal__body teams__modal-body">
+
+        <!-- VIEW MODE: read-only member roster. -->
+        @if (isViewMode()) {
+          <div class="teams__view-meta">
+            @if (isGlobal() && formModules.length) {
+              <div class="teams__chips">
+                @for (id of formModules; track id) {
+                  <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ moduleFieldLabel }}</span>
+                }
+              </div>
+            }
+          </div>
+          <p class="teams__section-label">Members ({{ selectedMembers.length }})</p>
+          @if (selectedMembers.length) {
+            <ul class="teams__member-list" role="list">
+              @for (m of selectedMembers; track m.id) {
+                <li class="teams__member">
+                  <span class="ds-avatar ds-avatar--sm" aria-hidden="true">
+                    <span class="ds-avatar__initials">{{ m.initials }}</span>
+                  </span>
+                  <span class="teams__member-text">
+                    <span class="teams__member-name">{{ m.name }}</span>
+                    <span class="teams__member-email">{{ m.email }}</span>
+                  </span>
+                  <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--{{ statusColor(m.status) }}">
+                    <span class="ds-label__dot" aria-hidden="true"></span>{{ m.status }}
+                  </span>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="teams__muted teams__view-empty">This team has no members yet.</p>
+          }
+        }
+
+        <!-- CREATE / EDIT MODE: the form. -->
+        @if (!isViewMode()) {
+          <!-- Name (required) -->
+          <div class="ds-input teams__field" [class.is-error]="formAttempted() && nameInvalid">
+            <label class="ds-input__label" for="team-name">Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+            <div class="ds-input__field">
+              <input id="team-name" class="ds-input__control" type="text" placeholder="e.g. Tier 1 Support"
+                     [(ngModel)]="formName"
+                     [attr.aria-invalid]="formAttempted() && nameInvalid ? 'true' : null"
+                     [attr.aria-describedby]="formAttempted() && nameInvalid ? 'team-name-error' : null" />
+              @if (formAttempted() && nameInvalid) {
+                <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+              }
+            </div>
+            @if (formAttempted() && nameInvalid) {
+              <span class="ds-input__helper" id="team-name-error" role="alert">Team name is required.</span>
+            }
+          </div>
+
+          <!-- Modules (multi). Hidden in a scoped module context (prefilled to the current module). -->
+          @if (isGlobal()) {
+            <div class="ds-select teams__field" (click)="$event.stopPropagation()">
+              <span class="ds-select__label">Module(s)</span>
+              <div class="ds-select__field-row">
+                <button class="ds-select__field teams__picker-trigger" type="button"
+                        aria-haspopup="listbox" [attr.aria-expanded]="openPicker() === 'modules'"
+                        (click)="togglePicker('modules')">
+                  <span class="teams__picker-value" [class.teams__picker-placeholder]="!formModules.length">
+                    {{ formModules.length ? moduleFieldLabel : 'Select module(s)' }}
+                  </span>
+                  <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+                </button>
+                @if (openPicker() === 'modules') {
+                  <div class="ds-select__dropdown teams__picker-dropdown" role="listbox" aria-multiselectable="true" aria-label="Modules">
+                    <div class="ds-menu">
+                      @for (m of moduleOptions(); track m.id) {
+                        <button class="ds-menu__item ds-menu__item--indent" type="button"
+                                role="option" [attr.aria-selected]="formModules.includes(m.id)"
+                                [class.ds-menu__item--selected]="formModules.includes(m.id)"
+                                (click)="toggleModule(m.id)">
+                          @if (formModules.includes(m.id)) {
+                            <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                          }
+                          {{ m.name }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Topics (multi) -->
+          <div class="ds-select teams__field" (click)="$event.stopPropagation()">
+            <span class="ds-select__label">Topics</span>
+            <div class="ds-select__field-row">
+              <button class="ds-select__field teams__picker-trigger" type="button"
+                      aria-haspopup="listbox" [attr.aria-expanded]="openPicker() === 'topics'"
+                      (click)="togglePicker('topics')">
+                <span class="teams__picker-value" [class.teams__picker-placeholder]="!formTopics.length">
+                  {{ formTopics.length ? formTopics.join(', ') : 'Select topic(s)' }}
+                </span>
+                <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+              </button>
+              @if (openPicker() === 'topics') {
+                <div class="ds-select__dropdown teams__picker-dropdown" role="listbox" aria-multiselectable="true" aria-label="Topics">
+                  <div class="ds-menu">
+                    @for (topic of topicOptions(); track topic) {
+                      <button class="ds-menu__item ds-menu__item--indent" type="button"
+                              role="option" [attr.aria-selected]="formTopics.includes(topic)"
+                              [class.ds-menu__item--selected]="formTopics.includes(topic)"
+                              (click)="toggleTopic(topic)">
+                        @if (formTopics.includes(topic)) {
+                          <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                        }
+                        {{ topic }}
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            @if (formTopics.length) {
+              <div class="teams__chip-list">
+                @for (topic of formTopics; track topic) {
+                  <span class="ds-chip ds-chip--sm" role="option">
+                    <span class="ds-chip__label">{{ topic }}</span>
+                    <button class="ds-chip__remove" type="button" [attr.aria-label]="'Remove ' + topic" (click)="toggleTopic(topic)">
+                      <span class="ds-icon ds-icon--sm">close</span>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Permission set (single + None) -->
+          <div class="ds-select teams__field" (click)="$event.stopPropagation()">
+            <span class="ds-select__label">Permission set</span>
+            <div class="ds-select__field-row">
+              <!-- TODO eng: replace native single-select with ds-select runtime -->
+              <div class="ds-select__field teams__native-field" role="listbox" aria-label="Permission set">
+                <select class="ds-select__control teams__native-select" [(ngModel)]="formPermissionSetId" aria-label="Permission set">
+                  <option value="">None</option>
+                  @for (ps of permissionSetOptions(); track ps.id) {
+                    <option [value]="ps.id">{{ ps.name }}</option>
+                  }
+                </select>
+                <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+              </div>
+            </div>
+          </div>
+
+          <hr class="teams__divider" aria-hidden="true" />
+
+          <!-- Members: searchable picker + selected list with avatar/name/email + remove. -->
+          <div class="teams__field">
+            <p class="teams__section-label">Members ({{ selectedMembers.length }})</p>
+
+            <div class="ds-input ds-search teams__member-search" role="search" (click)="$event.stopPropagation()">
+              <div class="ds-input__field">
+                <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                <input class="ds-input__control" type="search" placeholder="Search users to add"
+                       aria-label="Search users to add" [(ngModel)]="memberSearch" />
+              </div>
+            </div>
+
+            @if (memberSearch.trim()) {
+              <div class="ds-menu teams__member-results" role="listbox" aria-label="Matching users">
+                @for (m of availableMembers; track m.id) {
+                  <button class="ds-menu__item teams__result" role="option" type="button" (click)="addMember(m.id)">
+                    <span class="ds-avatar ds-avatar--xs" aria-hidden="true">
+                      <span class="ds-avatar__initials">{{ m.initials }}</span>
+                    </span>
+                    <span class="teams__member-text">
+                      <span class="teams__member-name">{{ m.name }}</span>
+                      <span class="teams__member-email">{{ m.email }}</span>
+                    </span>
+                  </button>
+                } @empty {
+                  <p class="teams__muted teams__no-results">No matching users.</p>
+                }
+              </div>
+            }
+
+            @if (selectedMembers.length) {
+              <ul class="teams__member-list teams__member-list--bordered" role="list">
+                @for (m of selectedMembers; track m.id) {
+                  <li class="teams__member">
+                    <span class="ds-avatar ds-avatar--sm" aria-hidden="true">
+                      <span class="ds-avatar__initials">{{ m.initials }}</span>
+                    </span>
+                    <span class="teams__member-text">
+                      <span class="teams__member-name">{{ m.name }}</span>
+                      <span class="teams__member-email">{{ m.email }}</span>
+                    </span>
+                    <button class="ds-button ds-button--text ds-button--sm" type="button"
+                            [attr.aria-label]="'Remove ' + m.name" (click)="removeMember(m.id)">Remove</button>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="teams__muted teams__view-empty">No members added yet.</p>
+            }
+          </div>
+        }
+      </div>
+
+      <footer class="ds-modal__actions">
+        @if (isViewMode()) {
+          <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeDialog()">Close</button>
+          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="switchToEdit()">
+            <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">edit</span>
+            Edit team
+          </button>
+        } @else {
+          <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeDialog()">Cancel</button>
+          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="save()">
+            {{ isCreateMode() ? 'Create team' : 'Save changes' }}
+          </button>
+        }
+      </footer>
+    </div>
+  </div>
+}
+
+<!-- ── Delete confirmation ──────────────────────────────────────────────────────── -->
+@if (deleteTarget(); as target) {
+  <div class="ds-dialog-backdrop" (click)="cancelDelete()">
+    <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
+    <div class="ds-dialog teams__delete-dialog" role="alertdialog" aria-modal="true"
+         aria-labelledby="delete-team-title" (click)="$event.stopPropagation()">
+      <div class="ds-dialog__body">
+        <h2 class="ds-dialog__title" id="delete-team-title">Delete "{{ target.name }}"?</h2>
+        <p class="ds-dialog__text">
+          This can't be undone.
+          @if (target.memberCount) {
+            Its {{ target.memberCount }} member{{ target.memberCount === 1 ? '' : 's' }} will be unassigned from this team.
+          } @else {
+            This team has no members.
+          }
+        </p>
+      </div>
+      <div class="ds-dialog__divider" aria-hidden="true"></div>
+      <div class="ds-dialog__actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancelDelete()">Cancel</button>
+        <button class="ds-button ds-button--destructive-outlined ds-button--md" type="button" (click)="confirmDelete()">Delete team</button>
+      </div>
+    </div>
+  </div>
+}

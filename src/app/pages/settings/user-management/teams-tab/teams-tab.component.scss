@@ -1,0 +1,389 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// The Teams tab renders inside the parent User Management page's ds-page-content__main
+// card shell, below the inner-page tabs — so it pads its own content and stacks the
+// toolbar above the scrollable grid. Padding + gap mirror the sibling Users tab so the
+// two tabs feel like one page.
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+}
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────
+// Search + filters on the left, Create Team pinned to the right; wraps on narrow widths.
+.teams__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.teams__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// Search field caps its width so the Create Team button keeps its place.
+.teams__search {
+  width: 280px;
+  max-width: 100%;
+}
+
+// Filter wrapper (a <label> holding the mock select) and the select shell within it.
+.teams__filter {
+  display: inline-flex;
+}
+
+.teams__filter-select {
+  min-width: 160px;
+}
+
+// Mock native <select> dressed to read like a ds-select control. Transparent so the
+// ds-select__field shell behind it supplies the surface, border, and radius.
+// TODO eng: replace native selects with the ds-select runtime once filters are wired.
+.teams__native-select {
+  appearance: none;
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  // Leave room for the absolutely-positioned arrow glyph at the right edge.
+  padding-right: var(--spacing-xl);
+  @include ds.type-body-medium;
+
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+    border-radius: var(--radius-sm);
+  }
+}
+
+// In the permission-set field the native control sits inside a bordered ds-select__field
+// shell; give it the input surface so it reads as an editable field, not flat text.
+.teams__native-field {
+  position: relative;
+  background-color: var(--color-surface-input);
+}
+
+// ── Grid ───────────────────────────────────────────────────────────────────────
+// The scroll wrapper owns horizontal overflow; ds-table supplies header/row styling.
+// Scrollbar matches the slim design-system treatment used across menus and tables.
+.teams__table-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  &::-webkit-scrollbar {
+    width: var(--spacing-sm);
+    height: var(--spacing-sm);
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+}
+
+.teams__table {
+  width: 100%;
+  min-width: 900px; // keep the six data columns legible; the wrapper scrolls when narrower
+}
+
+// Team name reads as the row's primary label.
+.teams__cell-name {
+  @include ds.type-body-medium;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+// Member-count column: narrow and right-aligned so the numbers stack tidily.
+.teams__col-count {
+  width: var(--spacing-xl);
+  text-align: right;
+  white-space: nowrap;
+}
+
+// Trailing actions column: narrow, right-aligned for the more_vert button.
+.teams__col-actions {
+  width: var(--spacing-xl);
+  text-align: right;
+  white-space: nowrap;
+}
+
+// Wrapping group of module / topic chips within a cell.
+.teams__chips {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex-wrap: wrap;
+}
+
+// Em-dash placeholder for an empty module/topic cell.
+.teams__empty-cell {
+  color: var(--color-text-disabled);
+}
+
+// Quieter secondary text — "None" permission set, source name.
+.teams__muted {
+  color: var(--color-text-secondary);
+}
+
+// ── Row action menu (more_vert) ──────────────────────────────────────────────────
+// The trigger is wrapped in a relative anchor so the menu floats beneath it.
+.teams__actions {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+}
+
+// Menu floats beneath the more_vert trigger, right-aligned, at popover elevation.
+.teams__menu {
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  right: 0;
+  z-index: 20;
+  min-width: 180px;
+  box-shadow: var(--shadow-elevation-2);
+  text-align: left;
+}
+
+// Full-viewport transparent scrim that closes the open row menu on an outside click.
+// Sits below the menu (z 20) but above the rest of the page.
+.teams__menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+}
+
+// Empty-state row spans the full table.
+.teams__empty-row {
+  padding: var(--spacing-xl);
+  text-align: center;
+}
+
+// ── Create / Edit / View dialog ───────────────────────────────────────────────────
+// ds-modal-backdrop already fixes + centers the modal; here we only size the panel.
+.teams__modal {
+  width: 560px;
+  max-width: 100%;
+  max-height: 90vh;
+}
+
+// The form / roster column inside the modal body.
+.teams__modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+// Each labelled field stacks its label, control, and any helper/chips.
+.teams__field {
+  width: 100%;
+
+  // Inputs and selects fill the dialog width.
+  .ds-input,
+  .ds-select {
+    width: 100%;
+  }
+}
+
+// Section heading inside the dialog — e.g. "Members (N)".
+.teams__section-label {
+  @include ds.type-title-h4;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+// Hairline rule between the details fields and the members section (matches the
+// gold-standard card divider: a subtle 1px border, not a dedicated component).
+.teams__divider {
+  height: 1px;
+  margin: 0;
+  border: none;
+  background-color: var(--color-border-subtle);
+}
+
+// ── Multi-select pickers (modules / topics) ───────────────────────────────────────
+// Trigger button styled to read like a ds-select field: input surface, subtle border,
+// value on the left and the dropdown caret on the right.
+.teams__picker-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background-color: var(--color-surface-input);
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+  @include ds.type-body-medium;
+
+  &:focus {
+    outline: none;
+  }
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+  }
+}
+
+.teams__picker-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Placeholder state when nothing is selected.
+.teams__picker-placeholder {
+  color: var(--color-text-secondary);
+}
+
+// The open dropdown floats over the field at popover elevation, scrolling if long.
+.teams__picker-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + var(--spacing-xs));
+  z-index: 30;
+  max-height: 260px;
+  overflow-y: auto;
+  background-color: var(--color-surface-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elevation-2);
+
+  // The field-row anchors the absolutely-positioned dropdown.
+  // (ds-select__field-row is the relative container in the template.)
+}
+
+// ds-select__field-row needs to anchor the dropdown it contains.
+.ds-select__field-row {
+  position: relative;
+}
+
+// Removable chips for the selected topics, below the topics picker.
+.teams__chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: var(--spacing-sm);
+}
+
+// ── Member picker + lists ─────────────────────────────────────────────────────────
+.teams__member-search {
+  width: 100%;
+  margin-top: var(--spacing-sm);
+}
+
+// Results dropdown for the member search — a bordered, scrollable menu.
+.teams__member-results {
+  margin-top: var(--spacing-xs);
+  max-height: 240px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-elevation-2);
+}
+
+// A single search result row: avatar + name/email stack.
+.teams__result {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  width: 100%;
+  text-align: left;
+}
+
+.teams__no-results {
+  margin: 0;
+  padding: var(--spacing-md);
+  @include ds.type-body-small;
+}
+
+// Selected-members / view-members roster.
+.teams__member-list {
+  margin: var(--spacing-sm) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+// Bordered variant inside the edit form, so the selected list reads as a contained group.
+.teams__member-list--bordered {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-subtle);
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+// One roster row: avatar, name/email, then status pill or remove button.
+.teams__member {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+
+  & + & {
+    border-top: 1px solid var(--color-border-subtle);
+  }
+}
+
+// Name over a quieter email line; the text block flexes and truncates.
+.teams__member-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.teams__member-name {
+  @include ds.type-body-medium;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teams__member-email {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Module chips shown above the roster in view mode.
+.teams__view-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+// "No members" placeholder copy in both the view panel and the edit form.
+.teams__view-empty {
+  margin: var(--spacing-sm) 0 0;
+  @include ds.type-body-medium;
+}
+
+// ── Delete confirmation ───────────────────────────────────────────────────────────
+// ds-dialog-backdrop fixes + centers the dialog; only the panel width is set here.
+.teams__delete-dialog {
+  width: 440px;
+  max-width: 100%;
+}
