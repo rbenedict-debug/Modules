@@ -1,1 +1,351 @@
-<div>Permission Sets</div>
+<!-- Permission Sets tab. Renders inside the parent User Management page's
+     ds-page-content__main card, below the inner-page tabs — so this template owns no page
+     heading or card shell. A single `editingId` signal swaps between the list and the
+     full-tab editor. -->
+
+@if (editingId() === null) {
+  <!-- ════════════ LIST VIEW ════════════ -->
+  <div class="psets">
+    <div class="psets__toolbar">
+      <div>
+        <p class="psets__lead">Permission sets bundle what a user can see and do. Assign them to users and teams.</p>
+      </div>
+      <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="createSet()">
+        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
+        Create permission set
+      </button>
+    </div>
+
+    <!-- Permission-set list. Semantic ds-table; rows open the editor on click. -->
+    <div class="psets__table-scroll">
+      <table class="ds-table psets__table">
+        <thead>
+          <tr>
+            <th scope="col">
+              <div class="ds-table__header-content"><span class="ds-table__header-label">Name</span></div>
+            </th>
+            <th scope="col">
+              <div class="ds-table__header-content"><span class="ds-table__header-label">Type</span></div>
+            </th>
+            <th scope="col">
+              <div class="ds-table__header-content"><span class="ds-table__header-label">Module scope</span></div>
+            </th>
+            <th scope="col" class="psets__col-locked">
+              <div class="ds-table__header-content"><span class="ds-table__header-label">Locked</span></div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track row.id) {
+            <tr class="psets__row" tabindex="0"
+                [attr.aria-label]="'Open ' + row.name"
+                (click)="openEditor(row)"
+                (keydown.enter)="openEditor(row)"
+                (keydown.space)="$event.preventDefault(); openEditor(row)">
+              <td class="psets__cell-name">
+                <span class="psets__name">{{ row.name }}</span>
+              </td>
+              <td>
+                @if (row.type === 'System') {
+                  <span class="ds-label ds-label--blue ds-label--xs ds-label--pill ds-label--outline">System</span>
+                } @else {
+                  <span class="ds-label ds-label--purple ds-label--xs ds-label--pill ds-label--outline">Custom</span>
+                }
+              </td>
+              <td>
+                @if (row.scope === 'System-wide') {
+                  <span class="psets__muted">System-wide</span>
+                } @else {
+                  <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ row.scope }}</span>
+                }
+              </td>
+              <td class="psets__col-locked">
+                @if (row.isLocked) {
+                  <span class="ds-icon ds-icon--sm psets__lock" aria-label="Locked — read only">lock</span>
+                } @else {
+                  <span class="psets__empty-cell" aria-hidden="true">—</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}
+
+@if (editingId() !== null) {
+  <!-- ════════════ EDITOR ════════════ -->
+  <div class="psets-editor">
+    <!-- Editor header: Back + set name, read-only badge, Cancel / Save. -->
+    <header class="psets-editor__bar">
+      <div class="psets-editor__bar-left">
+        <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm" type="button"
+                aria-label="Back to permission sets" (click)="closeEditor()">
+          <span class="ds-icon ds-icon--sm">arrow_back</span>
+        </button>
+        <h2 class="psets-editor__title">{{ editingName() }}</h2>
+        @if (readOnly()) {
+          <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot">
+            <span class="ds-label__dot" aria-hidden="true"></span>Read only
+          </span>
+        }
+      </div>
+      <div class="psets-editor__bar-actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeEditor()">
+          {{ readOnly() ? 'Back' : 'Cancel' }}
+        </button>
+        @if (!readOnly()) {
+          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="save()">Save</button>
+        }
+      </div>
+    </header>
+
+    @if (readOnly()) {
+      <div class="ds-alert ds-alert--info psets-editor__notice" role="status">
+        <span class="ds-icon ds-icon--sm ds-icon--filled ds-alert__icon" aria-hidden="true">info</span>
+        <div class="ds-alert__content">
+          <p class="ds-alert__message">This is a system permission set and can't be edited. Duplicate it to make changes.</p>
+        </div>
+      </div>
+    }
+
+    <div class="psets-editor__body">
+      <!-- ── Left nav: search + section list ── -->
+      <nav class="psets-editor__nav" aria-label="Permission sections">
+        <div class="ds-input ds-search psets-editor__search" role="search">
+          <div class="ds-input__field">
+            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+            <input class="ds-input__control" type="search" placeholder="Search permissions"
+                   aria-label="Search permissions"
+                   [ngModel]="searchText" (ngModelChange)="onSearch($event)" />
+            @if (searchText) {
+              <button class="ds-input__action" type="button" aria-label="Clear search" (click)="clearSearch()">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="psets-editor__nav-list">
+          @for (s of filteredSections(); track s.id) {
+            <button class="ds-subnav-button psets-editor__nav-item" type="button"
+                    [class.is-selected]="visibleSection()?.id === s.id"
+                    [attr.aria-pressed]="visibleSection()?.id === s.id"
+                    (click)="selectSection(s.id)">
+              <span class="ds-icon ds-icon--sm psets-editor__nav-icon" aria-hidden="true">{{ s.icon }}</span>
+              <span class="psets-editor__nav-label">{{ s.label }}</span>
+              @if (s.matchCount > 0) {
+                <span class="psets-editor__nav-count">{{ s.matchCount }}</span>
+              } @else if (s.id !== dataVisibilityId) {
+                <span class="psets-editor__nav-dot ds-label__dot psets-editor__nav-dot--{{ presetColor(s.id) }}"
+                      aria-hidden="true"></span>
+              }
+            </button>
+          } @empty {
+            <p class="psets-editor__nav-empty">No permissions match.</p>
+          }
+        </div>
+      </nav>
+
+      <!-- ── Right content: active section ── -->
+      <div class="psets-editor__content" id="perm-set-content"
+           [class.is-readonly]="readOnly()" [attr.aria-disabled]="readOnly() ? 'true' : null">
+        @if (visibleSection(); as section) {
+
+          @if (section.id !== dataVisibilityId) {
+            <!-- Catalog section: header + preset buttons, then perm rows grouped by sub-group. -->
+            <div class="psets-editor__section-head">
+              <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">{{ section.icon }}</span>
+              <h3 class="psets-editor__section-title">{{ section.label }}</h3>
+              <!-- Section presets: bulk-set every perm in this section. -->
+              <div class="psets-editor__presets" role="group" aria-label="Section access preset">
+                @for (p of presets; track p.id) {
+                  <button class="psets-editor__preset" type="button"
+                          [class.is-active]="currentPreset(section.id) === p.id"
+                          [class.is-disabled]="readOnly()"
+                          [disabled]="readOnly()"
+                          [attr.aria-pressed]="currentPreset(section.id) === p.id"
+                          (click)="applyPreset(section.id, p.id)">{{ p.label }}</button>
+                }
+              </div>
+            </div>
+
+            <div class="psets-editor__perms">
+              @for (run of groupPerms(section.perms); track $index) {
+                @if (run.kind === 'item') {
+                  <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
+                } @else {
+                  <!-- Collapsible sub-group block. -->
+                  <div class="psets-editor__group">
+                    <button class="psets-editor__group-head" type="button"
+                            [attr.aria-expanded]="!isCollapsed(section.id, run.label)"
+                            (click)="toggleGroup(section.id, run.label)">
+                      <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
+                            [class.is-collapsed]="isCollapsed(section.id, run.label)" aria-hidden="true">expand_more</span>
+                      <span class="psets-editor__group-label">{{ run.label }}</span>
+                      <span class="psets-editor__group-rule" aria-hidden="true"></span>
+                    </button>
+                    @if (!isCollapsed(section.id, run.label)) {
+                      <div class="psets-editor__group-body">
+                        @for (perm of run.perms; track perm.id) {
+                          <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              }
+            </div>
+          } @else {
+            <!-- ── Data Visibility pane ── -->
+            <div class="psets-editor__section-head">
+              <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">visibility</span>
+              <h3 class="psets-editor__section-title">Data Visibility</h3>
+            </div>
+            <p class="psets-editor__dv-lead">Control which records this set can see, beyond what the action permissions allow.</p>
+
+            <!-- Tickets scope -->
+            <div class="psets-editor__dv-card">
+              <div class="psets-editor__dv-card-head">
+                <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">confirmation_number</span>
+                <span class="psets-editor__dv-card-title">Tickets</span>
+              </div>
+              <div class="psets-editor__dv-card-body">
+                <p class="psets-editor__dv-sublabel">Scope</p>
+                <div class="ds-radio-group">
+                  <label class="ds-radio">
+                    <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="All"
+                           [checked]="dvTicketScope() === 'All'" [disabled]="readOnly()"
+                           (change)="setDvTicketScope('All')" />
+                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                    <span class="ds-radio__label">
+                      All tickets
+                      <span class="psets-editor__radio-desc">Access to every ticket in scope.</span>
+                    </span>
+                  </label>
+                  <label class="ds-radio">
+                    <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="Assigned"
+                           [checked]="dvTicketScope() === 'Assigned'" [disabled]="readOnly()"
+                           (change)="setDvTicketScope('Assigned')" />
+                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                    <span class="ds-radio__label">
+                      Assigned only
+                      <span class="psets-editor__radio-desc">Only tickets the user owns or is a team member of.</span>
+                    </span>
+                  </label>
+                </div>
+                <label class="ds-toggle psets-editor__dv-toggle">
+                  <input type="checkbox" role="switch" class="ds-toggle__control"
+                         [checked]="dvExcludeConfidential()" [disabled]="readOnly()"
+                         (change)="setDvExcludeConfidential($any($event.target).checked)" />
+                  <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+                  <span class="ds-toggle__label">Exclude confidential topics</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Assets scope -->
+            <div class="psets-editor__dv-card">
+              <div class="psets-editor__dv-card-head">
+                <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">devices</span>
+                <span class="psets-editor__dv-card-title">Assets</span>
+              </div>
+              <div class="psets-editor__dv-card-body">
+                <p class="psets-editor__dv-sublabel">Scope</p>
+                <div class="ds-radio-group">
+                  <label class="ds-radio">
+                    <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="All"
+                           [checked]="dvAssetScope() === 'All'" [disabled]="readOnly()"
+                           (change)="setDvAssetScope('All')" />
+                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                    <span class="ds-radio__label">
+                      All assets
+                      <span class="psets-editor__radio-desc">Access to every asset in scope.</span>
+                    </span>
+                  </label>
+                  <label class="ds-radio">
+                    <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="Assigned"
+                           [checked]="dvAssetScope() === 'Assigned'" [disabled]="readOnly()"
+                           (change)="setDvAssetScope('Assigned')" />
+                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+                    <span class="ds-radio__label">
+                      Assigned locations only
+                      <span class="psets-editor__radio-desc">Only assets in the locations assigned to this user.</span>
+                    </span>
+                  </label>
+                </div>
+                <label class="ds-toggle psets-editor__dv-toggle">
+                  <input type="checkbox" role="switch" class="ds-toggle__control"
+                         [checked]="dvExcludeOtherLocations()" [disabled]="readOnly()"
+                         (change)="setDvExcludeOtherLocations($any($event.target).checked)" />
+                  <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+                  <span class="ds-toggle__label">Exclude assets from other locations</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- TODO eng: wire the full data-visibility filter builder (multi-select asset / user
+                 type / grade with include-exclude) here on handoff -->
+          }
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── Reusable permission row (toggle or segmented control) ─────────────────────── -->
+<ng-template #permRow let-perm="perm">
+  <div class="psets-editor__row">
+    <div class="psets-editor__row-text">
+      <p class="psets-editor__row-label">{{ perm.label }}</p>
+      @if (perm.description) {
+        <p class="psets-editor__row-desc">{{ perm.description }}</p>
+      }
+      @if (perm.notes) {
+        @for (note of perm.notes; track $index) {
+          <p class="psets-editor__note psets-editor__note--{{ note.type }}">
+            <span class="ds-icon ds-icon--xs psets-editor__note-icon" aria-hidden="true">{{ noteIcon(note.type) }}</span>
+            {{ note.text }}
+          </p>
+        }
+      }
+    </div>
+
+    <div class="psets-editor__row-control">
+      @if (perm.controlType === 'toggle') {
+        <label class="ds-toggle" [class.is-disabled]="readOnly()" [attr.aria-label]="perm.label">
+          <input type="checkbox" role="switch" class="ds-toggle__control"
+                 [checked]="toggleValue(perm)" [disabled]="readOnly()"
+                 (change)="setToggle(perm, $any($event.target).checked)" />
+          <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+        </label>
+      } @else {
+        <!-- Segmented control: token-styled button group; active option is filled. -->
+        <div class="psets-editor__segment" role="group" [attr.aria-label]="perm.label">
+          @for (opt of segOptions(perm); track opt) {
+            <button class="psets-editor__segment-btn" type="button"
+                    [class.is-active]="segValue(perm) === opt"
+                    [class.is-disabled]="readOnly()"
+                    [disabled]="readOnly()"
+                    [attr.aria-pressed]="segValue(perm) === opt"
+                    (click)="setSegment(perm, opt)">{{ opt }}</button>
+          }
+        </div>
+        @if (showManageSubs(perm)) {
+          <div class="psets-editor__manage-subs">
+            @for (sub of manageSubOptions; track sub) {
+              <label class="ds-checkbox ds-checkbox--sm" [class.is-disabled]="readOnly()">
+                <input type="checkbox" class="ds-checkbox__control"
+                       [checked]="manageSub(perm, sub)" [disabled]="readOnly()"
+                       (change)="setManageSub(perm, sub, $any($event.target).checked)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                <span class="ds-checkbox__label">{{ sub }}</span>
+              </label>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</ng-template>
