@@ -45,10 +45,19 @@
   }
 }
 
+// Subnav width override — DS default is 195px (semantic token --subnav-width,
+// which the design system maps to the internal --ref-layout-subnav-width).
+.ds-page-layout {
+  --subnav-width: 205px;
+}
+
+// The expand toggle straddles the subnav's right edge, so its expanded `left`
+// is coupled to --subnav-width above: sidebar (~76px) + subnav width − straddle.
+// Keep this in sync — move it by the same delta whenever --subnav-width changes.
 .ds-page-layout .ds-nav-expand {
   position: absolute;
   top: 87px;
-  left: 270px;
+  left: 280px;
   z-index: 10;
   transition: left .2s ease;
 }

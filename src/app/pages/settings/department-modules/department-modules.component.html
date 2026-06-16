@@ -1,7 +1,7 @@
 <div class="ds-page-content__heading">
   <h1 class="ds-page-content__title">Department Modules</h1>
   <p class="modules__subtitle">
-    Modules give each team their own space in Onflo to focus on their work. It's all still one system underneath, so your teams stay connected.
+    Modules give each team their own focused space in Onflo while keeping everyone connected in one system.
   </p>
 </div>
 <div class="ds-page-content__main">
@@ -17,7 +17,7 @@
           </h2>
           <div class="modules__grid">
             @for (m of section.modules; track m.id) {
-              <div class="ds-card ds-card--elevated modules__card">
+              <div class="ds-card ds-card--outlined modules__card">
                 @if (m.active) {
                   <span class="ds-label ds-label--green ds-label--outline ds-label--xs ds-label--pill ds-label--has-dot modules__status">
                     <span class="ds-label__dot" aria-hidden="true"></span>Active
@@ -46,14 +46,17 @@
                 <div class="ds-card__body">
                   <p class="modules__tagline">{{ m.tagline }}</p>
 
-                  <hr class="ds-divider modules__divider" />
-
-                  <p class="modules__feature-label">What's included</p>
-                  <ul class="modules__features">
-                    @for (f of m.features; track f) {
-                      <li class="modules__feature">{{ f }}</li>
-                    }
-                  </ul>
+                  <div class="modules__included">
+                    <p class="modules__feature-label">What's included</p>
+                    <ul class="modules__features">
+                      @for (f of m.features; track f) {
+                        <li class="modules__feature">
+                          <span class="ds-icon ds-icon--filled ds-icon--xs modules__feature-check" aria-hidden="true">check_circle</span>
+                          <span class="modules__feature-text">{{ f }}</span>
+                        </li>
+                      }
+                    </ul>
+                  </div>
                 </div>
 
                 @if (!m.active && !m.pending) {

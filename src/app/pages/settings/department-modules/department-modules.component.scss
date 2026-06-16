@@ -1,5 +1,28 @@
 @use '@onflo/design-system/tokens/scss' as ds;
 
+// ds-page-content__main is the page's scroll boundary (DS sets overflow-y: auto). Restyle
+// its native scrollbar to the design-system look used by menus/dropdowns: a slim bar with
+// a --color-surface-scroll thumb over a transparent track, replacing the browser default.
+.ds-page-content__main {
+  scrollbar-width: thin;                                       // Firefox
+  scrollbar-color: var(--color-surface-scroll) transparent;    // thumb, track
+
+  // WebKit / Chromium
+  &::-webkit-scrollbar {
+    width: var(--spacing-sm);
+    height: var(--spacing-sm);
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+}
+
 // ds-page-content__main is an unpadded card shell, so the page pads its own content.
 .modules {
   padding: var(--spacing-xl);
@@ -9,7 +32,6 @@
   @include ds.type-body-medium;
   margin: var(--spacing-xs) 0 0;
   padding-left: var(--spacing-lg); // match the page title's 16px left padding
-  max-width: 65ch;
   color: var(--color-text-secondary);
 }
 
@@ -37,6 +59,10 @@
 .modules__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  // Equal-height rows: every card in a section matches the tallest one, so heights
+  // stay consistent across wraps and as cards are added — including pending "under
+  // review" cards (the overlay is absolutely positioned, so it never shrinks the card).
+  grid-auto-rows: 1fr;
   gap: var(--spacing-xl);
 }
 
@@ -51,6 +77,8 @@
   // the icon tile rather than the design system's default top alignment.
   .ds-card__header {
     align-items: center;
+    // 24px top/sides, no bottom — tightens the gap into the body below.
+    padding: var(--spacing-xl) var(--spacing-xl) 0;
   }
 
   // Card title → Title H3 (design-system default is Title H4).
@@ -58,13 +86,18 @@
     @include ds.type-title-h3;
   }
 
+  // Roomier 24px (--spacing-xl) inset on the sides and bottom; top is 16px
+  // (--spacing-lg) to tighten the gap up to the header above.
   .ds-card__body {
     flex: 1 1 auto;
+    padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-xl);
   }
 
   // Remove the divider line above the footer.
   .ds-card__actions {
     border-top: none;
+    // 24px sides/bottom, no top — pulls the request button up toward the content.
+    padding: 0 var(--spacing-xl) var(--spacing-xl);
   }
 }
 
@@ -125,28 +158,50 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   color: var(--color-text-primary);
 }
 
-// Divider inside the body, inset to the card's content padding — separates the
-// description from the "What's included" checklist.
-.modules__divider {
-  margin: var(--spacing-lg) 0;
+// "What's included" is set off from the tagline by a divider line above it rather than
+// a box — a hairline rule (the same --color-border-subtle the DS divider uses) with
+// space above and below, so the section reads as distinct without a surface fill.
+.modules__included {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing-lg);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
+// Label above the checklist.
 .modules__feature-label {
   @include ds.type-body-medium;
-  margin: 0 0 var(--spacing-sm);
+  margin: 0 0 var(--spacing-md);
   color: var(--color-text-primary);
 }
 
-// "What's included" — a plain bulleted list inside each card.
+// "What's included" is a checklist — icon + text rows instead of bullets, so it scans
+// as a list of inclusions rather than a block of text.
 .modules__features {
   margin: 0;
-  padding-left: var(--spacing-lg); // room for the bullet markers
-  list-style: disc;
+  padding: 0;
+  list-style: none;
   color: var(--color-text-primary);
+}
+
+.modules__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
 }
 
 .modules__feature + .modules__feature {
-  margin-top: var(--spacing-sm);
+  margin-top: var(--spacing-md);
+}
+
+// One uniform tick color across every card (brand blue) — readable on the subtle
+// panel, unlike the per-accent hues (e.g. yellow) that washed out.
+.modules__feature-check {
+  flex-shrink: 0;
+  color: var(--color-icon-brand);
+}
+
+.modules__feature-text {
+  @include ds.type-body-medium;
 }
 
 // Request button sits at the start of the card footer.
@@ -201,6 +256,9 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   background-color: var(--color-surface-accent-blue);
   border: 2px solid var(--color-border-accent-blue);
   border-radius: var(--radius-md);
+  // Lift the panel off the dimmed card — elevation-2 (popover level) reads as floating
+  // above the surface rather than resting on it.
+  box-shadow: var(--shadow-elevation-2);
 }
 
 .modules__overlay-icon {

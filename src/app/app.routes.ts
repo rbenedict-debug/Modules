@@ -7,7 +7,7 @@ import { SettingsComponent } from './pages/settings/settings.component';
 import { DepartmentModulesComponent } from './pages/settings/department-modules/department-modules.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'tickets', pathMatch: 'full' },
+  { path: '', redirectTo: 'settings/department-modules', pathMatch: 'full' },
   { path: 'tickets', component: TicketsComponent },
   { path: 'assets', component: AssetsComponent },
   { path: 'users', component: UsersComponent },

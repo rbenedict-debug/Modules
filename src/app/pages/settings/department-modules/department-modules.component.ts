@@ -29,10 +29,11 @@ export class DepartmentModulesComponent {
   // pending — moving it into Active under the "Under review" overlay. Section membership
   // is derived (see `sections`), not stored.
   //
-  // Card copy follows one pattern so each card sells activating it: a benefit-led tagline
-  // (the team's own focused space), then features covering the module's own tools, the
-  // classic core it's built on, reuse of your existing integrations/SIS data, and tickets
-  // flowing to/from other teams. Classic frames as the shared foundation; Custom stays light.
+  // Each card sells activating its module: a short, benefit-led tagline, then a "What's
+  // included" list of the capabilities it comes with, written as short phrases. The team
+  // modules (Classic, HR, Transportation) include ticketing, reporting/analytics, and
+  // workflow automation; IT and Facilities add asset management; the lightweight Custom
+  // module includes ticketing only.
   private readonly modules = signal<ModuleInfo[]>([
     // Classic — Onflo's original product and the shared foundation every other module
     // builds on and connects to.
@@ -41,14 +42,11 @@ export class DepartmentModulesComponent {
       name: 'Classic',
       icon: 'star',
       accent: 'blue',
-      tagline: 'The classic Onflo service desk your district runs on — the foundation every other module builds on and connects to.',
+      tagline: 'The Onflo service desk your district already runs on, and the foundation every other module is built from.',
       features: [
-        'Ticketing and service-desk queues',
-        'Workflow automation',
-        'Landing pages and request forms',
-        'Contact and user management',
-        'Reporting and analytics',
-        'The shared home for your integrations and SIS data — every module builds on it',
+        'Service desk ticketing',
+        'Dashboard analytics',
+        'Workflow automation and routing',
       ],
       active: true,
     },
@@ -58,13 +56,12 @@ export class DepartmentModulesComponent {
       name: 'IT',
       icon: 'computer',
       accent: 'purple',
-      tagline: "Give your IT team a service desk that's all their own — without rebuilding what you've already set up.",
+      tagline: "Your IT team gets a service desk of its own, running on the setup you've already done.",
       features: [
-        'IT asset and inventory management',
-        'Device provisioning and lifecycle tracking',
-        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
-        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
-        'Tickets pass seamlessly to and from your other teams',
+        'Service desk ticketing',
+        'Dashboard analytics',
+        'Workflow automation and routing',
+        'Asset management',
       ],
       active: false,
     },
@@ -74,13 +71,11 @@ export class DepartmentModulesComponent {
       name: 'HR',
       icon: 'groups',
       accent: 'orange',
-      tagline: "Give HR a private, focused space of its own — without rebuilding what you've already set up.",
+      tagline: 'A private space for HR, with restricted queues for cases that need to stay confidential.',
       features: [
-        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
-        'Confidential, restricted-access queues for sensitive cases',
-        "Reporting and analytics for HR's work alone",
-        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
-        'Tickets pass seamlessly to and from your other teams',
+        'Service desk ticketing',
+        'Dashboard analytics',
+        'Workflow automation and routing',
       ],
       active: false,
     },
@@ -90,13 +85,11 @@ export class DepartmentModulesComponent {
       name: 'Transportation',
       icon: 'directions_bus',
       accent: 'yellow',
-      tagline: "Give your transportation team a focused space of its own — up and running on the data you've already set up.",
+      tagline: 'A space built around how your transportation team works, ready to go with the data you already have.',
       features: [
-        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
-        'Queues and request forms tuned to how transportation works',
-        "Reporting and analytics for your team's work alone",
-        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
-        'Tickets pass seamlessly to and from your other teams',
+        'Service desk ticketing',
+        'Dashboard analytics',
+        'Workflow automation and routing',
       ],
       active: true,
     },
@@ -106,30 +99,26 @@ export class DepartmentModulesComponent {
       name: 'Facilities',
       icon: 'apartment',
       accent: 'teal',
-      tagline: "Give your facilities team a service desk that's all their own — without rebuilding what you've already set up.",
+      tagline: 'A service desk for your facilities team, with asset and maintenance tracking built in.',
       features: [
-        'Facilities asset and equipment tracking',
-        'Preventive maintenance scheduling',
-        'The full classic Onflo service desk — ticketing, workflows, and landing pages',
-        "Shares the integrations and SIS data you've already uploaded — nothing to redo",
-        'Tickets pass seamlessly to and from your other teams',
+        'Service desk ticketing',
+        'Dashboard analytics',
+        'Workflow automation and routing',
+        'Asset management',
       ],
       active: false,
     },
     // Requestable "Custom module" — always stays in Available. Requesting it spawns a named
     // pending copy (see confirmRequest). Kept intentionally light so the prebuilt modules
-    // stay the default, but it still plugs into the same shared foundation.
+    // stay the default; it includes ticketing only.
     {
       id: 'custom',
       name: 'Custom module',
       icon: 'settings',
       accent: 'grey',
-      tagline: "A lighter, build-your-own space for the occasional need a prebuilt module doesn't cover.",
+      tagline: "For the occasional need the prebuilt modules don't cover, you can add a custom one of your own. It's intentionally lightweight, with ticketing only, so the prebuilt modules stay your first choice whenever one fits what your team does.",
       features: [
-        'Basic ticketing and a simple workflow',
-        'A landing page and request form',
-        'Plugs into the same integrations and SIS data — nothing to redo',
-        'Tickets still pass to and from your other teams',
+        'Service desk ticketing',
       ],
       active: false,
     },
@@ -140,12 +129,9 @@ export class DepartmentModulesComponent {
       name: 'Custom module',
       icon: 'settings',
       accent: 'grey',
-      tagline: "A lighter, build-your-own space for the occasional need a prebuilt module doesn't cover.",
+      tagline: "For the occasional need the prebuilt modules don't cover, you can add a custom one of your own. It's intentionally lightweight, with ticketing only, so the prebuilt modules stay your first choice whenever one fits what your team does.",
       features: [
-        'Basic ticketing and a simple workflow',
-        'A landing page and request form',
-        'Plugs into the same integrations and SIS data — nothing to redo',
-        'Tickets still pass to and from your other teams',
+        'Service desk ticketing',
       ],
       active: false,
       pending: true,

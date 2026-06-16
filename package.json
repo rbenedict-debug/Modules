@@ -20,7 +20,7 @@
     "@angular/material": "^21.2.11",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
-    "@onflo/design-system": "github:rbenedict-debug/Design-System#v0.6.0",
+    "@onflo/design-system": "github:rbenedict-debug/Design-System#v0.7.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
