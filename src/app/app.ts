@@ -1,7 +1,9 @@
-import { Component, AfterViewInit, OnDestroy, HostListener } from '@angular/core';
+import { Component, AfterViewInit, OnDestroy, HostListener, inject } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs';
+import { ModuleSwitcherComponent } from './components/module-switcher/module-switcher.component';
+import { ModuleContextService } from './data/module-context.service';
 
 type NavSection = 'tickets' | 'assets' | 'users' | 'analytics' | 'settings';
 
@@ -15,11 +17,14 @@ interface SettingsItem {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, ModuleSwitcherComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App implements AfterViewInit, OnDestroy {
+  // Public so app.html can gate Analytics/Settings nav on the current module role.
+  readonly moduleCtx = inject(ModuleContextService);
+
   subNavOpen = true;
   activeNav: NavSection = 'tickets';
 
@@ -40,14 +45,25 @@ export class App implements AfterViewInit, OnDestroy {
     });
   }
 
+  /** Sections hidden from agent-role module contexts. */
+  private readonly _agentRestricted: NavSection[] = ['analytics', 'settings'];
+
   private _syncNavFromUrl(url: string): void {
     const segment = url.split('/')[1]?.split('?')[0];
     const valid: NavSection[] = ['tickets', 'assets', 'users', 'analytics', 'settings'];
+    let next: NavSection;
     if (!segment) {
-      this.activeNav = 'tickets';
+      next = 'tickets';
     } else {
-      this.activeNav = valid.includes(segment as NavSection) ? (segment as NavSection) : 'tickets';
+      next = valid.includes(segment as NavSection) ? (segment as NavSection) : 'tickets';
     }
+    // Agent-role contexts can't see Analytics/Settings — bounce them to Tickets.
+    if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(next)) {
+      this.activeNav = 'tickets';
+      this.router.navigate(['tickets']);
+      return;
+    }
+    this.activeNav = next;
   }
 
   ngAfterViewInit(): void {
@@ -60,6 +76,10 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   setNav(section: NavSection): void {
+    // Agent-role contexts have no Analytics/Settings — redirect to Tickets instead.
+    if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(section)) {
+      section = 'tickets';
+    }
     this.subNavOpen = true;
     this.router.navigate([section]);
   }
