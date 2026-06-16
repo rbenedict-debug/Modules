@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
 import { ModuleContextService } from '../../data/module-context.service';
-import { ModulesService } from '../../data/modules.service';
 
 @Component({
   selector: 'app-module-switcher',
@@ -11,8 +10,8 @@ import { ModulesService } from '../../data/modules.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ModuleSwitcherComponent {
+  // Persona-derived: availableModules / isGlobalAdmin / current context all come from here.
   readonly moduleCtx = inject(ModuleContextService);
-  readonly modulesSvc = inject(ModulesService);
 
   readonly open = signal(false);
 

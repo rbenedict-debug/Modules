@@ -14,7 +14,19 @@ export interface User {
 
 export type ModuleRole = 'Admin' | 'Agent';
 export type ModuleAccent = 'blue'|'green'|'grey'|'navy'|'orange'|'pink'|'purple'|'red'|'teal'|'yellow';
-export interface Module { id: string; name: string; icon: string; accent: ModuleAccent; role: ModuleRole; ticketCount: number; active: boolean; }
+export interface Module { id: string; name: string; icon: string; accent: ModuleAccent; ticketCount: number; active: boolean; }
+
+/** A demo persona for the ⌘K/Ctrl+K persona swapper. The active persona drives the whole
+ *  shell: which modules are accessible (and the role in each), whether the top-nav module
+ *  switcher appears, and which nav areas are visible. Role per module lives here, not on Module. */
+export interface PersonaModuleAccess { moduleId: string; role: ModuleRole; }
+export interface Persona {
+  id: string;
+  name: string;
+  title: string;
+  isGlobalAdmin: boolean;
+  moduleAccess: PersonaModuleAccess[];
+}
 
 export type TeamSource = 'Manual' | 'Active Directory' | 'Azure' | 'Google';
 export interface Team { id: string; name: string; modules: string[]; topics: string[]; memberIds: string[]; permissionSetId?: string; source: TeamSource; }

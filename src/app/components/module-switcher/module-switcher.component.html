@@ -19,22 +19,24 @@
 
   @if (open()) {
     <div class="ds-menu module-switcher__panel" role="menu" aria-label="Module context">
-      <!-- Context -->
-      <div class="ds-menu__section-label">Context</div>
-      <button class="ds-menu__item ds-menu__item--indent module-switcher__item"
-              [class.ds-menu__item--selected]="moduleCtx.isGlobal()"
-              role="menuitemradio" [attr.aria-checked]="moduleCtx.isGlobal()"
-              (click)="select(null)">
-        @if (moduleCtx.isGlobal()) {
-          <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
-        }
-        <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__icon--global" aria-hidden="true">public</span>
-        <span class="module-switcher__item-name">Global Admin</span>
-      </button>
+      <!-- Context — Global is only available to global-admin personas -->
+      @if (moduleCtx.isGlobalAdmin()) {
+        <div class="ds-menu__section-label">Context</div>
+        <button class="ds-menu__item ds-menu__item--indent module-switcher__item"
+                [class.ds-menu__item--selected]="moduleCtx.isGlobal()"
+                role="menuitemradio" [attr.aria-checked]="moduleCtx.isGlobal()"
+                (click)="select(null)">
+          @if (moduleCtx.isGlobal()) {
+            <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
+          }
+          <span class="ds-icon ds-icon--sm module-switcher__icon module-switcher__icon--global" aria-hidden="true">public</span>
+          <span class="module-switcher__item-name">Global Admin</span>
+        </button>
+      }
 
-      <!-- Modules -->
+      <!-- Modules the active persona can act in -->
       <div class="ds-menu__section-label">Modules</div>
-      @for (m of modulesSvc.modules(); track m.id) {
+      @for (m of moduleCtx.availableModules(); track m.id) {
         <button class="ds-menu__item ds-menu__item--indent module-switcher__item"
                 [class.ds-menu__item--selected]="moduleCtx.currentModuleId() === m.id"
                 role="menuitemradio" [attr.aria-checked]="moduleCtx.currentModuleId() === m.id"
