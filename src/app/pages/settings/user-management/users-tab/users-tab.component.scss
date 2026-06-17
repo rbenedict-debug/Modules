@@ -1,300 +1,87 @@
+// The Users tab hosts the canonical Design System table (driven by table-init.js,
+// wired in angular.json). Layout — the card shell, toolbar, column panel, and
+// full-height flex — comes from onflo.css + table-sim.css. Only the few page-specific
+// touches below live here. Mirrors tickets.component.scss.
 @use '@onflo/design-system/tokens/scss' as ds;
 
-// The tab renders inside the parent's ds-page-content__main card shell, so it pads
-// its own content and stacks the toolbar above the scrollable table.
-.users {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
-}
-
-// ── Toolbar ──────────────────────────────────────────────────────────────────
-.users__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  flex-wrap: wrap;
-}
-
-.users__toolbar-left {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.users__toolbar-right {
+// ── Toolbar ─────────────────────────────────────────────────────────────────────
+// One flat flex row — no left/right split. The search is the ONLY flexible child: it
+// fills the free width and shrinks to fit, while every button keeps its natural size, so
+// the actions are always on screen and there's no dead space. (The bundle's
+// .ds-table-toolbar isn't a flex container in design mode, hence forcing it here.)
+.ds-table-toolbar {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
-// Search field caps its width so the toolbar's right-hand actions keep their place.
-.users__search {
-  width: 320px;
-  max-width: 100%;
+// Every toolbar child holds its size; only the search (below) is allowed to flex.
+.ds-table-toolbar > * {
+  flex-shrink: 0;
 }
 
-.users__bulk-delete {
-  // Destructive intent on an outlined button — red text + icon, neutral border.
-  color: var(--color-text-error);
-
-  .ds-icon {
-    color: var(--color-icon-error);
-  }
+.ds-input.ds-search.users-toolbar__search {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
 }
 
-// ── Popovers (filter + columns) ────────────────────────────────────────────────
-// Each trigger is wrapped in a relative anchor so its popover floats beneath it.
-.users__popover-anchor {
-  position: relative;
-  display: inline-flex;
+// Let the inner input shrink instead of holding the field open at its default size.
+.ds-input.ds-search.users-toolbar__search .ds-input__control {
+  min-width: 0;
 }
 
-.users__popover {
-  position: absolute;
-  top: calc(100% + var(--spacing-xs));
-  right: 0;
-  z-index: 20;
-  min-width: 220px;
-  max-height: 360px;
-  overflow-y: auto;
-  // Popover elevation — dropdowns/popovers sit at level 2.
-  box-shadow: var(--shadow-elevation-2);
-
-  // Checkbox rows reuse ds-menu__item spacing but need the label to sit inline.
-  .ds-checkbox {
-    width: 100%;
-  }
+// ── Row click affordance ──────────────────────────────────────────────────────────
+// Each row opens the customer profile (the click handler is bound at initial render and
+// survives cdr.detach()). Give it a pointer + subtle hover tint so it reads as clickable.
+.users-row {
+  cursor: pointer;
 }
 
-// ── Table ─────────────────────────────────────────────────────────────────────
-// The scroll wrapper owns horizontal overflow; ds-table supplies header/row styling.
-.users__table-scroll {
-  overflow-x: auto;
-  border-radius: var(--radius-md);
-
-  // Match the design-system scrollbar treatment used elsewhere.
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-surface-scroll) transparent;
-
-  &::-webkit-scrollbar {
-    width: var(--spacing-sm);
-    height: var(--spacing-sm);
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--color-surface-scroll);
-    border-radius: var(--radius-full);
-  }
+.users-row:hover {
+  background-color: var(--overlay-hovered);
 }
 
-.users__table {
-  width: 100%;
-  min-width: 1100px; // keep columns legible; the wrapper scrolls when narrower
-}
-
-// Narrow utility columns for the leading checkbox and trailing actions.
-.users__col-select {
-  width: var(--spacing-xl);
-  white-space: nowrap;
-}
-
-.users__col-actions {
-  width: var(--spacing-xl);
-  text-align: right;
-  white-space: nowrap;
-}
-
-// Selected row tint — uses the brand-subtle surface so it reads as highlighted.
-.users__table tbody tr.is-selected {
-  background-color: var(--color-surface-accent-blue);
-}
-
-// Name cell: primary name over a quieter email line.
-.users__name {
+// ── Name cell ───────────────────────────────────────────────────────────────────
+// Primary name over a quieter email line.
+.users-name {
   display: flex;
   flex-direction: column;
   line-height: 1.3;
   min-width: 0;
 }
 
-.users__name-primary {
+.users-name__primary {
   @include ds.type-body-medium;
   color: var(--color-text-primary);
 }
 
-.users__name-email {
+.users-name__email {
   @include ds.type-body-small;
   color: var(--color-text-secondary);
 }
 
-// Role chips + overflow pill.
-.users__chips {
-  display: flex;
+// ── Role chips + overflow pill ────────────────────────────────────────────────────
+.users-roles {
+  display: inline-flex;
   align-items: center;
   gap: var(--spacing-xs);
   flex-wrap: nowrap;
 }
 
-.users__chip-overflow {
+.users-roles__overflow {
   flex-shrink: 0;
 }
 
-// Long single-line values (modules, teams, locations, etc.) truncate per cell.
-.users__truncate {
-  display: block;
-  max-width: 22ch;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// Em-dash placeholder for empty values.
-.users__empty {
+// ── Em-dash placeholder for empty values ────────────────────────────────────────────
+.users-empty {
   color: var(--color-text-disabled);
 }
 
-// Row-action menu floats beneath the more_vert trigger, right-aligned.
-.users__row-menu {
-  position: absolute;
-  top: calc(100% + var(--spacing-xs));
-  right: 0;
-  z-index: 20;
-  min-width: 180px;
-  box-shadow: var(--shadow-elevation-2);
+// ── Full-height table ─────────────────────────────────────────────────────────────
+// table-sim.css caps .table-body height for the standalone component gallery; inside
+// the full-height page shell we want the table to fill the available viewport instead.
+.table-body {
+  max-height: none;
 }
-
-// Empty-state row spans the full table.
-.users__empty-row {
-  padding: var(--spacing-xl);
-  text-align: center;
-}
-
-// ── Create / Edit modal ─────────────────────────────────────────────────────────
-.users__modal {
-  width: 600px;
-  max-width: 100%;
-  max-height: 90vh;
-}
-
-.users__form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-lg);
-}
-
-.users__form-row {
-  display: grid;
-  gap: var(--spacing-md);
-
-  &--2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  &--3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  // Inputs fill their grid cell.
-  .ds-input {
-    width: 100%;
-  }
-}
-
-// Full-width selects inside the form (modules, locations).
-.users__form-select {
-  width: 100%;
-}
-
-// Hairline rule between form sections (matches the gold-standard card divider:
-// a subtle 1px border rather than a dedicated divider component).
-.users__form-divider {
-  height: 1px;
-  background-color: var(--color-border-subtle);
-}
-
-.users__activation {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-sm);
-}
-
-.users__activation-label {
-  @include ds.type-body-medium;
-  color: var(--color-text-primary);
-}
-
-// Inline "N fields require attention" hint in the footer, left of the buttons.
-.users__form-error {
-  @include ds.type-body-small;
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  margin-right: auto;
-  color: var(--color-text-error);
-
-  .ds-icon {
-    color: var(--color-icon-error);
-  }
-}
-
-// ── Delete dialog ─────────────────────────────────────────────────────────────
-.users__delete-dialog {
-  width: 460px;
-  max-width: 100%;
-}
-
-.users__delete-list {
-  margin: var(--spacing-md) 0 0;
-  padding: 0;
-  list-style: none;
-  max-height: 220px;
-  overflow-y: auto;
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  background-color: var(--color-surface-subtle);
-}
-
-.users__delete-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-sm) var(--spacing-md);
-
-  & + & {
-    border-top: 1px solid var(--color-border-subtle);
-  }
-}
-
-.users__delete-avatar {
-  flex-shrink: 0;
-}
-
-.users__delete-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-  min-width: 0;
-}
-
-.users__delete-name {
-  @include ds.type-body-medium;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.users__delete-email {
-  @include ds.type-body-small;
-  color: var(--color-text-secondary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-// Delete confirm uses the standard filled button (matches the gold-standard dialog's
-// primary action). The dialog copy + warning context carry the destructive intent.

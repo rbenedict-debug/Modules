@@ -1,0 +1,6 @@
+// User Management shell. The host is ds-page-content (a flex column, gap --spacing-lg):
+// the heading holds the page title + page tabs (ds-tabs), and the active tab's
+// ds-page-content__main--table fills the remaining height below.
+//
+// No custom heading/tab styling — ds-page-content__heading is built to hold "title +
+// optional tabs" (see specs-layout.md), matching the canonical page-default-tabs pattern.

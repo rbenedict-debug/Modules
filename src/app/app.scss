@@ -86,3 +86,22 @@
     white-space: nowrap;
   }
 }
+
+// The DS subnav type tokens (label-medium / label-small) set line-height equal to
+// font-size, leaving the line-box no room for descenders. Combined with the
+// `overflow: hidden` on each row/button and its label span, that clips the bottoms of
+// g/y/p — most visible on the bold, descender-heavy subnav-subheader labels (Activity
+// Log, Tags, Portals, Topics Manager). Relax the line-box so descenders clear; every
+// row is a fixed 32px with align-items:center, so the single line stays centered.
+.ds-subnav-button,
+.ds-subnav-header__row,
+.ds-subnav-subheader__row {
+  line-height: 1.4;
+}
+
+// The DS makes subnav subheaders bold (label-medium weight-prominent). Drop them to
+// the regular label-medium weight so they match the subnav buttons.
+// TODO: fix this in the design system; this is a temporary prototype-side override.
+.ds-subnav-subheader__row {
+  font-weight: var(--ref-typescale-label-medium-weight);
+}

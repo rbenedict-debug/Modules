@@ -14,7 +14,23 @@ export interface User {
 
 export type ModuleRole = 'Admin' | 'Agent';
 export type ModuleAccent = 'blue'|'green'|'grey'|'navy'|'orange'|'pink'|'purple'|'red'|'teal'|'yellow';
-export interface Module { id: string; name: string; icon: string; accent: ModuleAccent; ticketCount: number; active: boolean; }
+export interface Module {
+  id: string; name: string; icon: string; accent: ModuleAccent; ticketCount: number; active: boolean;
+  // Department Modules catalog copy — kept here so a module is defined exactly once: the switcher
+  // reads identity (name/icon/accent), the Department Modules page also renders tagline + features.
+  tagline: string; features: string[];
+}
+
+/** Every custom module shares one treatment — 'settings' icon, neutral 'grey' tile, and the same
+ *  tagline + "What's included" copy. The title (name) is the only thing client-chosen, so the copy
+ *  is defined once here and spread into each custom Module (the catalog entries and the request
+ *  card alike), keeping every custom card identical except for its name. */
+export const CUSTOM_MODULE_DEFAULTS: Pick<Module, 'icon' | 'accent' | 'tagline' | 'features'> = {
+  icon: 'settings',
+  accent: 'grey',
+  tagline: "For the occasional need the prebuilt modules don't cover, you can add a custom one of your own. It's intentionally lightweight, with ticketing and asset management, so the prebuilt modules stay your first choice whenever one fits what your team does.",
+  features: ['Service desk ticketing', 'Asset management'],
+};
 
 /** A demo persona for the ⌘K/Ctrl+K persona swapper. The active persona drives the whole
  *  shell: which modules are accessible (and the role in each), whether the top-nav module

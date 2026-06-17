@@ -1,26 +1,37 @@
 <div class="ds-page-content__heading">
   <h1 class="ds-page-content__title">User Management</h1>
+
+  <!-- Page-level tabs (ds-tabs) sit in the heading, the canonical page-with-tabs pattern
+       (same as the Tickets page). Hidden while the permission-set editor is open, since the
+       editor takes over the content area. -->
+  @if (!editingSetId()) {
+    <div class="ds-tabs" role="tablist" aria-label="User management sections">
+      <button class="ds-tabs__tab" role="tab"
+              [class.is-selected]="activeTab() === 'users'"
+              [attr.aria-selected]="activeTab() === 'users'"
+              [attr.tabindex]="activeTab() === 'users' ? 0 : -1"
+              (click)="setTab('users')">Users</button>
+      <button class="ds-tabs__tab" role="tab"
+              [class.is-selected]="activeTab() === 'teams'"
+              [attr.aria-selected]="activeTab() === 'teams'"
+              [attr.tabindex]="activeTab() === 'teams' ? 0 : -1"
+              (click)="setTab('teams')">Teams</button>
+      <button class="ds-tabs__tab" role="tab"
+              [class.is-selected]="activeTab() === 'permission-sets'"
+              [attr.aria-selected]="activeTab() === 'permission-sets'"
+              [attr.tabindex]="activeTab() === 'permission-sets' ? 0 : -1"
+              (click)="setTab('permission-sets')">Permission Sets</button>
+    </div>
+  }
 </div>
 
-<div class="ds-page-content__main">
-  <div class="ds-inner-page-tabs" role="tablist" aria-label="User management sections">
-    <button class="ds-inner-page-tabs__tab" role="tab"
-            [class.is-selected]="activeTab() === 'users'"
-            [attr.aria-selected]="activeTab() === 'users'"
-            [attr.tabindex]="activeTab() === 'users' ? 0 : -1"
-            (click)="setTab('users')">Users</button>
-    <button class="ds-inner-page-tabs__tab" role="tab"
-            [class.is-selected]="activeTab() === 'teams'"
-            [attr.aria-selected]="activeTab() === 'teams'"
-            [attr.tabindex]="activeTab() === 'teams' ? 0 : -1"
-            (click)="setTab('teams')">Teams</button>
-    <button class="ds-inner-page-tabs__tab" role="tab"
-            [class.is-selected]="activeTab() === 'permission-sets'"
-            [attr.aria-selected]="activeTab() === 'permission-sets'"
-            [attr.tabindex]="activeTab() === 'permission-sets' ? 0 : -1"
-            (click)="setTab('permission-sets')">Permission Sets</button>
-  </div>
-
+<!-- Editor and tabs are mutually exclusive: when a permission set is being edited it takes
+     over the content area (reactive — the parent is NOT detached). Otherwise the active
+     tab's Onflo table renders. Rendering one table at a time keeps table-init.js's global
+     ids from colliding. -->
+@if (editingSetId(); as setId) {
+  <app-permission-set-editor [setId]="setId" (back)="editingSetId.set(null)" />
+} @else {
   @switch (activeTab()) {
     @case ('users') {
       <app-users-tab (viewProfile)="selectedUserId.set($event)" />
@@ -29,9 +40,11 @@
       <app-teams-tab />
     }
     @case ('permission-sets') {
-      <app-permission-sets-tab />
+      <app-permission-sets-tab (editSet)="editingSetId.set($event)" />
     }
   }
+}
 
-  <app-user-profile-drawer [userId]="selectedUserId()" (close)="selectedUserId.set(null)" />
-</div>
+<!-- Profile drawer lives in the (attached) parent, so a row click in the detached Users
+     table still opens it via the selectedUserId signal. -->
+<app-user-profile-drawer [userId]="selectedUserId()" (close)="selectedUserId.set(null)" />

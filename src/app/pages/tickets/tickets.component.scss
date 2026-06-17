@@ -1,205 +1,61 @@
-@use '@onflo/design-system/tokens/scss' as ds;
+// The tickets page hosts the canonical Design System table (driven by table-init.js,
+// wired in angular.json). Layout — the card shell, toolbar, column panel, paginator,
+// and full-height flex — comes from onflo-design.css + table-sim.css. Only the few
+// page-specific touches below live here.
 
-// ds-page-content__main is the page's card shell and scroll boundary. The inbox fills
-// it as a single column (tabs, toolbar, scrolling table, footer) so the table body
-// scrolls within the card rather than the whole page.
-.ds-page-content__main {
-  display: flex;
-  min-height: 0;
+// ── Tabs (match the Inbox & Tickets project) ───────────────────────────────────
+// Count chips use the brand-bold surface so they read as filled accent badges,
+// mirroring the source inbox's "My Tickets 12 / Team 99+" counts.
+.inbox-tabs .ds-badge-indicator {
+  background: var(--color-surface-brand-bold);
 }
 
-.inbox {
+// ── Toolbar (match the Inbox & Tickets project) ────────────────────────────────
+// One flat flex row — no left/right split. The search is the ONLY flexible child: it
+// fills the free width and shrinks to fit, while every button keeps its natural size, so
+// the actions are always on screen and there's no dead space on the right. (The bundle's
+// .ds-table-toolbar isn't a flex container in design mode, hence forcing it here.)
+.ds-table-toolbar {
   display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  min-height: 0;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
 }
 
-// ── Tabs ─────────────────────────────────────────────────────────────────────
-// The DS tabs row sits flush to the card's top edge; a hairline divider separates it
-// from the toolbar below. Horizontal inset aligns tabs with the table padding.
-.inbox__tabs {
+// Every toolbar child holds its size; only the search (below) is allowed to flex.
+.ds-table-toolbar > * {
   flex-shrink: 0;
-  padding: 0 var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border-subtle);
 }
 
-// Count badge inside each tab — a pill that echoes the tab's selected/idle color.
-// Selected tabs get the brand accent surface; idle tabs a neutral surface.
-.inbox__tab-count {
+.ds-input.ds-search.tickets-toolbar__search {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+// Let the inner input shrink instead of holding the field open at its default size.
+.ds-input.ds-search.tickets-toolbar__search .ds-input__control {
+  min-width: 0;
+}
+
+// ── Owner cell ──────────────────────────────────────────────────────────────────
+// Avatar + name inline, matching the owner treatment in the source inbox table.
+.tickets-owner {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  min-width: var(--spacing-lg);
-  margin-left: var(--spacing-sm);
-  padding: 0 var(--spacing-xs);
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-subtle);
-  color: var(--color-text-secondary);
-  @include ds.type-label-small;
-
-  .ds-tabs__tab.is-selected & {
-    background-color: var(--color-surface-accent-blue);
-    color: var(--color-text-brand);
-  }
+  gap: var(--spacing-sm);
+  min-width: 0;
 }
 
-// ── Toolbar (search) ───────────────────────────────────────────────────────────
-.inbox__toolbar {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.inbox__search {
-  width: 360px;
-  max-width: 100%;
-}
-
-// ── Table ──────────────────────────────────────────────────────────────────────
-// The table fills the remaining height and scrolls on its own, with the DS menu/dropdown
-// scrollbar treatment (slim bar, surface-scroll thumb over a transparent track).
-.inbox__table-wrap {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-
-  scrollbar-width: thin;                                    // Firefox
-  scrollbar-color: var(--color-surface-scroll) transparent; // thumb, track
-
-  &::-webkit-scrollbar {
-    width: var(--spacing-sm);
-    height: var(--spacing-sm);
-  }
-
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--color-surface-scroll);
-    border-radius: var(--radius-full);
-  }
-}
-
-.inbox__table {
-  width: 100%;
-
-  // Keep the header visible while the body scrolls beneath it.
-  thead th {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background-color: var(--color-surface-subtle);
-  }
-
-  // Cells top-align so the two-line Subject column reads cleanly against single-line
-  // neighbours.
-  td {
-    vertical-align: top;
-  }
-}
-
-// Narrow, non-growing leading checkbox column; center the box vertically against the
-// first text line of each row.
-.inbox__col-select {
-  width: var(--spacing-xl);
-
-  .ds-checkbox {
-    margin: 0;
-  }
-}
-
-// Subject is the widest column: bold subject, a muted single-line description preview
-// beneath, and the ticket number above as a small brand token.
-.inbox__col-subject {
-  min-width: 280px;
-  max-width: 420px;
-}
-
-.inbox__number {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 var(--spacing-xs);
-  border: 1px solid var(--color-border-accent-blue);
-  border-radius: var(--radius-sm);
-  background-color: var(--color-surface-accent-blue);
-  color: var(--color-text-brand);
-  @include ds.type-label-small;
-}
-
-.inbox__subject {
-  display: block;
-  margin-top: var(--spacing-xs);
-  color: var(--color-text-primary);
-  @include ds.type-body-medium;
-  font-weight: var(--ref-typescale-body-medium-weight-prominent);
-}
-
-.inbox__preview {
-  display: block;
-  margin-top: var(--spacing-xs);
-  color: var(--color-text-secondary);
-  @include ds.type-body-small;
-  // Clamp the preview to a single line so rows stay a consistent height.
+.tickets-owner__name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-// ── Customer ─────────────────────────────────────────────────────────────────
-.inbox__customer {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: var(--spacing-xs);
-}
-
-.inbox__customer-name {
-  color: var(--color-text-primary);
-  @include ds.type-body-medium;
-}
-
-// ── Owner ──────────────────────────────────────────────────────────────────────
-.inbox__owner {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  white-space: nowrap;
-}
-
-.inbox__owner-name {
-  color: var(--color-text-primary);
-  @include ds.type-body-medium;
-}
-
-// ── Received ───────────────────────────────────────────────────────────────────
-.inbox__col-received {
-  white-space: nowrap;
-  color: var(--color-text-secondary);
-  @include ds.type-body-small;
-}
-
-// ── Empty state ────────────────────────────────────────────────────────────────
-// Center the empty state across the full table width.
-.inbox__empty {
-  padding: var(--spacing-xl);
-  text-align: center;
-}
-
-// ── Footer ─────────────────────────────────────────────────────────────────────
-.inbox__footer {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-top: 1px solid var(--color-border-subtle);
-  background-color: var(--color-surface-subtle);
-}
-
-.inbox__count {
-  color: var(--color-text-secondary);
-  @include ds.type-body-small;
+// ── Full-height table ─────────────────────────────────────────────────────────
+// table-sim.css caps .table-body height for the standalone component gallery; inside
+// the full-height page shell we want the table to fill the available viewport instead.
+.table-body {
+  max-height: none;
 }

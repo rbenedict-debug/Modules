@@ -1,351 +1,449 @@
-<!-- Permission Sets tab. Renders inside the parent User Management page's
-     ds-page-content__main card, below the inner-page tabs — so this template owns no page
-     heading or card shell. A single `editingId` signal swaps between the list and the
-     full-tab editor. -->
+<!-- Permission Sets tab — the canonical Design System table (driven by table-init.js, wired
+     in angular.json). Rendered inside the parent User Management page's content area, below
+     the inner-page tabs, so this template owns no page heading or card shell — it starts at
+     ds-page-content__main--table (like the Tickets page). A row click opens that set's editor
+     via (editSet); the parent swaps in app-permission-set-editor. -->
 
-@if (editingId() === null) {
-  <!-- ════════════ LIST VIEW ════════════ -->
-  <div class="psets">
-    <div class="psets__toolbar">
-      <div>
-        <p class="psets__lead">Permission sets bundle what a user can see and do. Assign them to users and teams.</p>
+<div class="ds-page-content__main ds-page-content__main--table">
+  <div class="table-container">
+
+    <!-- ── Toolbar ───────────────────────────────────────────────────────────────
+         One flat row — the search flexes; every button keeps its natural size. The
+         filter/columns buttons keep the ids table-init.js wires (#btn-filter / #btn-columns),
+         and the search keeps #search-input / #search-clear. -->
+    <div class="ds-table-toolbar" id="toolbar">
+      <div class="ds-input ds-search psets-toolbar__search" role="search">
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input class="ds-input__control" type="search" placeholder="Search permission sets…" aria-label="Search permission sets" id="search-input">
+          <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+          </button>
+        </div>
       </div>
-      <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="createSet()">
+      <button class="ds-button ds-button--filled" type="button" (click)="createSet()">
         <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
         Create permission set
       </button>
+      <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
+              type="button" aria-label="Filter" id="btn-filter">
+        <span class="ds-icon ds-icon--filled" aria-hidden="true">filter_alt</span>
+      </button>
+      <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
+              type="button" aria-pressed="false" aria-label="Column settings" id="btn-columns">
+        <span class="ds-icon ds-icon--filled" aria-hidden="true">settings</span>
+      </button>
     </div>
 
-    <!-- Permission-set list. Semantic ds-table; rows open the editor on click. -->
-    <div class="psets__table-scroll">
-      <table class="ds-table psets__table">
-        <thead>
-          <tr>
-            <th scope="col">
-              <div class="ds-table__header-content"><span class="ds-table__header-label">Name</span></div>
-            </th>
-            <th scope="col">
-              <div class="ds-table__header-content"><span class="ds-table__header-label">Type</span></div>
-            </th>
-            <th scope="col">
-              <div class="ds-table__header-content"><span class="ds-table__header-label">Module scope</span></div>
-            </th>
-            <th scope="col" class="psets__col-locked">
-              <div class="ds-table__header-content"><span class="ds-table__header-label">Locked</span></div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (row of rows(); track row.id) {
-            <tr class="psets__row" tabindex="0"
-                [attr.aria-label]="'Open ' + row.name"
-                (click)="openEditor(row)"
-                (keydown.enter)="openEditor(row)"
-                (keydown.space)="$event.preventDefault(); openEditor(row)">
-              <td class="psets__cell-name">
-                <span class="psets__name">{{ row.name }}</span>
-              </td>
-              <td>
-                @if (row.type === 'System') {
-                  <span class="ds-label ds-label--blue ds-label--xs ds-label--pill ds-label--outline">System</span>
-                } @else {
-                  <span class="ds-label ds-label--purple ds-label--xs ds-label--pill ds-label--outline">Custom</span>
-                }
-              </td>
-              <td>
-                @if (row.scope === 'System-wide') {
-                  <span class="psets__muted">System-wide</span>
-                } @else {
-                  <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ row.scope }}</span>
-                }
-              </td>
-              <td class="psets__col-locked">
-                @if (row.isLocked) {
-                  <span class="ds-icon ds-icon--sm psets__lock" aria-label="Locked — read only">lock</span>
-                } @else {
-                  <span class="psets__empty-cell" aria-hidden="true">—</span>
-                }
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <!-- ── Filter bar (hidden until filters applied) ──────────────────────── -->
+    <div class="filter-applied-bar" id="surveys-filter-bar" style="display:none;">
+      <span class="ds-label ds-label--brand ds-label--pill ds-label--sm filter-bar__count-chip" id="surveys-filter-count-chip" aria-hidden="true">0 active filters</span>
+      <div class="filter-applied-bar__cards" id="surveys-filter-cards" role="group" aria-label="Applied filters"></div>
+      <button class="filter-bar__toggle" id="surveys-filter-bar-toggle" type="button" aria-expanded="true" aria-label="Hide filters">
+        <span class="filter-bar__toggle-label">Hide filters</span>
+        <span class="ds-icon ds-icon--sm filter-bar__toggle-arrow" aria-hidden="true">arrow_drop_down</span>
+      </button>
     </div>
+
+    <div class="table-content-row">
+    <div class="table-content-left">
+
+    <!-- ── Row Groups Bar (hidden until row groups are active or drag starts) ─ -->
+    <div class="ds-table-row-groups-bar" id="row-groups-bar" hidden>
+      <div class="ds-table-row-groups-bar__drop-zone">
+        <span class="ds-icon ds-icon--sm ds-table-row-groups-bar__drag-icon" aria-hidden="true">cell_merge</span>
+        <div class="ds-table-row-groups-bar__chips" id="row-groups-bar-chips"></div>
+        <span class="ds-table-row-groups-bar__placeholder" id="row-groups-bar-placeholder" aria-hidden="true">Drag here to set row groups</span>
+      </div>
+    </div>
+
+    <!-- ── Table body (scroll area + column panel) ──────────────────────────── -->
+    <div class="table-body">
+
+      <div class="table-scroll-wrap">
+        <div class="table-scroll" id="table-scroll">
+          <table class="ds-table" id="main-table" [style.min-width.px]="totalWidth">
+            <thead>
+              <tr>
+                <th style="width:260px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Name</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Name">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:130px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Type</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Type">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:200px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Scope</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Scope">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:130px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Status</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Status">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (set of rows(); track set.id) {
+                <tr class="psets__row" [attr.aria-label]="'Open ' + set.name" (click)="openEditor(set.id)">
+                  <td>{{ set.name }}</td>
+                  <td>
+                    @if (set.type === 'System') {
+                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--blue">System</span>
+                    } @else {
+                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--grey">Custom</span>
+                    }
+                  </td>
+                  <td>{{ set.scope }}</td>
+                  <td>
+                    @if (set.isLocked) {
+                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--grey">
+                        <span class="ds-label__dot" aria-hidden="true"></span>Locked
+                      </span>
+                    } @else {
+                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--green">
+                        <span class="ds-label__dot" aria-hidden="true"></span>Editable
+                      </span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+            <!-- TODO eng: replace with AG Grid + onfloTheme (real sort, filter, resize, row grouping) -->
+            <tfoot id="main-table-foot"></tfoot>
+          </table>
+        </div><!-- /table-scroll -->
+        <div class="ds-table-vbar-header"></div>
+        <div class="ds-table-vbar" id="ds-table-vbar"><div class="ds-table-vbar__thumb" id="ds-table-vbar-thumb"></div></div>
+        <div class="ds-table-hbar" id="ds-table-hbar"><div class="ds-table-hbar__thumb" id="ds-table-hbar-thumb"></div></div>
+        <div class="ds-table-scroll-corner"></div>
+      </div><!-- /table-scroll-wrap -->
+
+    </div><!-- /table-body -->
+
+    </div><!-- /table-content-left -->
+
+    <!-- ── Column panel (hidden until gear is toggled) ─────────────────────── -->
+    <div id="col-panel-wrapper">
+      <div id="col-panel-scroll">
+      <div class="ds-column-panel">
+
+          <!-- 1. Density -->
+          <div class="ds-column-panel__density">
+            <div class="ds-button-group" role="group" aria-label="Row density" style="width:100%;">
+              <button type="button" id="cp-density-comfort"
+                      class="ds-button ds-button--outlined ds-button--sm ds-button--leading-icon is-selected"
+                      aria-pressed="true" style="flex:1 0 0;">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">density_medium</span>Comfort
+              </button>
+              <button type="button" id="cp-density-compact"
+                      class="ds-button ds-button--outlined ds-button--sm ds-button--leading-icon"
+                      aria-pressed="false" style="flex:1 0 0;">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">density_small</span>Compact
+              </button>
+            </div>
+          </div>
+
+          <!-- 2. Column Visibility -->
+          <button type="button" class="ds-column-panel__section-hd" id="cp-col-hd" aria-expanded="true">
+            <span class="ds-icon ds-icon--filled ds-column-panel__section-icon" aria-hidden="true">visibility</span>
+            <span class="ds-column-panel__section-title">Column Visibility</span>
+            <span class="ds-icon ds-icon--sm ds-column-panel__expand-icon" aria-hidden="true">arrow_drop_down</span>
+          </button>
+          <div class="ds-column-panel__col-list" id="cp-col-list"></div>
+
+          <!-- 3. Pivot Mode -->
+          <div class="ds-divider" role="separator" aria-hidden="true"></div>
+          <div class="ds-column-panel__pivot-row">
+            <label class="ds-toggle" aria-label="Enable pivot mode">
+              <input type="checkbox" class="ds-toggle__control" id="cp-pivot-toggle" role="switch" />
+              <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+            </label>
+            <span class="ds-column-panel__pivot-label">Pivot Mode</span>
+          </div>
+
+          <!-- 3b. Column Labels (pivot on only) -->
+          <div id="cp-col-labels-section" style="display:none">
+            <div class="ds-column-panel__section-hd">
+              <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">view_column</span>
+              <span class="ds-column-panel__section-title">Column Labels</span>
+            </div>
+            <div class="ds-column-panel__pivot-col-list" id="cp-col-labels"></div>
+            <button type="button" class="ds-column-panel__add-btn" id="cp-col-labels-add" aria-expanded="false">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+              Add Column
+            </button>
+          </div>
+
+          <!-- 4. Row Groups -->
+          <div class="ds-divider" role="separator" aria-hidden="true"></div>
+          <div class="ds-column-panel__section-hd">
+            <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">cell_merge</span>
+            <span class="ds-column-panel__section-title">Row Groups</span>
+          </div>
+          <div class="ds-column-panel__pivot-col-list" id="cp-row-groups"></div>
+          <button type="button" class="ds-column-panel__add-btn" id="cp-row-groups-add" aria-expanded="false">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+            Add Column
+          </button>
+
+          <!-- 5. Values -->
+          <div class="ds-divider" role="separator" aria-hidden="true"></div>
+          <div class="ds-column-panel__section-hd">
+            <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">functions</span>
+            <span class="ds-column-panel__section-title">Values</span>
+          </div>
+          <div class="ds-column-panel__pivot-col-list" id="cp-values"></div>
+          <button type="button" class="ds-column-panel__add-btn" id="cp-values-add" aria-expanded="false">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+            Add Column
+          </button>
+
+      </div><!-- /ds-column-panel -->
+      </div><!-- /col-panel-scroll -->
+      <div class="ds-table-vbar" id="cp-vbar"><div class="ds-table-vbar__thumb" id="cp-vbar-thumb"></div></div>
+    </div><!-- /col-panel-wrapper -->
+
+    </div><!-- /table-content-row -->
+
+  </div><!-- /table-container -->
+</div><!-- /ds-page-content__main--table -->
+
+<!-- ── Column panel picker overlay (position:fixed, shared) ──────────── -->
+<div id="cp-picker-overlay" class="ds-column-panel__picker-overlay" style="display:none;" role="dialog" aria-label="Add column">
+  <div class="ds-column-panel__picker-search">
+    <span class="ds-icon ds-icon--sm" aria-hidden="true">search</span>
+    <input type="text" id="cp-picker-search" placeholder="Search columns…" autocomplete="off" aria-label="Search columns" />
   </div>
-}
+  <div id="cp-picker-list" class="ds-column-panel__picker-list" role="list"></div>
+</div>
 
-@if (editingId() !== null) {
-  <!-- ════════════ EDITOR ════════════ -->
-  <div class="psets-editor">
-    <!-- Editor header: Back + set name, read-only badge, Cancel / Save. -->
-    <header class="psets-editor__bar">
-      <div class="psets-editor__bar-left">
-        <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm" type="button"
-                aria-label="Back to permission sets" (click)="closeEditor()">
-          <span class="ds-icon ds-icon--sm">arrow_back</span>
-        </button>
-        <h2 class="psets-editor__title">{{ editingName() }}</h2>
-        @if (readOnly()) {
-          <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot">
-            <span class="ds-label__dot" aria-hidden="true"></span>Read only
-          </span>
-        }
-      </div>
-      <div class="psets-editor__bar-actions">
-        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeEditor()">
-          {{ readOnly() ? 'Back' : 'Cancel' }}
-        </button>
-        @if (!readOnly()) {
-          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="save()">Save</button>
-        }
-      </div>
-    </header>
+<!-- ── Filter overlay ──────────────────────────────────────────────────── -->
+<div
+  class="filter-overlay"
+  id="surveys-filter-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="surveys-filter-modal-title"
+  hidden
+>
+  <div class="filter-modal" id="surveys-filter-modal">
 
-    @if (readOnly()) {
-      <div class="ds-alert ds-alert--info psets-editor__notice" role="status">
-        <span class="ds-icon ds-icon--sm ds-icon--filled ds-alert__icon" aria-hidden="true">info</span>
-        <div class="ds-alert__content">
-          <p class="ds-alert__message">This is a system permission set and can't be edited. Duplicate it to make changes.</p>
-        </div>
-      </div>
-    }
+    <button class="ds-icon-button ds-icon-button--icon filter-modal__close" id="surveys-close-modal-btn" aria-label="Close filters">
+      <span class="ds-icon ds-icon--sm">close</span>
+    </button>
 
-    <div class="psets-editor__body">
-      <!-- ── Left nav: search + section list ── -->
-      <nav class="psets-editor__nav" aria-label="Permission sections">
-        <div class="ds-input ds-search psets-editor__search" role="search">
-          <div class="ds-input__field">
-            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-            <input class="ds-input__control" type="search" placeholder="Search permissions"
-                   aria-label="Search permissions"
-                   [ngModel]="searchText" (ngModelChange)="onSearch($event)" />
-            @if (searchText) {
-              <button class="ds-input__action" type="button" aria-label="Clear search" (click)="clearSearch()">
+    <div class="filter-modal__body">
+
+      <!-- LEFT PANEL -->
+      <div class="filter-modal__left">
+        <div class="filter-modal__header">
+          <h2 class="filter-modal__title" id="surveys-filter-modal-title">Filters</h2>
+          <div class="ds-input ds-search filter-modal__search" role="search" id="surveys-filter-search-wrapper">
+            <div class="ds-input__field">
+              <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+              <input
+                class="ds-input__control"
+                type="search"
+                id="surveys-filter-search-input"
+                placeholder="Search filters..."
+                aria-label="Search all filters"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                class="ds-input__action"
+                id="surveys-search-clear-btn"
+                type="button"
+                aria-label="Clear search"
+                hidden
+              >
                 <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
               </button>
-            }
+            </div>
           </div>
         </div>
 
-        <div class="psets-editor__nav-list">
-          @for (s of filteredSections(); track s.id) {
-            <button class="ds-subnav-button psets-editor__nav-item" type="button"
-                    [class.is-selected]="visibleSection()?.id === s.id"
-                    [attr.aria-pressed]="visibleSection()?.id === s.id"
-                    (click)="selectSection(s.id)">
-              <span class="ds-icon ds-icon--sm psets-editor__nav-icon" aria-hidden="true">{{ s.icon }}</span>
-              <span class="psets-editor__nav-label">{{ s.label }}</span>
-              @if (s.matchCount > 0) {
-                <span class="psets-editor__nav-count">{{ s.matchCount }}</span>
-              } @else if (s.id !== dataVisibilityId) {
-                <span class="psets-editor__nav-dot ds-label__dot psets-editor__nav-dot--{{ presetColor(s.id) }}"
-                      aria-hidden="true"></span>
-              }
-            </button>
-          } @empty {
-            <p class="psets-editor__nav-empty">No permissions match.</p>
-          }
+        <div class="filter-modal__content">
+          <nav class="filter-modal__nav" id="surveys-filter-nav" aria-label="Filter categories"></nav>
+          <div
+            class="filter-modal__options"
+            id="surveys-filter-options"
+            role="region"
+            aria-label="Filter options"
+            aria-live="polite"
+          ></div>
         </div>
-      </nav>
+      </div>
 
-      <!-- ── Right content: active section ── -->
-      <div class="psets-editor__content" id="perm-set-content"
-           [class.is-readonly]="readOnly()" [attr.aria-disabled]="readOnly() ? 'true' : null">
-        @if (visibleSection(); as section) {
+      <!-- RIGHT PANEL: selected filters -->
+      <div class="filter-modal__right">
+        <div class="filter-modal__selected-header">
+          <div class="filter-modal__selected-header-row">
+            <h2 class="filter-modal__selected-title">Selected Filters</h2>
+          </div>
+          <div class="filter-modal__selected-header-actions">
+            <button class="ds-button ds-button--outlined ds-button--xs ds-button--leading-icon filter-saved-sets-toggle-btn" id="surveys-saved-sets-toggle-btn" aria-pressed="false">
+              <span class="ds-icon" aria-hidden="true">bookmark</span>Load Filters
+            </button>
+            <button class="ds-button ds-button--text ds-button--xs" id="surveys-header-clear-btn" hidden>Clear all</button>
+          </div>
+        </div>
 
-          @if (section.id !== dataVisibilityId) {
-            <!-- Catalog section: header + preset buttons, then perm rows grouped by sub-group. -->
-            <div class="psets-editor__section-head">
-              <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">{{ section.icon }}</span>
-              <h3 class="psets-editor__section-title">{{ section.label }}</h3>
-              <!-- Section presets: bulk-set every perm in this section. -->
-              <div class="psets-editor__presets" role="group" aria-label="Section access preset">
-                @for (p of presets; track p.id) {
-                  <button class="psets-editor__preset" type="button"
-                          [class.is-active]="currentPreset(section.id) === p.id"
-                          [class.is-disabled]="readOnly()"
-                          [disabled]="readOnly()"
-                          [attr.aria-pressed]="currentPreset(section.id) === p.id"
-                          (click)="applyPreset(section.id, p.id)">{{ p.label }}</button>
-                }
-              </div>
+        <div class="filter-modal__selected-body" id="surveys-selected-body">
+          <div class="filter-active-set-chip" id="surveys-active-set-chip" hidden>
+            <span class="filter-active-set-chip__name" id="surveys-active-set-name"></span>
+            <button class="filter-active-set-chip__update" id="surveys-update-set-btn" aria-label="Update saved set" title="Update saved set" hidden>
+              <span class="ds-icon" aria-hidden="true">sync</span>
+            </button>
+          </div>
+
+          <div class="ds-empty-state" id="surveys-selected-empty">
+            <div class="ds-empty-state__graphic" aria-hidden="true">
+              <span class="ds-icon ds-icon--xl">filter_alt_off</span>
             </div>
-
-            <div class="psets-editor__perms">
-              @for (run of groupPerms(section.perms); track $index) {
-                @if (run.kind === 'item') {
-                  <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
-                } @else {
-                  <!-- Collapsible sub-group block. -->
-                  <div class="psets-editor__group">
-                    <button class="psets-editor__group-head" type="button"
-                            [attr.aria-expanded]="!isCollapsed(section.id, run.label)"
-                            (click)="toggleGroup(section.id, run.label)">
-                      <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
-                            [class.is-collapsed]="isCollapsed(section.id, run.label)" aria-hidden="true">expand_more</span>
-                      <span class="psets-editor__group-label">{{ run.label }}</span>
-                      <span class="psets-editor__group-rule" aria-hidden="true"></span>
-                    </button>
-                    @if (!isCollapsed(section.id, run.label)) {
-                      <div class="psets-editor__group-body">
-                        @for (perm of run.perms; track perm.id) {
-                          <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
-                        }
-                      </div>
-                    }
-                  </div>
-                }
-              }
+            <div class="ds-empty-state__body">
+              <p class="ds-empty-state__heading">No filters selected</p>
+              <p class="ds-empty-state__description">Pick options from the left panel.</p>
             </div>
-          } @else {
-            <!-- ── Data Visibility pane ── -->
-            <div class="psets-editor__section-head">
-              <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">visibility</span>
-              <h3 class="psets-editor__section-title">Data Visibility</h3>
-            </div>
-            <p class="psets-editor__dv-lead">Control which records this set can see, beyond what the action permissions allow.</p>
+          </div>
 
-            <!-- Tickets scope -->
-            <div class="psets-editor__dv-card">
-              <div class="psets-editor__dv-card-head">
-                <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">confirmation_number</span>
-                <span class="psets-editor__dv-card-title">Tickets</span>
-              </div>
-              <div class="psets-editor__dv-card-body">
-                <p class="psets-editor__dv-sublabel">Scope</p>
-                <div class="ds-radio-group">
-                  <label class="ds-radio">
-                    <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="All"
-                           [checked]="dvTicketScope() === 'All'" [disabled]="readOnly()"
-                           (change)="setDvTicketScope('All')" />
-                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-                    <span class="ds-radio__label">
-                      All tickets
-                      <span class="psets-editor__radio-desc">Access to every ticket in scope.</span>
-                    </span>
-                  </label>
-                  <label class="ds-radio">
-                    <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="Assigned"
-                           [checked]="dvTicketScope() === 'Assigned'" [disabled]="readOnly()"
-                           (change)="setDvTicketScope('Assigned')" />
-                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-                    <span class="ds-radio__label">
-                      Assigned only
-                      <span class="psets-editor__radio-desc">Only tickets the user owns or is a team member of.</span>
-                    </span>
-                  </label>
-                </div>
-                <label class="ds-toggle psets-editor__dv-toggle">
-                  <input type="checkbox" role="switch" class="ds-toggle__control"
-                         [checked]="dvExcludeConfidential()" [disabled]="readOnly()"
-                         (change)="setDvExcludeConfidential($any($event.target).checked)" />
-                  <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
-                  <span class="ds-toggle__label">Exclude confidential topics</span>
-                </label>
-              </div>
-            </div>
+          <ul class="selected-filter-list" id="surveys-selected-list" aria-label="Selected filters" hidden></ul>
+        </div>
 
-            <!-- Assets scope -->
-            <div class="psets-editor__dv-card">
-              <div class="psets-editor__dv-card-head">
-                <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">devices</span>
-                <span class="psets-editor__dv-card-title">Assets</span>
-              </div>
-              <div class="psets-editor__dv-card-body">
-                <p class="psets-editor__dv-sublabel">Scope</p>
-                <div class="ds-radio-group">
-                  <label class="ds-radio">
-                    <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="All"
-                           [checked]="dvAssetScope() === 'All'" [disabled]="readOnly()"
-                           (change)="setDvAssetScope('All')" />
-                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-                    <span class="ds-radio__label">
-                      All assets
-                      <span class="psets-editor__radio-desc">Access to every asset in scope.</span>
-                    </span>
-                  </label>
-                  <label class="ds-radio">
-                    <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="Assigned"
-                           [checked]="dvAssetScope() === 'Assigned'" [disabled]="readOnly()"
-                           (change)="setDvAssetScope('Assigned')" />
-                    <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-                    <span class="ds-radio__label">
-                      Assigned locations only
-                      <span class="psets-editor__radio-desc">Only assets in the locations assigned to this user.</span>
-                    </span>
-                  </label>
-                </div>
-                <label class="ds-toggle psets-editor__dv-toggle">
-                  <input type="checkbox" role="switch" class="ds-toggle__control"
-                         [checked]="dvExcludeOtherLocations()" [disabled]="readOnly()"
-                         (change)="setDvExcludeOtherLocations($any($event.target).checked)" />
-                  <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
-                  <span class="ds-toggle__label">Exclude assets from other locations</span>
-                </label>
-              </div>
-            </div>
+        <div class="filter-saved-sets-panel" id="surveys-saved-sets-panel" hidden>
+          <div class="filter-saved-sets-panel__header">
+            <h2 class="filter-saved-sets-panel__title">Saved Filter Sets</h2>
+          </div>
+          <div class="filter-saved-sets-panel__body" id="surveys-saved-sets-body"></div>
+        </div>
+      </div>
 
-            <!-- TODO eng: wire the full data-visibility filter builder (multi-select asset / user
-                 type / grade with include-exclude) here on handoff -->
-          }
-        }
+    </div><!-- /.filter-modal__body -->
+
+    <div class="filter-modal__footer">
+      <div class="filter-modal__footer-summary" id="surveys-footer-summary"></div>
+      <div class="filter-modal__footer-actions">
+        <button class="ds-button ds-button--text" id="surveys-cancel-btn">Cancel</button>
+        <button class="ds-button ds-button--filled" id="surveys-apply-btn">Apply Filters</button>
       </div>
     </div>
-  </div>
-}
 
-<!-- ── Reusable permission row (toggle or segmented control) ─────────────────────── -->
-<ng-template #permRow let-perm="perm">
-  <div class="psets-editor__row">
-    <div class="psets-editor__row-text">
-      <p class="psets-editor__row-label">{{ perm.label }}</p>
-      @if (perm.description) {
-        <p class="psets-editor__row-desc">{{ perm.description }}</p>
-      }
-      @if (perm.notes) {
-        @for (note of perm.notes; track $index) {
-          <p class="psets-editor__note psets-editor__note--{{ note.type }}">
-            <span class="ds-icon ds-icon--xs psets-editor__note-icon" aria-hidden="true">{{ noteIcon(note.type) }}</span>
-            {{ note.text }}
-          </p>
-        }
-      }
-    </div>
+  </div><!-- /.filter-modal -->
+</div><!-- /.filter-overlay -->
 
-    <div class="psets-editor__row-control">
-      @if (perm.controlType === 'toggle') {
-        <label class="ds-toggle" [class.is-disabled]="readOnly()" [attr.aria-label]="perm.label">
-          <input type="checkbox" role="switch" class="ds-toggle__control"
-                 [checked]="toggleValue(perm)" [disabled]="readOnly()"
-                 (change)="setToggle(perm, $any($event.target).checked)" />
-          <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
-        </label>
-      } @else {
-        <!-- Segmented control: token-styled button group; active option is filled. -->
-        <div class="psets-editor__segment" role="group" [attr.aria-label]="perm.label">
-          @for (opt of segOptions(perm); track opt) {
-            <button class="psets-editor__segment-btn" type="button"
-                    [class.is-active]="segValue(perm) === opt"
-                    [class.is-disabled]="readOnly()"
-                    [disabled]="readOnly()"
-                    [attr.aria-pressed]="segValue(perm) === opt"
-                    (click)="setSegment(perm, opt)">{{ opt }}</button>
-          }
-        </div>
-        @if (showManageSubs(perm)) {
-          <div class="psets-editor__manage-subs">
-            @for (sub of manageSubOptions; track sub) {
-              <label class="ds-checkbox ds-checkbox--sm" [class.is-disabled]="readOnly()">
-                <input type="checkbox" class="ds-checkbox__control"
-                       [checked]="manageSub(perm, sub)" [disabled]="readOnly()"
-                       (change)="setManageSub(perm, sub, $any($event.target).checked)" />
-                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
-                <span class="ds-checkbox__label">{{ sub }}</span>
-              </label>
-            }
-          </div>
-        }
-      }
-    </div>
-  </div>
-</ng-template>
+<!-- ── Right-click context menus ────────────────────────────────────────── -->
+
+<!-- Header context menu -->
+<div id="ctx-header" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3000;min-width:220px;">
+  <button class="ds-menu__item" id="ctx-h-pin" role="menuitem" aria-haspopup="true" aria-expanded="false">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">push_pin</span>
+    Pin Column
+    <span class="ds-menu__item-trailing"><span class="ds-icon ds-icon--sm">chevron_right</span></span>
+  </button>
+  <button class="ds-menu__item" id="ctx-h-autosize" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">straighten</span>
+    Auto-size Column
+  </button>
+  <button class="ds-menu__item" id="ctx-h-autosize-all" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">straighten</span>
+    Auto-size All Columns
+  </button>
+  <button class="ds-menu__item" id="ctx-h-reset" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">restart_alt</span>
+    Reset Columns
+  </button>
+  <hr class="ds-menu__divider" id="ctx-h-group-divider">
+  <button class="ds-menu__item" id="ctx-h-group" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">cell_merge</span>
+    <span id="ctx-h-group-label">Group by</span>
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item" id="ctx-h-hide" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">visibility_off</span>
+    Hide Column
+  </button>
+</div>
+
+<!-- Pin submenu -->
+<div id="ctx-pin" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3001;min-width:150px;">
+  <button class="ds-menu__item" role="menuitemradio" aria-checked="false" data-pin="left">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">first_page</span>
+    Left
+  </button>
+  <button class="ds-menu__item" role="menuitemradio" aria-checked="false" data-pin="right">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">last_page</span>
+    Right
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item ds-menu__item--selected" role="menuitemradio" aria-checked="true" data-pin="none">
+    <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
+    No Pin
+  </button>
+</div>
+
+<!-- Cell context menu -->
+<div id="ctx-cell" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3000;min-width:220px;">
+  <button class="ds-menu__item" id="ctx-c-copy-cell" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">content_copy</span>
+    Copy Cell
+  </button>
+  <button class="ds-menu__item" id="ctx-c-copy-row" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">table_rows</span>
+    Copy Row
+  </button>
+  <button class="ds-menu__item" id="ctx-c-copy-headers" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">table_view</span>
+    Copy Row with Headers
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item" id="ctx-c-export" role="menuitem" aria-haspopup="true" aria-expanded="false">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">download</span>
+    Export
+    <span class="ds-menu__item-trailing"><span class="ds-icon ds-icon--sm">chevron_right</span></span>
+  </button>
+  <hr class="ds-menu__divider" id="ctx-c-group-sep" style="display:none;">
+  <button class="ds-menu__item" id="ctx-c-expand" role="menuitem" style="display:none;">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">unfold_more</span>
+    Expand All
+  </button>
+  <button class="ds-menu__item" id="ctx-c-collapse" role="menuitem" style="display:none;">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">unfold_less</span>
+    Collapse All
+  </button>
+</div>
+
+<!-- Export submenu -->
+<div id="ctx-export" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3001;min-width:180px;">
+  <button class="ds-menu__item" id="ctx-e-csv" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">description</span>
+    CSV Export
+  </button>
+  <button class="ds-menu__item" id="ctx-e-excel" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">grid_on</span>
+    Excel Export (.xlsx)
+  </button>
+</div>
+
+<!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
+     is called from permission-sets-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

@@ -2,17 +2,15 @@
   <div class="cmdk" role="dialog" aria-modal="true" aria-label="Switch persona">
     <div class="cmdk__scrim" (click)="close()"></div>
 
-    <div class="cmdk__panel">
-      <div class="cmdk__search">
-        <span class="ds-icon ds-icon--sm cmdk__search-icon" aria-hidden="true">badge</span>
-        <input #search class="cmdk__input" type="text" placeholder="Switch persona…"
-               aria-label="Search personas"
-               [ngModel]="query()" (ngModelChange)="onQueryChange($event)" />
+    <div #panel class="cmdk__panel" tabindex="-1">
+      <div class="cmdk__header">
+        <span class="ds-icon ds-icon--sm cmdk__header-icon" aria-hidden="true">badge</span>
+        <span class="cmdk__title">Switch persona</span>
         <span class="cmdk__kbd" aria-hidden="true">{{ shortcutLabel }}</span>
       </div>
 
       <div class="cmdk__list" role="listbox" aria-label="Personas">
-        @for (p of filtered(); track p.id; let i = $index) {
+        @for (p of personas(); track p.id; let i = $index) {
           <button class="cmdk__item" type="button"
                   role="option" [attr.aria-selected]="i === highlighted()"
                   [class.is-highlighted]="i === highlighted()"
@@ -27,8 +25,6 @@
               <span class="ds-label ds-label--pill ds-label--xs ds-label--green cmdk__current">Viewing</span>
             }
           </button>
-        } @empty {
-          <div class="cmdk__empty">No personas match “{{ query() }}”.</div>
         }
       </div>
 

@@ -28,10 +28,16 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-elevation-3);
   overflow: hidden;
+
+  // Programmatically focused on open (tabindex="-1") to move focus into the dialog;
+  // no ring on the panel itself — the highlighted row is the visible affordance.
+  &:focus {
+    outline: none;
+  }
 }
 
-// ── Search row ───────────────────────────────────────────────────────────────
-.cmdk__search {
+// ── Header row ───────────────────────────────────────────────────────────────
+.cmdk__header {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
@@ -39,23 +45,16 @@
   border-bottom: 1px solid var(--color-border-primary);
 }
 
-.cmdk__search-icon {
+.cmdk__header-icon {
   color: var(--color-icon-subtle);
   flex-shrink: 0;
 }
 
-.cmdk__input {
+.cmdk__title {
   @include ds.type-body-large;
   flex: 1;
   min-width: 0;
-  border: none;
-  background: transparent;
   color: var(--color-text-primary);
-  outline: none;
-
-  &::placeholder {
-    color: var(--color-text-secondary);
-  }
 }
 
 // ── List ───────────────────────────────────────────────────────────────────
@@ -81,7 +80,11 @@
   cursor: pointer;
 
   &.is-highlighted {
-    background: var(--color-surface-subtle);
+    background: var(--color-surface-brand-subtle);
+
+    .cmdk__name {
+      color: var(--color-text-brand);
+    }
   }
 
   &:focus {
@@ -128,13 +131,6 @@
 .cmdk__current {
   margin-left: auto;
   flex-shrink: 0;
-}
-
-.cmdk__empty {
-  @include ds.type-body-medium;
-  padding: var(--spacing-xl);
-  text-align: center;
-  color: var(--color-text-secondary);
 }
 
 // ── Footer + kbd hints ───────────────────────────────────────────────────────

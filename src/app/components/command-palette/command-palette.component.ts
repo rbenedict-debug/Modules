@@ -9,7 +9,6 @@ import {
   signal,
   viewChild,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Persona } from '../../data/models';
 import { PersonaService } from '../../data/persona.service';
 import { ModulesService } from '../../data/modules.service';
@@ -22,7 +21,7 @@ import { ModulesService } from '../../data/modules.service';
 @Component({
   selector: 'app-command-palette',
   standalone: true,
-  imports: [FormsModule],
+  imports: [],
   templateUrl: './command-palette.component.html',
   styleUrl: './command-palette.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,23 +31,10 @@ export class CommandPaletteComponent {
   private readonly modulesSvc = inject(ModulesService);
 
   readonly open = signal(false);
-  readonly query = signal('');
   readonly highlighted = signal(0);
 
+  readonly personas = computed<Persona[]>(() => this.personaSvc.personas());
   readonly currentId = computed(() => this.personaSvc.current().id);
-
-  /** Personas filtered by the search query (name / title / access summary). */
-  readonly filtered = computed<Persona[]>(() => {
-    const q = this.query().toLowerCase().trim();
-    const all = this.personaSvc.personas();
-    if (!q) return all;
-    return all.filter(
-      p =>
-        p.name.toLowerCase().includes(q) ||
-        p.title.toLowerCase().includes(q) ||
-        this.accessSummary(p).toLowerCase().includes(q),
-    );
-  });
 
   /** Cross-platform shortcut hint: ⌘K on Mac, Ctrl+K elsewhere. */
   readonly shortcutLabel = /mac|iphone|ipad/i.test(
@@ -57,14 +43,14 @@ export class CommandPaletteComponent {
     ? '⌘K'
     : 'Ctrl+K';
 
-  private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('search');
+  private readonly panel = viewChild<ElementRef<HTMLElement>>('panel');
 
   constructor() {
-    // Focus the search box and reset the highlight each time the palette opens.
+    // Move focus into the dialog and reset the highlight each time the palette opens.
     effect(() => {
       if (this.open()) {
         this.highlighted.set(0);
-        setTimeout(() => this.searchInput()?.nativeElement.focus(), 0);
+        setTimeout(() => this.panel()?.nativeElement.focus(), 0);
       }
     });
   }
@@ -84,7 +70,6 @@ export class CommandPaletteComponent {
   }
 
   openPalette(): void {
-    this.query.set('');
     this.open.set(true);
   }
 
@@ -95,11 +80,6 @@ export class CommandPaletteComponent {
   selectPersona(p: Persona): void {
     this.personaSvc.select(p.id);
     this.close();
-  }
-
-  onQueryChange(value: string): void {
-    this.query.set(value);
-    this.highlighted.set(0);
   }
 
   // ⌘K / Ctrl+K toggles the palette anywhere; ↑↓ move the highlight; Enter selects; Esc closes.
@@ -122,13 +102,13 @@ export class CommandPaletteComponent {
       this.move(-1);
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      const p = this.filtered()[this.highlighted()];
+      const p = this.personas()[this.highlighted()];
       if (p) this.selectPersona(p);
     }
   }
 
   private move(delta: number): void {
-    const len = this.filtered().length;
+    const len = this.personas().length;
     if (len === 0) return;
     this.highlighted.set((this.highlighted() + delta + len) % len);
   }

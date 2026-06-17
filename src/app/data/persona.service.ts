@@ -17,6 +17,7 @@ export class PersonaService {
         { moduleId: 'it', role: 'Admin' },
         { moduleId: 'hr', role: 'Admin' },
         { moduleId: 'facilities', role: 'Admin' },
+        { moduleId: 'music', role: 'Admin' },
       ],
     },
     {
