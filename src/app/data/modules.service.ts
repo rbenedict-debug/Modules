@@ -15,7 +15,7 @@ export class ModulesService {
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
     {
-      id: 'transportation', name: 'Transportation', icon: 'directions_bus', accent: 'yellow', ticketCount: 8, active: true,
+      id: 'transportation', name: 'Transportation', icon: 'directions_bus', accent: 'yellow', ticketCount: 8, active: false, comingSoon: true,
       tagline: 'A space built around how your transportation team works, ready to go with the data you already have.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
@@ -25,12 +25,12 @@ export class ModulesService {
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing', 'Asset management'],
     },
     {
-      id: 'hr', name: 'HR', icon: 'groups', accent: 'orange', ticketCount: 3, active: false,
+      id: 'hr', name: 'HR', icon: 'groups', accent: 'orange', ticketCount: 3, active: false, comingSoon: true,
       tagline: 'A private space for HR, with restricted queues for cases that need to stay confidential.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
     {
-      id: 'facilities', name: 'Facilities', icon: 'apartment', accent: 'teal', ticketCount: 5, active: false,
+      id: 'facilities', name: 'Facilities', icon: 'apartment', accent: 'teal', ticketCount: 5, active: false, comingSoon: true,
       tagline: 'A service desk for your facilities team, with asset and maintenance tracking built in.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing', 'Asset management'],
     },

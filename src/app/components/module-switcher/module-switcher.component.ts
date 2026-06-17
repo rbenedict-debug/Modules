@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
 import { ModuleContextService } from '../../data/module-context.service';
+import { MessagingService } from '../../data/messaging.service';
 
 @Component({
   selector: 'app-module-switcher',
@@ -12,6 +13,7 @@ import { ModuleContextService } from '../../data/module-context.service';
 export class ModuleSwitcherComponent {
   // Persona-derived: availableModules / isGlobalAdmin / current context all come from here.
   readonly moduleCtx = inject(ModuleContextService);
+  private readonly msg = inject(MessagingService);
 
   readonly open = signal(false);
 
@@ -19,10 +21,22 @@ export class ModuleSwitcherComponent {
     this.open.update(v => !v);
   }
 
-  /** Pick a context (null = Global) and close the menu. */
-  select(moduleId: string | null): void {
-    this.moduleCtx.select(moduleId);
+  /**
+   * Pick a context (null = Global) and close the menu. Hold Shift while selecting to
+   * simulate a failed switch: the context stays put and an error toast offers Retry
+   * (mock switches otherwise always succeed).
+   */
+  select(moduleId: string | null, event?: Event): void {
     this.open.set(false);
+    const shiftHeld = (event as MouseEvent | KeyboardEvent | undefined)?.shiftKey ?? false;
+    if (shiftHeld) {
+      const label = moduleId === null
+        ? 'Global'
+        : this.moduleCtx.availableModules().find(m => m.id === moduleId)?.name ?? 'that module';
+      this.msg.error(`Couldn't switch to ${label}. Please try again.`, () => this.moduleCtx.select(moduleId));
+      return;
+    }
+    this.moduleCtx.select(moduleId);
   }
 
   // Mirror app.ts's .profile-menu close pattern: outside-click + Escape.

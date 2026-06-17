@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import { filter } from 'rxjs';
 import { ModuleSwitcherComponent } from './components/module-switcher/module-switcher.component';
 import { CommandPaletteComponent } from './components/command-palette/command-palette.component';
+import { SnackbarHostComponent } from './components/snackbar-host/snackbar-host.component';
 import { ModuleContextService } from './data/module-context.service';
 import { PersonaService } from './data/persona.service';
 
@@ -19,7 +20,7 @@ interface SettingsItem {
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, ModuleSwitcherComponent, CommandPaletteComponent],
+  imports: [RouterOutlet, ModuleSwitcherComponent, CommandPaletteComponent, SnackbarHostComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })

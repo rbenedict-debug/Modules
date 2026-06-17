@@ -7,3 +7,22 @@ html, body {
   margin: 0;
   overflow: hidden;
 }
+
+// ── App-wide snackbar host ───────────────────────────────────────────────────
+// The design-mode snackbar is plain CSS-class markup (no MatSnackBar overlay), so its
+// top-center placement is owned here. See MessagingService / SnackbarHostComponent.
+.ds-snackbar {
+  position: fixed;
+  top: calc(var(--spacing-xl) * 2);
+  left: 0;
+  right: 0;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: 90vw;
+  z-index: 1000;
+}
+
+// The DS snackbar has no error variant — tint the leading icon to signal failure.
+.snackbar-error-icon {
+  color: var(--color-icon-error-on-dark);
+}

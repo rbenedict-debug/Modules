@@ -26,9 +26,9 @@
       @if (moduleCtx.isGlobalAdmin()) {
         <div class="ds-list-item ds-list-item--2-lines ds-list-item--interactive"
              role="menuitemradio" [attr.aria-checked]="moduleCtx.isGlobal()" tabindex="0"
-             (click)="select(null)"
-             (keydown.enter)="select(null)"
-             (keydown.space)="select(null); $event.preventDefault()">
+             (click)="select(null, $event)"
+             (keydown.enter)="select(null, $event)"
+             (keydown.space)="select(null, $event); $event.preventDefault()">
           <div class="ds-list-item__leading">
             <span class="ds-icon ds-icon--filled module-switcher__icon--global" aria-hidden="true">public</span>
           </div>
@@ -48,9 +48,9 @@
       @for (m of moduleCtx.availableModules(); track m.id) {
         <div class="ds-list-item ds-list-item--2-lines ds-list-item--interactive"
              role="menuitemradio" [attr.aria-checked]="moduleCtx.currentModuleId() === m.id" tabindex="0"
-             (click)="select(m.id)"
-             (keydown.enter)="select(m.id)"
-             (keydown.space)="select(m.id); $event.preventDefault()">
+             (click)="select(m.id, $event)"
+             (keydown.enter)="select(m.id, $event)"
+             (keydown.space)="select(m.id, $event); $event.preventDefault()">
           <div class="ds-list-item__leading">
             <span class="ds-icon ds-icon--filled module-switcher__accent--{{ m.accent }}" aria-hidden="true">{{ m.icon }}</span>
           </div>

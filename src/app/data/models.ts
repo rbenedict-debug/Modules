@@ -19,6 +19,8 @@ export interface Module {
   // Department Modules catalog copy — kept here so a module is defined exactly once: the switcher
   // reads identity (name/icon/accent), the Department Modules page also renders tagline + features.
   tagline: string; features: string[];
+  /** A prebuilt module not yet released — shows a "Coming soon" state and can't be requested. */
+  comingSoon?: boolean;
 }
 
 /** Every custom module shares one treatment — 'settings' icon, neutral 'grey' tile, and the same

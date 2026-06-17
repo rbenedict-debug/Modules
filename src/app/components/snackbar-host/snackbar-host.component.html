@@ -1,0 +1,16 @@
+@if (msg.snackbar(); as snack) {
+  <div class="ds-snackbar ds-snackbar--has-close"
+       [class.ds-snackbar--text-action]="!!snack.retry"
+       [attr.role]="snack.kind === 'error' ? 'alert' : 'status'" aria-live="polite">
+    @if (snack.kind === 'error') {
+      <span class="ds-icon ds-icon--sm snackbar-error-icon" aria-hidden="true">error</span>
+    }
+    <span class="ds-snackbar__message">{{ snack.message }}</span>
+    @if (snack.retry) {
+      <button class="ds-button ds-button--filled ds-button--sm" type="button" (click)="msg.retry()">Retry</button>
+    }
+    <button class="ds-snackbar__close" type="button" aria-label="Dismiss" (click)="msg.dismiss()">
+      <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+    </button>
+  </div>
+}

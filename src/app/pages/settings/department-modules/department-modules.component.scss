@@ -28,6 +28,19 @@
   padding: var(--spacing-xl);
 }
 
+// In-dialog error alert (request submit failure) — space it from the dialog title.
+.modules__request-error {
+  margin-bottom: var(--spacing-md);
+}
+
+// Coming-soon previews read as not-yet-available: mute the icon + body, keep the label crisp.
+.modules__card--coming-soon {
+  .modules__icon-box,
+  .ds-card__body {
+    opacity: 0.6;
+  }
+}
+
 .modules__subtitle {
   @include ds.type-body-medium;
   margin: var(--spacing-xs) 0 0;
