@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { Ticket, User, UserStatus, fullName } from '../../../../data/models';
+import { SOURCE_LOCKED_FIELDS, Ticket, User, UserStatus, fullName } from '../../../../data/models';
 import { UsersService } from '../../../../data/users.service';
 import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
@@ -18,6 +18,14 @@ interface InfoField {
   value: string | string[];
   chips?: boolean;
   chipColor?: 'blue' | 'grey';
+  // Department-module chips, each coloured by its module accent (ties the field to the
+  // project's department-module system).
+  moduleChips?: { name: string; accent: string }[];
+  // Leading icon + tint on a single-value field (Account Status, Source).
+  icon?: string;
+  iconColor?: 'green' | 'yellow' | 'grey' | 'purple' | 'blue';
+  // When set, the field is synced/locked from this integration → "Managed by X" note.
+  managedBy?: string;
 }
 
 // One module the agent belongs to, with its permission set + the teams scoped to it.
@@ -37,18 +45,30 @@ interface TicketStat {
   tone: 'blue' | 'orange' | 'grey';
 }
 
-interface MockAsset {
-  name: string;
-  assetId: string;
-  status: string;
-  statusColor: 'green' | 'yellow' | 'grey';
+// One entry in the agent's audit history (Activity tab) — a major action taken by or
+// on this agent. TODO eng: source from the real audit log.
+interface AuditEvent {
+  icon: string;
+  tone: 'blue' | 'green' | 'orange' | 'grey' | 'red';
+  title: string;
+  detail?: string;
+  actor: string;
+  timestamp: string;
 }
 
-interface AgentNote {
-  author: string;
-  initials: string;
-  timestamp: string;
-  body: string;
+// Which information panel shows below the hero.
+type TabId = 'details' | 'permissions' | 'tickets' | 'activity';
+interface ProfileTab { id: TabId; label: string; }
+
+// Hero provenance chip: at-a-glance "where did this agent come from". Synced agents
+// carry the integration name + a sync icon (blue); manual entries read "Manual entry"
+// with an edit icon (grey) — mirrors the agents/teams "integration = blue, Manual =
+// grey" convention.
+interface SourceBadge {
+  synced: boolean;
+  icon: string;
+  label: string;
+  title: string;
 }
 
 // Status → DS label colour (matches the agents table + the former drawer).
@@ -57,6 +77,14 @@ const STATUS_COLOR: Record<UserStatus, 'green' | 'yellow' | 'grey' | 'purple'> =
   Unverified: 'yellow',
   Inactive: 'grey',
   Pending: 'purple',
+};
+
+// Status → leading icon for the Account Status field.
+const STATUS_ICON: Record<UserStatus, string> = {
+  Active: 'check_circle',
+  Unverified: 'help',
+  Inactive: 'cancel',
+  Pending: 'schedule',
 };
 
 /**
@@ -96,6 +124,15 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     this.usersSvc.users().find((u) => u.id === this.agentId()),
   );
 
+  // ── Tabs (Details / Tickets / Activity) ───────────────────────────────────────
+  readonly tabs: ProfileTab[] = [
+    { id: 'details', label: 'Details' },
+    { id: 'permissions', label: 'Permissions' },
+    { id: 'tickets', label: 'Tickets' },
+    { id: 'activity', label: 'Activity' },
+  ];
+  readonly activeTab = signal<TabId>('details');
+
   ngOnInit(): void {
     // Full-area takeover view: collapse the subnav on open, restore it on leave.
     this.chrome.setEditorOpen(true);
@@ -122,6 +159,26 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     return u ? STATUS_COLOR[u.status] : 'grey';
   });
 
+  // Source provenance for the hero chip — manual entry vs. synced from an integration.
+  readonly sourceBadge = computed<SourceBadge | null>(() => {
+    const u = this.user();
+    if (!u) return null;
+    if (u.source === 'Manual') {
+      return {
+        synced: false,
+        icon: 'edit',
+        label: 'Manual entry',
+        title: 'This agent was added manually.',
+      };
+    }
+    return {
+      synced: true,
+      icon: 'sync',
+      label: `Synced from ${u.source}`,
+      title: `This agent is synced from ${u.source}; its core fields are managed by the integration.`,
+    };
+  });
+
   readonly isAgent = computed(() => !!this.user()?.roles.includes('Agent'));
 
   // Identity line under the name: roles · primary location (the full lists live in
@@ -139,23 +196,47 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   readonly basicInfo = computed<InfoField[]>(() => {
     const u = this.user();
     if (!u) return [];
+
     const chipField = (
       label: string,
       values: string[],
       chipColor: 'blue' | 'grey',
     ): InfoField => (values.length ? { label, value: values, chips: true, chipColor } : { label, value: '—' });
 
+    // Synced sources lock a subset of fields (SOURCE_LOCKED_FIELDS); those carry a
+    // "Managed by {integration}" note so admins know the value is owned upstream.
+    const synced = u.source !== 'Manual';
+    const locked = SOURCE_LOCKED_FIELDS[u.source];
+    const managedBy = (key: keyof User): string | undefined =>
+      synced && locked.includes(key) ? u.source : undefined;
+
+    const teamNames = this.teamsSvc.teams()
+      .filter((t) => u.teams.includes(t.id))
+      .map((t) => t.name);
+    // Departments ARE the project's department modules — resolve each to its name +
+    // accent so the field reads consistently with the rest of the module system.
+    const departments = u.modules.map((id) => {
+      const m = this.modulesSvc.modules().find((mod) => mod.id === id);
+      return { name: m?.name ?? id, accent: m?.accent ?? 'grey' };
+    });
+
     return [
-      { label: 'Email', value: u.email },
+      { label: 'User ID', value: this.formatUserId(u.id) },
+      { label: 'First Name', value: u.firstName, managedBy: managedBy('firstName') },
+      { label: 'Last Name', value: u.lastName, managedBy: managedBy('lastName') },
+      { label: 'Middle Name', value: u.middleName || '—' },
+      { label: 'Email', value: u.email, managedBy: managedBy('email') },
       { label: 'Phone', value: u.phone || '—' },
-      chipField('Roles', u.roles, 'blue'),
-      { label: 'Source', value: u.source },
-      { label: 'Job Title', value: u.jobTitle || '—' },
+      { label: 'Account Status', value: u.status, icon: STATUS_ICON[u.status], iconColor: STATUS_COLOR[u.status], managedBy: managedBy('status') },
+      chipField('Role', u.roles, 'blue'),
       chipField('Locations', u.locations, 'grey'),
-      chipField('Topics', u.topics, 'grey'),
-      { label: 'Employee ID', value: u.employeeId || '—' },
-      { label: 'Pronouns', value: u.pronouns || '—' },
-      { label: 'Emergency Contact', value: u.emergencyContact || '—' },
+      { label: 'Source', value: u.source, icon: synced ? 'cloud' : undefined, iconColor: synced ? 'blue' : undefined },
+      departments.length
+        ? { label: 'Department(s)', value: '', moduleChips: departments }
+        : { label: 'Department(s)', value: '—' },
+      chipField('Team(s)', teamNames, 'grey'),
+      { label: 'Job Title', value: u.jobTitle || '—' },
+      chipField('Topic(s)', u.topics, 'grey'),
       { label: 'Last Login', value: this.formatDate(u.lastLogin) },
       { label: 'Date Added', value: this.formatDate(u.dateAdded) },
     ];
@@ -197,15 +278,18 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   // ── Tickets owned by this agent (real data) ───────────────────────────────────
   // Match on full name, falling back to first+last (seed ticket ownerName values omit
   // the middle names that fullName() includes).
-  private readonly ownedTickets = computed<Ticket[]>(() => {
+  // Every ticket this agent is on, newest first — the Tickets tab's full history.
+  readonly ownedTickets = computed<Ticket[]>(() => {
     const u = this.user();
     if (!u) return [];
     const full = fullName(u).toLowerCase();
     const firstLast = `${u.firstName} ${u.lastName}`.toLowerCase();
-    return this.ticketsSvc.tickets().filter((t) => {
-      const owner = t.ownerName.toLowerCase();
-      return owner === full || owner === firstLast;
-    });
+    return this.ticketsSvc.tickets()
+      .filter((t) => {
+        const owner = t.ownerName.toLowerCase();
+        return owner === full || owner === firstLast;
+      })
+      .sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1));
   });
 
   readonly ticketStats = computed<TicketStat[]>(() => {
@@ -219,13 +303,6 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
       { icon: 'check_circle', label: 'Closed', value: String(closed), tone: 'grey' },
     ];
   });
-
-  // Most-recent owned tickets for the activity list.
-  readonly recentTickets = computed<Ticket[]>(() =>
-    [...this.ownedTickets()]
-      .sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1))
-      .slice(0, 5),
-  );
 
   // Status → DS label color. Mirrors the inbox: Unopened grey, In Progress blue,
   // Waiting yellow, Closed green.
@@ -243,41 +320,44 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     }
   }
 
-  // ── Assets (mock — TODO eng) ───────────────────────────────────────────────────
-  readonly assets: MockAsset[] = [
-    { name: 'HP Chromebook 14', assetId: 'AST-0312', status: 'In Use', statusColor: 'green' },
-    { name: 'Logitech Headset H390', assetId: 'AST-0881', status: 'In Use', statusColor: 'green' },
-    { name: 'Dell Docking Station', assetId: 'AST-0942', status: 'In Use', statusColor: 'green' },
-    { name: 'iPad Air (10.9")', assetId: 'AST-1107', status: 'Pending Return', statusColor: 'yellow' },
-  ];
-
-  // ── Notes — agent-authored notes (local-only in design mode) ───────────────────
-  // TODO eng: persist notes (create + load) for this agent.
-  readonly notes = signal<AgentNote[]>([
-    {
-      author: 'Devon Clark',
-      initials: 'DC',
-      timestamp: 'May 30, 2026',
-      body: 'Promoted to team lead in the IT module — updated the permission set to match.',
-    },
-    {
-      author: 'Front Office',
-      initials: 'FO',
-      timestamp: 'May 22, 2026',
-      body: 'Covers the North Campus on Fridays; route urgent hardware tickets here first.',
-    },
-  ]);
-
-  addNote(body: string): void {
-    const text = body.trim();
-    if (!text) return;
-    this.notes.update((list) => [
-      { author: 'You', initials: 'Y', timestamp: 'Just now', body: text },
-      ...list,
-    ]);
+  // Priority → DS label color (P1 most urgent).
+  ticketPriorityColor(priority: Ticket['priority']): 'red' | 'orange' | 'grey' {
+    switch (priority) {
+      case 'P1':
+        return 'red';
+      case 'P2':
+        return 'orange';
+      default:
+        return 'grey';
+    }
   }
 
+  /** Module display name for a ticket's moduleId (falls back to the id). */
+  moduleName(moduleId: string): string {
+    return this.modulesSvc.modules().find((m) => m.id === moduleId)?.name ?? moduleId;
+  }
+
+  // ── Activity — audit history (mock — TODO eng) ─────────────────────────────────
+  // The major things this agent has done (and changes made to their account), newest
+  // first. TODO eng: source from the real audit log for this agent.
+  readonly auditEvents = signal<AuditEvent[]>([
+    { icon: 'check_circle', tone: 'green', title: 'Resolved ticket INC-1042', detail: 'Password reset — North High School', actor: 'This agent', timestamp: 'Jun 17, 2026 · 3:24 PM' },
+    { icon: 'login', tone: 'blue', title: 'Signed in', detail: 'Chrome on Windows', actor: 'This agent', timestamp: 'Jun 17, 2026 · 8:02 AM' },
+    { icon: 'autorenew', tone: 'blue', title: 'Moved ticket INC-1039 to In Progress', detail: 'Projector not connecting — Room 214', actor: 'This agent', timestamp: 'Jun 16, 2026 · 1:11 PM' },
+    { icon: 'lock_reset', tone: 'orange', title: 'Permission set changed', detail: 'IT Support → IT Admin (IT module)', actor: 'Devon Clark', timestamp: 'Jun 12, 2026 · 10:47 AM' },
+    { icon: 'group_add', tone: 'green', title: 'Added to team', detail: 'North Campus IT', actor: 'Devon Clark', timestamp: 'Jun 12, 2026 · 10:45 AM' },
+    { icon: 'confirmation_number', tone: 'blue', title: 'Took ownership of ticket INC-1031', detail: 'Laptop won’t charge — Front Office', actor: 'This agent', timestamp: 'Jun 9, 2026 · 9:30 AM' },
+    { icon: 'edit', tone: 'grey', title: 'Updated profile', detail: 'Phone number', actor: 'This agent', timestamp: 'Jun 2, 2026 · 4:18 PM' },
+    { icon: 'badge', tone: 'grey', title: 'Account created', detail: 'Synced from Active Directory', actor: 'System', timestamp: 'May 28, 2026 · 6:00 AM' },
+  ]);
+
   // ── Formatting ─────────────────────────────────────────────────────────────────
+  /** Display id like "USR-00002" from the internal id (e.g. "u2"). */
+  formatUserId(id: string): string {
+    const digits = id.replace(/\D/g, '');
+    return digits ? `USR-${digits.padStart(5, '0')}` : id.toUpperCase();
+  }
+
   formatDate(iso?: string): string {
     if (!iso) return '—';
     const d = new Date(iso);

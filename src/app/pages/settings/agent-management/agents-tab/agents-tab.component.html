@@ -92,10 +92,10 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:200px">
+                <th style="width:240px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Roles</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Roles">
+                    <span class="ds-table__header-label">Permission Sets</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Permission Sets">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -194,13 +194,13 @@
                     </span>
                   </td>
                   <td>
-                    @if (u.roles.length) {
+                    @if (permissionSetNames(u).length) {
                       <span class="users-roles">
-                        @for (r of visibleRoles(u); track r) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ r }}</span>
+                        @for (set of visiblePermissionSets(u); track set) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ set }}</span>
                         }
-                        @if (roleOverflow(u) > 0) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey users-roles__overflow">+{{ roleOverflow(u) }}</span>
+                        @if (permissionSetOverflow(u) > 0) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue users-roles__overflow">+{{ permissionSetOverflow(u) }}</span>
                         }
                       </span>
                     } @else {

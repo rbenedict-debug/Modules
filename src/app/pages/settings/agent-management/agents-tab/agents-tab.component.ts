@@ -14,7 +14,8 @@ import { DatePipe } from '@angular/common';
 import { ModulesService } from '../../../../data/modules.service';
 import { UsersService } from '../../../../data/users.service';
 import { TeamsService } from '../../../../data/teams.service';
-import { User, UserRole, UserStatus, fullName } from '../../../../data/models';
+import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { User, UserStatus, fullName } from '../../../../data/models';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
 declare const OnfloTableInit: { initTable: (config: unknown) => void };
@@ -38,6 +39,7 @@ export class AgentsTabComponent implements AfterViewInit {
   private readonly modulesSvc = inject(ModulesService);
   private readonly usersSvc = inject(UsersService);
   private readonly teamsSvc = inject(TeamsService);
+  private readonly setsSvc = inject(PermissionSetsService);
 
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -61,6 +63,14 @@ export class AgentsTabComponent implements AfterViewInit {
     return map;
   });
 
+  // Permission set id → name, for resolving each agent's assigned set(s). Reads the same
+  // PermissionSetsService the agent profile and the Permission Sets table read from.
+  private readonly permissionSetNameById = computed(() => {
+    const map = new Map<string, string>();
+    for (const s of this.setsSvc.sets()) map.set(s.id, s.name);
+    return map;
+  });
+
   teamNames(u: User): string[] {
     const map = this.teamNameById();
     return u.teams.map((id) => map.get(id) ?? id);
@@ -72,23 +82,23 @@ export class AgentsTabComponent implements AfterViewInit {
   }
 
   // ── Column config for table-init.js ─────────────────────────────────────────────
-  // `name` MUST match the <th> header labels exactly. Name/Roles cells hold rich
-  // markup, so those columns stay non-categorical (auto-derived filters read cell
+  // `name` MUST match the <th> header labels exactly. Name/Permission Sets cells hold
+  // rich markup, so those columns stay non-categorical (auto-derived filters read cell
   // textContent and would otherwise pick up emails / "+N" overflow text).
   readonly columns = [
-    { name: 'Name',       width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Roles',      width: 200, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Status',     width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
+    { name: 'Name',            width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Permission Sets', width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Status',          width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
       { l: 'Active', c: 'green' }, { l: 'Pending', c: 'yellow' }, { l: 'Unverified', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
     ]},
-    { name: 'Module(s)',  width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Teams',      width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Locations',  width: 170, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Phone',      width: 150, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Source',     width: 150, type: 'text',  _categorical: true,  _badgeOptions: null },
-    { name: 'Job Title',  width: 160, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Last Login', width: 140, type: 'date',  _categorical: false, _badgeOptions: null },
-    { name: 'Date Added', width: 130, type: 'date',  _categorical: false, _badgeOptions: null },
+    { name: 'Module(s)',       width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Teams',           width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Locations',       width: 170, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Phone',           width: 150, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Source',          width: 150, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Job Title',       width: 160, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Last Login',      width: 140, type: 'date',  _categorical: false, _badgeOptions: null },
+    { name: 'Date Added',      width: 130, type: 'date',  _categorical: false, _badgeOptions: null },
   ];
 
   get totalWidth(): number {
@@ -120,13 +130,23 @@ export class AgentsTabComponent implements AfterViewInit {
 
   // ── Cell display helpers (run during the initial render, before detach) ──────────
 
-  // Roles overflow — show up to 2 chips per row; the rest collapse into a "+N" pill.
-  private readonly ROLE_VISIBLE = 2;
-  visibleRoles(u: User): UserRole[] {
-    return u.roles.slice(0, this.ROLE_VISIBLE);
+  // An agent's assigned permission set(s), resolved from `permissionSetByModule` via
+  // PermissionSetsService — the SAME source the agent profile and the Permission Sets
+  // table read from, so all three surfaces stay wired to one dataset. Distinct names
+  // (an agent can hold the same set across modules), in module order.
+  permissionSetNames(u: User): string[] {
+    const names = this.permissionSetNameById();
+    const resolved = Object.values(u.permissionSetByModule).map((id) => names.get(id) ?? id);
+    return [...new Set(resolved)];
   }
-  roleOverflow(u: User): number {
-    return Math.max(0, u.roles.length - this.ROLE_VISIBLE);
+
+  // Overflow — show up to 2 chips per row; the rest collapse into a "+N" pill.
+  private readonly PERMISSION_SET_VISIBLE = 2;
+  visiblePermissionSets(u: User): string[] {
+    return this.permissionSetNames(u).slice(0, this.PERMISSION_SET_VISIBLE);
+  }
+  permissionSetOverflow(u: User): number {
+    return Math.max(0, this.permissionSetNames(u).length - this.PERMISSION_SET_VISIBLE);
   }
 
   statusColor(s: UserStatus): string {

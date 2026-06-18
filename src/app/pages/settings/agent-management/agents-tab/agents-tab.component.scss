@@ -77,7 +77,8 @@
   color: var(--color-text-secondary);
 }
 
-// ── Role chips + overflow pill ────────────────────────────────────────────────────
+// ── Permission-set chips + overflow pill ───────────────────────────────────────────
+// (.users-roles is the generic chip-row layout — reused for the Permission Sets cell.)
 .users-roles {
   display: inline-flex;
   align-items: center;

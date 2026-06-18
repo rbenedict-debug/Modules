@@ -19,12 +19,12 @@
 </div>
 
 @if (user(); as u) {
-  <!-- Full-width profile header card above a 70/30 split, mirroring the User-Explorer
-       end-user profile. .agent-detail is the page scroll boundary (the heading stays fixed). -->
+  <!-- Top-level hero + a tab system (Details / Tickets / Activity) below it.
+       .agent-detail is the page scroll boundary (the heading stays fixed). -->
   <div class="agent-detail">
 
-    <!-- ── Profile + Basic Information — full-width ──────────────────────────── -->
-    <section class="ds-card ds-card--elevated" aria-label="Profile and basic information">
+    <!-- ── Hero — top-level identity only ─────────────────────────────────────── -->
+    <section class="ds-card ds-card--elevated" aria-label="Profile">
       <div class="ds-card__body">
         <div class="agent-detail__hero">
           <div class="ds-avatar ds-avatar--xl">
@@ -36,220 +36,273 @@
               <span class="ds-label ds-label--pill ds-label--sm ds-label--has-dot ds-label--{{ statusColor() }}">
                 <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
               </span>
+              <!-- Source provenance — synced-from-integration vs. manual entry, at a glance. -->
+              @if (sourceBadge(); as src) {
+                <span class="agent-detail__source"
+                      [class.agent-detail__source--synced]="src.synced"
+                      [class.agent-detail__source--manual]="!src.synced"
+                      [title]="src.title">
+                  <span class="ds-icon ds-icon--xs" aria-hidden="true">{{ src.icon }}</span>
+                  {{ src.label }}
+                </span>
+              }
             </div>
             <p class="agent-detail__hero-sub">{{ subtitle() }}</p>
           </div>
-        </div>
-        <div class="ds-divider agent-detail__divider" role="separator" aria-hidden="true"></div>
-        <div class="agent-detail__info">
-          @for (field of basicInfo(); track field.label) {
-            <div class="agent-detail__info-item">
-              <span class="agent-detail__info-label">{{ field.label }}</span>
-              @if (field.chips) {
-                <div class="agent-detail__chips">
-                  @for (v of fieldValues(field); track $index) {
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ field.chipColor }}">{{ v }}</span>
-                  }
-                </div>
-              } @else {
-                <div class="agent-detail__info-values">
-                  @for (v of fieldValues(field); track $index) {
-                    <span class="agent-detail__info-value">{{ v }}</span>
-                  }
-                </div>
-              }
-            </div>
-          }
+          <!-- Top-right hero action. TODO eng: wire edit behavior. -->
+          <button class="ds-button ds-button--outlined ds-button--leading-icon agent-detail__hero-edit" type="button">
+            <span class="ds-icon">edit</span>
+            Edit
+          </button>
         </div>
       </div>
-      <!-- TODO eng: wire real agent fields. -->
     </section>
 
-    <!-- ── Remaining sections in a 70/30 split ───────────────────────────────── -->
-    <div class="agent-detail__split">
+    <!-- ── Tab bar ────────────────────────────────────────────────────────────── -->
+    <div class="ds-tabs" role="tablist" aria-label="Agent information">
+      @for (tab of tabs; track tab.id) {
+        <button class="ds-tabs__tab" type="button" role="tab"
+                [id]="'ap-tab-' + tab.id"
+                [class.is-selected]="activeTab() === tab.id"
+                [attr.aria-selected]="activeTab() === tab.id"
+                [attr.aria-controls]="'ap-panel-' + tab.id"
+                [attr.tabindex]="activeTab() === tab.id ? 0 : -1"
+                (click)="activeTab.set(tab.id)">
+          {{ tab.label }}
+        </button>
+      }
+    </div>
 
-      <!-- ── Main column ─────────────────────────────────────────────────────── -->
-      <div class="agent-detail__main">
+    <!-- ── Panels ─────────────────────────────────────────────────────────────── -->
+    @switch (activeTab()) {
 
-        <!-- Module permissions (agent-specific — the end-user profile's "Linked" slot) -->
-        <section class="ds-card ds-card--elevated" aria-labelledby="ap-perms-title">
-          <div class="ds-card__body">
-            <div class="agent-detail__section-head agent-detail__section-head--count">
-              <h2 class="agent-detail__section-title" id="ap-perms-title">Permissions</h2>
-              @if (isAgent()) {
-                <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ modulePermissionCards().length }}</span>
-              }
-            </div>
+      <!-- Details: basic information -->
+      @case ('details') {
+        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-details" aria-labelledby="ap-tab-details">
 
-            @if (isAgent()) {
-              <div class="agent-detail__perms">
-                @for (card of modulePermissionCards(); track card.id) {
-                  <div class="agent-detail__perm-item">
-                    <span class="agent-detail__module-icon agent-detail__module-icon--{{ card.accent }}" aria-hidden="true">
-                      <span class="ds-icon ds-icon--filled ds-icon--sm">{{ card.icon }}</span>
-                    </span>
-                    <div class="agent-detail__perm-body">
-                      <div class="agent-detail__perm-head">
-                        <span class="agent-detail__perm-name">{{ card.name }}</span>
-                        <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ card.permissionSetName }}</span>
+          <section class="ds-card ds-card--elevated" aria-labelledby="ap-info-title">
+            <div class="ds-card__body">
+              <div class="agent-detail__section-head">
+                <h2 class="agent-detail__section-title" id="ap-info-title">Basic Information</h2>
+              </div>
+              <div class="agent-detail__info">
+                @for (field of basicInfo(); track field.label) {
+                  <div class="agent-detail__info-item">
+                    <span class="agent-detail__info-label">{{ field.label }}</span>
+                    @if (field.moduleChips) {
+                      <div class="agent-detail__chips">
+                        @for (m of field.moduleChips; track m.name) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ m.accent }}">{{ m.name }}</span>
+                        }
                       </div>
-                      <div class="agent-detail__perm-field">
-                        <span class="agent-detail__info-label">Teams</span>
-                        <div class="agent-detail__chips">
-                          @for (team of card.teams; track team) {
-                            <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ team }}</span>
-                          } @empty {
-                            <span class="agent-detail__muted">Not assigned to any team</span>
-                          }
-                        </div>
+                    } @else if (field.chips) {
+                      <div class="agent-detail__chips">
+                        @for (v of fieldValues(field); track $index) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ field.chipColor }}">{{ v }}</span>
+                        }
                       </div>
-                    </div>
-                  </div>
-                } @empty {
-                  <div class="ds-empty-state">
-                    <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
-                      <span class="ds-icon ds-icon--lg">badge</span>
-                    </div>
-                    <div class="ds-empty-state__body">
-                      <p class="ds-empty-state__heading">No module permissions</p>
-                      <p class="ds-empty-state__description">This agent is not assigned to any module yet.</p>
-                    </div>
+                    } @else {
+                      <div class="agent-detail__info-values">
+                        @for (v of fieldValues(field); track $index) {
+                          <span class="agent-detail__info-value">
+                            @if (field.icon) {
+                              <span class="ds-icon ds-icon--sm ds-icon--filled agent-detail__info-icon agent-detail__info-icon--{{ field.iconColor }}" aria-hidden="true">{{ field.icon }}</span>
+                            }
+                            {{ v }}
+                          </span>
+                        }
+                      </div>
+                    }
+                    @if (field.managedBy) {
+                      <span class="agent-detail__managed">
+                        <span class="ds-icon ds-icon--xs agent-detail__managed-icon" aria-hidden="true">cloud</span>
+                        Managed by {{ field.managedBy }}
+                      </span>
+                    }
                   </div>
                 }
               </div>
-            } @else {
-              <div class="ds-empty-state">
-                <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
-                  <span class="ds-icon ds-icon--lg">badge</span>
-                </div>
-                <div class="ds-empty-state__body">
-                  <p class="ds-empty-state__description">Non-agent users are not assigned module-level permissions.</p>
-                </div>
+            </div>
+            <!-- TODO eng: render the agent's real field set (standard + custom). -->
+          </section>
+
+        </div>
+      }
+
+      <!-- Permissions: per-module permission set + teams -->
+      @case ('permissions') {
+        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-permissions" aria-labelledby="ap-tab-permissions">
+
+          <section class="ds-card ds-card--elevated" aria-labelledby="ap-perms-title">
+            <div class="ds-card__body">
+              <div class="agent-detail__section-head agent-detail__section-head--count">
+                <h2 class="agent-detail__section-title" id="ap-perms-title">Permissions</h2>
+                @if (isAgent()) {
+                  <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ modulePermissionCards().length }}</span>
+                }
               </div>
-            }
-          </div>
-          <!-- TODO eng: link permission sets to the editor on handoff. -->
-        </section>
 
-        <!-- Tickets owned by this agent -->
-        <section class="ds-card ds-card--elevated" aria-labelledby="ap-tickets-title">
-          <div class="ds-card__body">
-            <div class="agent-detail__section-head">
-              <h2 class="agent-detail__section-title" id="ap-tickets-title">Tickets Summary</h2>
-            </div>
-            <div class="agent-detail__stats">
-              @for (stat of ticketStats(); track stat.label) {
-                <div class="ds-metric-card agent-detail__stat-card agent-detail__stat-card--{{ stat.tone }}">
-                  <div class="ds-metric-card__header">
-                    <span class="ds-metric-card__label">{{ stat.label }}</span>
-                    <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">{{ stat.icon }}</span>
-                  </div>
-                  <div class="ds-metric-card__value">{{ stat.value }}</div>
-                </div>
-              }
-            </div>
-            <div class="ds-divider agent-detail__divider" role="separator" aria-hidden="true"></div>
-            <p class="agent-detail__list-label">Recent tickets</p>
-            <div class="agent-detail__list">
-              @for (ticket of recentTickets(); track ticket.id) {
-                <div class="ds-card-item">
-                  <div class="ds-card-item__leading agent-detail__row-inset">
-                    <span class="ds-icon agent-detail__row-icon" aria-hidden="true">confirmation_number</span>
-                  </div>
-                  <div class="ds-card-item__body">
-                    <span class="ds-card-item__primary">{{ ticket.subject }}</span>
-                    <span class="ds-card-item__secondary">{{ ticket.number }} · {{ formatDate(ticket.receivedAt) }}</span>
-                  </div>
-                  <div class="ds-card-item__trailing agent-detail__row-inset">
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketStatusColor(ticket.status) }}">{{ ticket.status }}</span>
-                  </div>
-                </div>
-              } @empty {
-                <p class="agent-detail__muted">No tickets owned by this agent.</p>
-              }
-            </div>
-          </div>
-          <!-- TODO eng: wire real ticket aggregates + recent activity. -->
-        </section>
-
-      </div>
-
-      <!-- ── Side column ─────────────────────────────────────────────────────── -->
-      <aside class="agent-detail__side" aria-label="Notes and assets">
-
-        <!-- Notes -->
-        <section class="ds-card ds-card--elevated" aria-labelledby="ap-notes-title">
-          <div class="ds-card__body">
-            <div class="agent-detail__section-head agent-detail__section-head--count">
-              <h2 class="agent-detail__section-title" id="ap-notes-title">Notes</h2>
-              <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ notes().length }}</span>
-            </div>
-
-            <!-- Composer (local-only in design mode) -->
-            <div class="agent-detail__note-composer">
-              <div class="ds-textarea">
-                <div class="ds-textarea__field">
-                  <textarea #noteInput class="ds-textarea__control" rows="3"
-                            placeholder="Write a note about this agent..."
-                            aria-label="Add a note about this agent"></textarea>
-                  <div class="ds-textarea__resize-handle" aria-hidden="true">
-                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M9 3L3 9M9 7L7 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-                  </div>
-                </div>
-              </div>
-              <div class="agent-detail__note-composer-actions">
-                <button class="ds-button ds-button--filled ds-button--sm" type="button"
-                        (click)="addNote(noteInput.value); noteInput.value = ''">Add note</button>
-              </div>
-            </div>
-
-            <div class="ds-divider agent-detail__divider" role="separator" aria-hidden="true"></div>
-
-            <div class="agent-detail__notes">
-              @for (note of notes(); track note) {
-                <div class="agent-detail__note">
-                  <div class="ds-avatar ds-avatar--sm"><span class="ds-avatar__initials">{{ note.initials }}</span></div>
-                  <div class="agent-detail__note-body">
-                    <div class="agent-detail__note-head">
-                      <span class="agent-detail__note-author">{{ note.author }}</span>
-                      <span class="agent-detail__note-time">{{ note.timestamp }}</span>
+              @if (isAgent()) {
+                <div class="agent-detail__perms">
+                  @for (card of modulePermissionCards(); track card.id) {
+                    <div class="agent-detail__perm-item">
+                      <span class="agent-detail__module-icon agent-detail__module-icon--{{ card.accent }}" aria-hidden="true">
+                        <span class="ds-icon ds-icon--filled ds-icon--sm">{{ card.icon }}</span>
+                      </span>
+                      <div class="agent-detail__perm-body">
+                        <div class="agent-detail__perm-head">
+                          <span class="agent-detail__perm-name">{{ card.name }}</span>
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ card.permissionSetName }}</span>
+                        </div>
+                        <div class="agent-detail__perm-field">
+                          <span class="agent-detail__info-label">Teams</span>
+                          <div class="agent-detail__chips">
+                            @for (team of card.teams; track team) {
+                              <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ team }}</span>
+                            } @empty {
+                              <span class="agent-detail__muted">Not assigned to any team</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <p class="agent-detail__note-text">{{ note.body }}</p>
+                  } @empty {
+                    <div class="ds-empty-state">
+                      <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
+                        <span class="ds-icon ds-icon--lg">badge</span>
+                      </div>
+                      <div class="ds-empty-state__body">
+                        <p class="ds-empty-state__heading">No module permissions</p>
+                        <p class="ds-empty-state__description">This agent is not assigned to any module yet.</p>
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="ds-empty-state">
+                  <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
+                    <span class="ds-icon ds-icon--lg">badge</span>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__description">Non-agent users are not assigned module-level permissions.</p>
                   </div>
                 </div>
               }
             </div>
-          </div>
-          <!-- TODO eng: persist notes (create + load) for this agent. -->
-        </section>
+            <!-- TODO eng: link permission sets to the editor on handoff. -->
+          </section>
 
-        <!-- Assigned assets (mock) -->
-        <section class="ds-card ds-card--elevated" aria-labelledby="ap-assets-title">
-          <div class="ds-card__body">
-            <div class="agent-detail__section-head agent-detail__section-head--count">
-              <h2 class="agent-detail__section-title" id="ap-assets-title">Assets</h2>
-              <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ assets.length }}</span>
-            </div>
-            <div class="agent-detail__list">
-              @for (asset of assets; track asset.assetId) {
-                <div class="ds-card-item ds-card-item--no-leading">
-                  <div class="ds-card-item__body">
-                    <span class="ds-card-item__primary">{{ asset.name }}</span>
-                    <span class="ds-card-item__secondary">Asset #{{ asset.assetId }}</span>
+        </div>
+      }
+
+      <!-- Tickets: full history table (every status) -->
+      @case ('tickets') {
+        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-tickets" aria-labelledby="ap-tab-tickets">
+          <section class="ds-card ds-card--elevated" aria-labelledby="ap-tickets-title">
+            <div class="ds-card__body">
+              <div class="agent-detail__section-head agent-detail__section-head--count">
+                <h2 class="agent-detail__section-title" id="ap-tickets-title">Tickets</h2>
+                <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ ownedTickets().length }}</span>
+              </div>
+
+              <!-- Quick counts so an admin can read the history at a glance. -->
+              <div class="agent-detail__stats">
+                @for (stat of ticketStats(); track stat.label) {
+                  <div class="ds-metric-card agent-detail__stat-card agent-detail__stat-card--{{ stat.tone }}">
+                    <div class="ds-metric-card__header">
+                      <span class="ds-metric-card__label">{{ stat.label }}</span>
+                      <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">{{ stat.icon }}</span>
+                    </div>
+                    <div class="ds-metric-card__value">{{ stat.value }}</div>
                   </div>
-                  <div class="ds-card-item__trailing agent-detail__row-inset">
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ asset.statusColor }}">{{ asset.status }}</span>
+                }
+              </div>
+
+              <div class="ds-divider agent-detail__divider" role="separator" aria-hidden="true"></div>
+
+              @if (ownedTickets().length) {
+                <div class="agent-detail__table-scroll">
+                  <table class="ds-table">
+                    <thead>
+                      <tr>
+                        <th>Ticket</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Module</th>
+                        <th>Received</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (ticket of ownedTickets(); track ticket.id) {
+                        <tr>
+                          <td>{{ ticket.number }}</td>
+                          <td>{{ ticket.subject }}</td>
+                          <td>
+                            <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketStatusColor(ticket.status) }}">{{ ticket.status }}</span>
+                          </td>
+                          <td>
+                            <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketPriorityColor(ticket.priority) }}">{{ ticket.priority }}</span>
+                          </td>
+                          <td>{{ moduleName(ticket.moduleId) }}</td>
+                          <td>{{ formatDate(ticket.receivedAt) }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <!-- TODO eng: replace with AG Grid + onfloTheme for a sortable/filterable history. -->
+              } @else {
+                <div class="ds-empty-state">
+                  <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
+                    <span class="ds-icon ds-icon--lg">confirmation_number</span>
+                  </div>
+                  <div class="ds-empty-state__body">
+                    <p class="ds-empty-state__heading">No tickets</p>
+                    <p class="ds-empty-state__description">This agent is not on any tickets yet.</p>
                   </div>
                 </div>
               }
             </div>
-          </div>
-          <!-- TODO eng: wire real asset assignments. -->
-        </section>
+          </section>
+        </div>
+      }
 
-      </aside>
+      <!-- Activity: audit history -->
+      @case ('activity') {
+        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-activity" aria-labelledby="ap-tab-activity">
+          <section class="ds-card ds-card--elevated" aria-labelledby="ap-activity-title">
+            <div class="ds-card__body">
+              <div class="agent-detail__section-head">
+                <h2 class="agent-detail__section-title" id="ap-activity-title">Activity</h2>
+              </div>
 
-    </div>
+              <ol class="agent-detail__timeline">
+                @for (event of auditEvents(); track $index) {
+                  <li class="agent-detail__event">
+                    <span class="agent-detail__event-icon agent-detail__event-icon--{{ event.tone }}" aria-hidden="true">
+                      <span class="ds-icon ds-icon--sm ds-icon--filled">{{ event.icon }}</span>
+                    </span>
+                    <div class="agent-detail__event-body">
+                      <div class="agent-detail__event-head">
+                        <span class="agent-detail__event-title">{{ event.title }}</span>
+                        <span class="agent-detail__event-time">{{ event.timestamp }}</span>
+                      </div>
+                      @if (event.detail) {
+                        <span class="agent-detail__event-detail">{{ event.detail }}</span>
+                      }
+                      <span class="agent-detail__event-actor">{{ event.actor }}</span>
+                    </div>
+                  </li>
+                }
+              </ol>
+            </div>
+            <!-- TODO eng: wire the real audit log for this agent. -->
+          </section>
+        </div>
+      }
+    }
+
   </div>
 } @else {
   <!-- Unknown id (e.g. a stale link) — the breadcrumb above is the way back. -->
