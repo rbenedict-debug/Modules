@@ -163,6 +163,22 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   }
 }
 
+// The 6 K12-tailored custom-module colors (token values in styles.scss). Same tile treatment as
+// the DS accents above — soft surface tint + matching filled glyph — but sourced from the
+// app-local --module-color-* properties since these live outside the DS palette. Quoted so Sass
+// treats `cyan`/`lime`/`magenta` as plain strings rather than color keywords.
+$module-extra-colors: 'gold', 'lime', 'cyan', 'indigo', 'magenta', 'clay', 'coral', 'mint', 'slate', 'sky', 'maroon';
+
+@each $c in $module-extra-colors {
+  .modules__icon-box--#{$c} {
+    background-color: var(--module-color-#{$c}-surface);
+
+    .ds-card__header-icon {
+      color: var(--module-color-#{$c}-icon);
+    }
+  }
+}
+
 
 // Lead description — now the first line of the card body (Body Medium, primary text).
 .modules__tagline {
@@ -290,13 +306,165 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
   color: var(--color-text-primary);
 }
 
-// Request confirmation dialog — a comfortable fixed width; the custom-module name field
-// fills it. The backdrop scrim/centering come from the DS `ds-dialog-backdrop` class.
+// Request confirmation dialog — comfortable width for the name field + the icon/color pickers
+// (side by side) + the preview below. Scrim/centering come from the DS `ds-dialog-backdrop` class.
 .modules__request-dialog {
-  width: 420px;
+  width: 480px;
   max-width: 100%;
 
   .ds-input {
     width: 100%;
   }
+}
+
+// Let the picker panels open past the dialog edge rather than being clipped by it — they're
+// absolutely positioned and float above the dialog body.
+.ds-dialog.modules__request-dialog,
+.modules__request-dialog .ds-dialog__body {
+  overflow: visible;
+}
+
+// Stack the custom-request fields (name → appearance → preview) with comfortable spacing.
+.modules__field + .modules__field {
+  margin-top: var(--spacing-lg);
+}
+
+// Icon + color pickers sit side by side; the preview is a full-width field below them.
+.modules__appearance {
+  display: flex;
+  gap: var(--spacing-xl);
+}
+
+// A single picker (trigger + popover). Relative so its panel anchors to the trigger.
+.modules__picker {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+// Compact trigger showing just the current value (icon glyph or color dot) + a caret — matches
+// the ds-select field height/treatment without the text input.
+.modules__picker-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  height: 42px;
+  padding: 0 var(--spacing-md);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-input);
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-surface-subtle);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+  }
+}
+
+.modules__picker-caret {
+  color: var(--color-icon-subtle);
+}
+
+// Popover panel — ds-menu supplies the surface/border/radius/elevation; we only position it.
+.modules__picker-panel {
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  z-index: 100;
+  padding: var(--spacing-sm);
+}
+
+// Options as a compact grid of swatches — no labels, the glyph / color is the value.
+.modules__picker-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--spacing-xs);
+  max-height: 264px;
+  overflow-y: auto;
+}
+
+.modules__picker-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background-color: transparent;
+  color: var(--color-text-primary);
+  cursor: pointer;
+
+  &:hover {
+    background-color: var(--color-surface-subtle);
+  }
+
+  // Selected: a brand ring around the option.
+  &.is-selected {
+    box-shadow: inset 0 0 0 2px var(--color-text-brand);
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+  }
+}
+
+// Color value/options: a solid filled dot in the chosen color (trigger + grid). No border — just
+// the solid color, so it never reads as a bordered "chip" / looks like a rendering bug.
+.modules__swatch-dot {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: var(--radius-full);
+}
+
+// Per-color fills, reused for the dropdown dots: the DS accents from the DS icon-accent tokens,
+// the 6 customs from their local glyph token. (`"" + $accent` avoids Sass color-keyword warnings.)
+@each $accent in $module-accents {
+  .modules__color-swatch--#{"" + $accent} {
+    background-color: var(--color-icon-accent-#{$accent});
+  }
+}
+
+@each $c in $module-extra-colors {
+  .modules__color-swatch--#{$c} {
+    background-color: var(--module-color-#{$c}-icon);
+  }
+}
+
+// Live preview — the exact card icon tile beside the typed name, so the choice is unambiguous.
+// Background is --color-surface-page (white) rather than subtle, so the tile tint + glyph render
+// against an accurate, untinted background.
+.modules__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-page);
+}
+
+.modules__preview-name {
+  @include ds.type-title-h4;
+  color: var(--color-text-primary);
+  // A long name truncates rather than blowing out the dialog; the tile stays fixed.
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

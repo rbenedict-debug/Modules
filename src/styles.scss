@@ -26,3 +26,40 @@ html, body {
 .snackbar-error-icon {
   color: var(--color-icon-error-on-dark);
 }
+
+// ── Custom department-module colors ──────────────────────────────────────────
+// The custom-module picker offers 15 colors: the 9 design-system accents (reused via their own
+// --color-*-accent tokens) plus these 6 K12-tailored additions. Each is defined here as app-local
+// custom properties — a soft surface tint for the card icon tile + a saturated filled-glyph color —
+// with light and dark values so the Department Modules cards and the top-nav switcher render them
+// the same token-based way as the DS accents. Centralized here (not inline hex) so they stay the
+// single source for these colors.
+// TODO eng: these 6 colors live outside the design system — candidates to promote into the DS as
+// official module-color tokens at handoff.
+:root {
+  --module-color-gold-surface: #fbf1cb;    --module-color-gold-icon: #cf9d11;
+  --module-color-lime-surface: #e9f2cc;    --module-color-lime-icon: #5a7302;
+  --module-color-cyan-surface: #d6eff6;    --module-color-cyan-icon: #0e7490;
+  --module-color-indigo-surface: #e3e2fb;  --module-color-indigo-icon: #4338ca;
+  --module-color-magenta-surface: #fbddf4; --module-color-magenta-icon: #a21597;
+  --module-color-clay-surface: #efe3d7;    --module-color-clay-icon: #875733;
+  --module-color-coral-surface: #fbe6df;   --module-color-coral-icon: #c24a33;
+  --module-color-mint-surface: #d6f2e8;    --module-color-mint-icon: #18866a;
+  --module-color-slate-surface: #e5e9f0;   --module-color-slate-icon: #4a5a70;
+  --module-color-sky-surface: #d9eefb;     --module-color-sky-icon: #0277b6;
+  --module-color-maroon-surface: #f4dee2;  --module-color-maroon-icon: #8e2a3f;
+}
+
+[data-theme='dark'] {
+  --module-color-gold-surface: #38300e;    --module-color-gold-icon: #f2c84b;
+  --module-color-lime-surface: #2b3310;    --module-color-lime-icon: #b9d957;
+  --module-color-cyan-surface: #0e2d35;    --module-color-cyan-icon: #54c4dd;
+  --module-color-indigo-surface: #201d42;  --module-color-indigo-icon: #a9a4f6;
+  --module-color-magenta-surface: #3a1034; --module-color-magenta-icon: #ef74d2;
+  --module-color-clay-surface: #33271b;    --module-color-clay-icon: #cd9e72;
+  --module-color-coral-surface: #3a1e15;   --module-color-coral-icon: #f09a82;
+  --module-color-mint-surface: #0e2e26;    --module-color-mint-icon: #5bd0aa;
+  --module-color-slate-surface: #232a37;   --module-color-slate-icon: #a6b2c6;
+  --module-color-sky-surface: #0c2a3d;     --module-color-sky-icon: #5bb8ec;
+  --module-color-maroon-surface: #34151c;  --module-color-maroon-icon: #d98797;
+}

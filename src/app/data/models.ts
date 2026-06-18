@@ -14,19 +14,55 @@ export interface User {
 
 export type ModuleRole = 'Admin' | 'Agent';
 export type ModuleAccent = 'blue'|'green'|'grey'|'navy'|'orange'|'pink'|'purple'|'red'|'teal'|'yellow';
+/** The custom-module color palette: the 9 design-system colored accents (reused via their existing
+ *  --color-*-accent tokens) plus 11 K12-tailored colors defined locally (styles.scss + the icon-box /
+ *  switcher color classes). Custom modules pick one of these; premade modules keep using `accent`.
+ *  Grey is intentionally excluded — a custom module always carries a real color now. */
+export type ModuleColor =
+  | 'blue' | 'green' | 'navy' | 'orange' | 'pink' | 'purple' | 'red' | 'teal' | 'yellow'
+  | 'gold' | 'lime' | 'cyan' | 'indigo' | 'magenta' | 'clay'
+  | 'coral' | 'mint' | 'slate' | 'sky' | 'maroon';
 export interface Module {
   id: string; name: string; icon: string; accent: ModuleAccent; ticketCount: number; active: boolean;
+  /** Custom modules carry a client-chosen color (the picker palette); premade modules leave this
+   *  unset and render from `accent`. Effective tile/glyph color is `color ?? accent`. */
+  color?: ModuleColor;
   // Department Modules catalog copy — kept here so a module is defined exactly once: the switcher
-  // reads identity (name/icon/accent), the Department Modules page also renders tagline + features.
+  // reads identity (name/icon/accent/color), the Department Modules page also renders tagline + features.
   tagline: string; features: string[];
   /** A prebuilt module not yet released — shows a "Coming soon" state and can't be requested. */
   comingSoon?: boolean;
 }
 
-/** Every custom module shares one treatment — 'settings' icon, neutral 'grey' tile, and the same
- *  tagline + "What's included" copy. The title (name) is the only thing client-chosen, so the copy
- *  is defined once here and spread into each custom Module (the catalog entries and the request
- *  card alike), keeping every custom card identical except for its name. */
+/** The capability areas a module can include. The active context's capabilities decide which
+ *  side-nav items and Settings sections are visible. Derived from `Module.features` (the
+ *  documented source of truth — see docs/department-modules-architecture.md) via FEATURE_CAPABILITY. */
+export type Capability = 'ticketing' | 'analytics' | 'workflow' | 'assets';
+
+/** Maps each canonical "What's included" feature label to the capability it grants. Keeps
+ *  `Module.features` the single source of truth; add a row whenever a new feature label ships. */
+export const FEATURE_CAPABILITY: Record<string, Capability> = {
+  'Service desk ticketing': 'ticketing',
+  'Dashboard analytics': 'analytics',
+  'Workflow automation and routing': 'workflow',
+  'Asset management': 'assets',
+};
+
+/** The set of capabilities a module includes, derived from its feature labels. */
+export function moduleCapabilities(m: Pick<Module, 'features'>): Set<Capability> {
+  const caps = new Set<Capability>();
+  for (const f of m.features) {
+    const cap = FEATURE_CAPABILITY[f];
+    if (cap) caps.add(cap);
+  }
+  return caps;
+}
+
+/** Shared copy + look for the reusable "Custom module" request card — a generic grey tile + gear
+ *  icon (the neutral "add your own" affordance), plus the tagline + "What's included" set (ticketing
+ *  + assets) every custom module shares. A custom module's real identity (name + icon + color) is
+ *  chosen in the request dialog and written onto the spawned module; this template card stays
+ *  generic. No `color` here, so the card renders grey via `color ?? accent`. */
 export const CUSTOM_MODULE_DEFAULTS: Pick<Module, 'icon' | 'accent' | 'tagline' | 'features'> = {
   icon: 'settings',
   accent: 'grey',
@@ -51,6 +87,12 @@ export interface Team { id: string; name: string; modules: string[]; topics: str
 
 export type PermissionSetType = 'System' | 'Custom';
 export interface PermissionSet { id: string; name: string; moduleId: string | null; type: PermissionSetType; isLocked: boolean; capabilities: Record<string, boolean | string>; }
+
+/** A Marketplace integration (owned by the Integrations team). Integration Hub is district-level
+ *  (global-admins-only), but a global admin can grant department modules manager access to specific
+ *  integrations — `managerModuleIds` is that grant list. A granted department sees a scoped
+ *  Integration Hub; empty = global-admin-managed only. See ModuleContextService.canSeeIntegrations. */
+export interface Integration { id: string; name: string; managerModuleIds: string[]; }
 
 export type TicketPriority = 'P1' | 'P2' | 'P3';
 export type TicketStatus = 'Unopened' | 'In Progress' | 'Waiting' | 'Closed';

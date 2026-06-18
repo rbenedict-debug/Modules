@@ -95,3 +95,14 @@ $module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
 .module-switcher__accent--grey {
   color: var(--color-icon-subtle);
 }
+
+// The 6 K12 custom-module colors — saturated glyph sourced from the app-local --module-color-*
+// token (defined in styles.scss). Quoted so Sass treats `cyan`/`lime`/`magenta` as plain strings,
+// not color keywords. Mirrors the card icon-box treatment on the Department Modules page.
+$module-extra-colors: 'gold', 'lime', 'cyan', 'indigo', 'magenta', 'clay', 'coral', 'mint', 'slate', 'sky', 'maroon';
+
+@each $c in $module-extra-colors {
+  .module-switcher__accent--#{$c} {
+    color: var(--module-color-#{$c}-icon);
+  }
+}

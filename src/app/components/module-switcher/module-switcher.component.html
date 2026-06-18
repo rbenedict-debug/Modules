@@ -8,7 +8,7 @@
       <span class="ds-icon ds-icon--sm ds-icon--filled module-switcher__icon module-switcher__icon--global" aria-hidden="true">public</span>
       <span class="module-switcher__name">Global</span>
     } @else {
-      <span class="ds-icon ds-icon--sm ds-icon--filled module-switcher__icon module-switcher__accent--{{ moduleCtx.currentModule()?.accent }}"
+      <span class="ds-icon ds-icon--sm ds-icon--filled module-switcher__icon module-switcher__accent--{{ currentColorClass() }}"
             aria-hidden="true">{{ moduleCtx.currentModule()?.icon }}</span>
       <span class="module-switcher__name">{{ moduleCtx.currentModule()?.name }}</span>
     }
@@ -52,7 +52,7 @@
              (keydown.enter)="select(m.id, $event)"
              (keydown.space)="select(m.id, $event); $event.preventDefault()">
           <div class="ds-list-item__leading">
-            <span class="ds-icon ds-icon--filled module-switcher__accent--{{ m.accent }}" aria-hidden="true">{{ m.icon }}</span>
+            <span class="ds-icon ds-icon--filled module-switcher__accent--{{ m.color ?? m.accent }}" aria-hidden="true">{{ m.icon }}</span>
           </div>
           <div class="ds-list-item__content">
             <span class="ds-list-item__primary">{{ m.name }}</span>

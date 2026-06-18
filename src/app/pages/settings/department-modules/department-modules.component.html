@@ -38,7 +38,7 @@
                 }
 
                 <div class="ds-card__header">
-                  <span class="modules__icon-box modules__icon-box--{{ m.accent }}" aria-hidden="true">
+                  <span class="modules__icon-box modules__icon-box--{{ m.color ?? m.accent }}" aria-hidden="true">
                     <span class="ds-icon ds-icon--filled ds-card__header-icon">{{ m.icon }}</span>
                   </span>
                   <div class="ds-card__header-text">
@@ -82,7 +82,7 @@
   <div class="ds-dialog-backdrop" (click)="closeRequest()">
     <!-- TODO eng: focus trap + Escape-to-close (MatDialog / CDK) on handoff -->
     <div class="ds-dialog modules__request-dialog" role="dialog" aria-modal="true"
-         aria-labelledby="request-dialog-title" (click)="$event.stopPropagation()">
+         aria-labelledby="request-dialog-title" (click)="onDialogClick($event)">
       <div class="ds-dialog__body">
         @if (requestError(); as err) {
           <div class="ds-alert ds-alert--error modules__request-error" role="alert">
@@ -107,10 +107,85 @@
           }
         </p>
         @if (isCustomRequest) {
-          <div class="ds-input">
+          <div class="ds-input modules__field" [class.is-error]="nameError">
             <label class="ds-input__label" for="request-module-name">Module name<span class="ds-input__required" aria-hidden="true">*</span></label>
             <div class="ds-input__field">
-              <input id="request-module-name" class="ds-input__control" type="text" placeholder="e.g. Athletics" [(ngModel)]="customName" />
+              <input id="request-module-name" class="ds-input__control" type="text" placeholder="e.g. Athletics"
+                     [(ngModel)]="customName"
+                     [attr.aria-invalid]="nameError ? 'true' : null"
+                     [attr.aria-describedby]="nameError ? 'request-name-error' : null" />
+              @if (nameError) {
+                <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+              }
+            </div>
+            @if (nameError) {
+              <span class="ds-input__helper" id="request-name-error" role="alert">{{ nameError }}</span>
+            }
+          </div>
+
+          <!-- Icon + color pickers, side by side. Fully Angular-controlled popovers (not ds-select —
+               the trigger shows a glyph / color dot, not text): click an option to set + close,
+               outside-click / Esc close, the current choice is highlighted. -->
+          <div class="modules__field modules__appearance">
+            <!-- Icon -->
+            <div class="modules__picker">
+              <span class="ds-input__label" id="request-icon-label">Icon</span>
+              <button type="button" class="modules__picker-trigger"
+                      aria-haspopup="menu" [attr.aria-expanded]="openPicker() === 'icon'"
+                      aria-labelledby="request-icon-label" (click)="togglePicker('icon')">
+                <span class="ds-icon ds-icon--filled" aria-hidden="true">{{ selectedIcon }}</span>
+                <span class="ds-icon ds-icon--sm modules__picker-caret" aria-hidden="true">arrow_drop_down</span>
+              </button>
+              @if (openPicker() === 'icon') {
+                <div class="ds-menu modules__picker-panel" role="menu" aria-label="Icon">
+                  <div class="modules__picker-grid">
+                    @for (opt of iconOptions; track opt.name) {
+                      <button type="button" class="modules__picker-option"
+                              [class.is-selected]="selectedIcon === opt.name"
+                              role="menuitemradio" [attr.aria-checked]="selectedIcon === opt.name"
+                              [attr.aria-label]="opt.label" (click)="pickIcon(opt.name)">
+                        <span class="ds-icon ds-icon--filled" aria-hidden="true">{{ opt.name }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Color -->
+            <div class="modules__picker">
+              <span class="ds-input__label" id="request-color-label">Color</span>
+              <button type="button" class="modules__picker-trigger"
+                      aria-haspopup="menu" [attr.aria-expanded]="openPicker() === 'color'"
+                      aria-labelledby="request-color-label" (click)="togglePicker('color')">
+                <span class="modules__swatch-dot modules__color-swatch--{{ selectedColor }}" aria-hidden="true"></span>
+                <span class="ds-icon ds-icon--sm modules__picker-caret" aria-hidden="true">arrow_drop_down</span>
+              </button>
+              @if (openPicker() === 'color') {
+                <div class="ds-menu modules__picker-panel" role="menu" aria-label="Color">
+                  <div class="modules__picker-grid">
+                    @for (opt of colorOptions; track opt.key) {
+                      <button type="button" class="modules__picker-option"
+                              [class.is-selected]="selectedColor === opt.key"
+                              role="menuitemradio" [attr.aria-checked]="selectedColor === opt.key"
+                              [attr.aria-label]="opt.label" (click)="pickColor(opt.key)">
+                        <span class="modules__swatch-dot modules__color-swatch--{{ opt.key }}" aria-hidden="true"></span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Live preview — the card icon tile + name exactly as it will render. -->
+          <div class="modules__field">
+            <span class="ds-input__label">Preview</span>
+            <div class="modules__preview">
+              <span class="modules__icon-box modules__icon-box--{{ selectedColor }}" aria-hidden="true">
+                <span class="ds-icon ds-icon--filled ds-card__header-icon">{{ selectedIcon }}</span>
+              </span>
+              <span class="modules__preview-name">{{ customName.trim() || 'Module name' }}</span>
             </div>
           </div>
         }
@@ -120,8 +195,8 @@
         <button class="ds-button ds-button--text ds-button--md" type="button"
                 [disabled]="submitting()" (click)="closeRequest()">Cancel</button>
         <button class="ds-button ds-button--filled ds-button--md" type="button"
-                [disabled]="(isCustomRequest && !customName.trim()) || submitting()"
-                [class.is-disabled]="isCustomRequest && !customName.trim()"
+                [disabled]="(isCustomRequest && (!customName.trim() || !!nameError)) || submitting()"
+                [class.is-disabled]="isCustomRequest && (!customName.trim() || !!nameError)"
                 [class.is-loading]="submitting()"
                 [attr.aria-busy]="submitting() ? 'true' : null"
                 (click)="confirmRequest($event)">{{ submitting() ? 'Sending...' : 'Send request' }}</button>

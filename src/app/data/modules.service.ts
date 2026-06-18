@@ -34,10 +34,12 @@ export class ModulesService {
       tagline: 'A service desk for your facilities team, with asset and maintenance tracking built in.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing', 'Asset management'],
     },
-    // Example custom, client-named module. Custom modules use the shared CUSTOM_MODULE_DEFAULTS
-    // treatment (settings icon, grey tile, ticketing-only copy); only the name is client-chosen.
+    // Example custom, client-named module. Custom modules share CUSTOM_MODULE_DEFAULTS' copy
+    // (ticketing + assets) but choose their own name, icon, and color — here a music note on a
+    // magenta tile (one of the 6 K12 colors), showing how a request renders on the card + switcher.
     {
       id: 'music', name: 'Music', ticketCount: 7, active: true, ...CUSTOM_MODULE_DEFAULTS,
+      icon: 'music_note', color: 'magenta',
     },
   ]);
 }

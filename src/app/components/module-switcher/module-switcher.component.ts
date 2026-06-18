@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, computed, inject, signal } from '@angular/core';
 import { ModuleContextService } from '../../data/module-context.service';
 import { MessagingService } from '../../data/messaging.service';
 
@@ -16,6 +16,13 @@ export class ModuleSwitcherComponent {
   private readonly msg = inject(MessagingService);
 
   readonly open = signal(false);
+
+  /** Effective glyph color for the current context's trigger icon — a custom module's chosen
+   *  `color`, otherwise its `accent`. (Menu rows compute `m.color ?? m.accent` inline.) */
+  readonly currentColorClass = computed(() => {
+    const m = this.moduleCtx.currentModule();
+    return m ? (m.color ?? m.accent) : '';
+  });
 
   toggle(): void {
     this.open.update(v => !v);
