@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   OnInit,
   Output,
   computed,
@@ -16,6 +17,7 @@ import {
   PermissionDef,
   PermissionSetsService,
 } from '../../../../data/permission-sets.service';
+import { ChromeService } from '../../../../data/chrome.service';
 
 // Section-level preset for the four header buttons. 'custom' = current values match none.
 type Preset = 'no-access' | 'view-only' | 'full-access' | 'custom';
@@ -42,13 +44,15 @@ const DV_EXCLUDE_OTHER_LOCATIONS = 'dv-exclude-other-locations';
   // own section title inside. Stays attached (no detach) so it remains fully reactive.
   host: { class: 'ds-page-content__main', style: 'display: flex; flex-direction: column;' },
 })
-export class PermissionSetEditorComponent implements OnInit {
+export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   /** The id of the permission set to edit. Loaded into the working copy on init. */
   @Input({ required: true }) setId!: string;
   /** Emitted on Back / Cancel / Save — the parent closes the editor (clears its signal). */
   @Output() back = new EventEmitter<void>();
 
   private readonly setsSvc = inject(PermissionSetsService);
+  // Auto-collapses the section subnav while this full-area editor is on screen; see lifecycle.
+  private readonly chrome = inject(ChromeService);
 
   // Section ids that hold catalog perms (everything except the synthetic data-visibility pane).
   readonly catalog = this.setsSvc.catalog;
@@ -79,7 +83,15 @@ export class PermissionSetEditorComponent implements OnInit {
   private readonly collapsed = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
+    // The editor only exists while the page is on screen, so its lifecycle brackets the
+    // "create/edit permission set" view: collapse the subnav on open, restore it on close
+    // (back / cancel / save, or navigating away entirely).
+    this.chrome.setEditorOpen(true);
     this.loadSet(this.setId);
+  }
+
+  ngOnDestroy(): void {
+    this.chrome.setEditorOpen(false);
   }
 
   // Load the set identified by `id` into the working copy. Same logic the old

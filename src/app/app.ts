@@ -7,6 +7,7 @@ import { CommandPaletteComponent } from './components/command-palette/command-pa
 import { SnackbarHostComponent } from './components/snackbar-host/snackbar-host.component';
 import { ModuleContextService } from './data/module-context.service';
 import { PersonaService } from './data/persona.service';
+import { ChromeService } from './data/chrome.service';
 
 type NavSection = 'tickets' | 'assets' | 'users' | 'analytics' | 'settings';
 
@@ -32,6 +33,9 @@ export class App implements AfterViewInit, OnDestroy {
   readonly moduleCtx = inject(ModuleContextService);
   // The active persona drives the shell; the top-nav avatar shows its initials.
   readonly persona = inject(PersonaService);
+  // Shell chrome state. subNavOpen lives here so full-area takeover views (the permission-set
+  // editor) can auto-collapse the drawer across the router-outlet boundary; see the proxy below.
+  private readonly chrome = inject(ChromeService);
 
   /** Initials of the active persona, for the top-nav avatar. */
   get personaInitials(): string {
@@ -39,7 +43,10 @@ export class App implements AfterViewInit, OnDestroy {
     return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
   }
 
-  subNavOpen = true;
+  // Proxies the shared ChromeService signal, so existing template bindings and the
+  // ds-nav-expand toggle keep working unchanged while the editor can drive it too.
+  get subNavOpen(): boolean { return this.chrome.subNavOpen(); }
+  set subNavOpen(value: boolean) { this.chrome.subNavOpen.set(value); }
   activeNav: NavSection = 'tickets';
 
   private _scrollCleanup: (() => void) | null = null;
