@@ -1,10 +1,10 @@
-import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { Router } from '@angular/router';
 import { AgentsTabComponent } from './agents-tab/agents-tab.component';
 import { AuthenticationTabComponent } from './authentication-tab/authentication-tab.component';
 import { TeamsTabComponent } from './teams-tab/teams-tab.component';
 import { PermissionSetsTabComponent } from './permission-sets-tab/permission-sets-tab.component';
 import { PermissionSetEditorComponent } from './permission-set-editor/permission-set-editor.component';
-import { AgentProfileDrawerComponent } from './agent-profile-drawer/agent-profile-drawer.component';
 
 type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 
@@ -17,7 +17,6 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
     TeamsTabComponent,
     PermissionSetsTabComponent,
     PermissionSetEditorComponent,
-    AgentProfileDrawerComponent,
   ],
   templateUrl: './agent-management.component.html',
   styleUrl: './agent-management.component.scss',
@@ -25,15 +24,19 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
   host: { class: 'ds-page-content', role: 'main' },
 })
 export class AgentManagementComponent {
+  private readonly router = inject(Router);
+
   readonly activeTab = signal<AgentMgmtTab>('agents');
 
-  // Profile drawer + permission editor are owned here (the parent stays attached), so row
-  // clicks from the detached table tabs can open them by setting these signals.
-  readonly selectedAgentId = signal<string | null>(null);
   /** Permission set being edited (null = list/tabs view). Drives the full-area editor. */
   readonly editingSetId = signal<string | null>(null);
 
   setTab(tab: AgentMgmtTab): void {
     this.activeTab.set(tab);
+  }
+
+  /** A row click in the (detached) Agents table opens the full agent profile page. */
+  openProfile(id: string): void {
+    this.router.navigate(['/settings/agent-management', id]);
   }
 }

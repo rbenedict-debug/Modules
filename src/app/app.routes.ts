@@ -6,6 +6,7 @@ import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { DepartmentModulesComponent } from './pages/settings/department-modules/department-modules.component';
 import { AgentManagementComponent } from './pages/settings/agent-management/agent-management.component';
+import { AgentProfileComponent } from './pages/settings/agent-management/agent-profile/agent-profile.component';
 import { SettingsBlankComponent } from './pages/settings/blank/blank.component';
 
 export const routes: Routes = [
@@ -21,6 +22,9 @@ export const routes: Routes = [
       { path: '', redirectTo: 'department-modules', pathMatch: 'full' },
       { path: 'department-modules', component: DepartmentModulesComponent },
       { path: 'agent-management', component: AgentManagementComponent },
+      // Full agent profile (replaces the old slide-out drawer). Same /settings/agent-management
+      // prefix so the subnav item stays selected (_syncSettingsFromUrl reads segment[1]).
+      { path: 'agent-management/:id', component: AgentProfileComponent },
       { path: 'blank', component: SettingsBlankComponent },
     ],
   },

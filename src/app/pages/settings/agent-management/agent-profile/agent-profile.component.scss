@@ -1,0 +1,398 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+/* No heading→content gap override here: the DS default (--spacing-lg) plus the scroll
+   container's --spacing-xs top padding give 20px below the breadcrumb, which matches the
+   20px above it (ds-page-layout__body top padding --spacing-md + the breadcrumb's
+   --spacing-sm top inset). Even space above and below on this title-less page. */
+
+/* Breadcrumb (component-scoped stand-in; ported from the User-Explorer profile).
+   TODO eng: promote to a real ds-breadcrumb component. */
+.breadcrumb {
+  /* No bottom margin — the host gap below the heading provides the separation. */
+  margin-bottom: 0;
+  /* Sit in the same padded box as ds-page-content__title (padding: --spacing-sm 0 0
+     --spacing-lg) so the breadcrumb left-aligns with where page titles sit and clears
+     the nav-expand toggle the same way titles do — this replaces the old :host gutter. */
+  padding: var(--spacing-sm) 0 0 var(--spacing-lg);
+
+  &__list {
+    @include ds.type-body-small;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item,
+  &__sep {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__sep {
+    color: var(--color-icon-subtle);
+  }
+
+  &__link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-text-primary);
+      text-decoration: underline;
+    }
+
+    &:focus { outline: none; }
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  &__current {
+    color: var(--color-text-primary);
+  }
+}
+
+/* Profile layout: a full-width profile header card stacked above a 70/30 split for
+   the remaining sections. The outer element is a flex column that owns the page
+   scroll (flex: 1 + overflow-y: auto), mirroring ds-page-content__main — the heading
+   stays fixed above it. */
+.agent-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  /* Custom scroll boundary — style its scrollbar with the DS scroll token. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  /* Elevated-card shadows get clipped at the scroll edges. Pad the scrollport so the
+     shadows have room, then cancel the horizontal padding with a negative inline
+     margin so cards stay aligned with the heading (the DS dashboard-canvas trick). */
+  padding: var(--spacing-xs) var(--spacing-md) var(--spacing-lg);
+  margin-inline: calc(-1 * var(--spacing-md));
+
+  &::-webkit-scrollbar { width: 8px; height: 8px; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+  &::-webkit-scrollbar-track { background: transparent; }
+}
+
+/* Keep the cards at their natural height — let .agent-detail scroll instead of
+   letting the height-constrained flex column squash them to ~0. */
+.agent-detail > * {
+  flex-shrink: 0;
+}
+
+.agent-detail__split {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+  gap: var(--spacing-lg);
+  align-items: start;
+}
+
+.agent-detail__main,
+.agent-detail__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  min-width: 0;
+
+  > .ds-card { width: 100%; }
+}
+
+/* ── Profile hero ──────────────────────────────────────────────────────────── */
+.agent-detail__hero {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.agent-detail__hero-id {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.agent-detail__hero-name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.agent-detail__hero-name {
+  margin: 0;
+  @include ds.type-title-h3;
+  color: var(--color-text-primary);
+}
+
+.agent-detail__hero-sub {
+  margin: 0;
+  @include ds.type-body-medium;
+  color: var(--color-text-secondary);
+}
+
+/* ── Section heads ─────────────────────────────────────────────────────────── */
+.agent-detail__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Count-badge heads (Permissions / Notes / Assets): tuck the count pill right after
+   the title instead of pushing it to the far edge. */
+.agent-detail__section-head--count {
+  justify-content: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.agent-detail__section-title {
+  margin: 0;
+  @include ds.type-title-h3;
+  color: var(--color-text-primary);
+}
+
+/* ── Basic Information grid ────────────────────────────────────────────────── */
+.agent-detail__info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.agent-detail__info-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.agent-detail__info-values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+/* Chip stacks (roles / locations / topics / teams) */
+.agent-detail__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+/* ── Row lists (recent tickets, assets) ────────────────────────────────────── */
+.agent-detail__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+/* Inset card-item leading/trailing slots from the card edge (they're edge-flush by default). */
+.agent-detail__row-inset {
+  padding-inline: var(--spacing-md);
+}
+
+.agent-detail__row-icon {
+  flex: none;
+  color: var(--color-text-secondary);
+}
+
+/* ── Permissions: one bordered sub-card per module ─────────────────────────── */
+.agent-detail__perms {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.agent-detail__perm-item {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.agent-detail__perm-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  min-width: 0;
+  flex: 1;
+}
+
+.agent-detail__perm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.agent-detail__perm-name {
+  @include ds.type-body-medium;
+  font-weight: var(--ref-typescale-body-medium-weight-prominent);
+  color: var(--color-text-primary);
+}
+
+.agent-detail__perm-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+/* Accent icon tile keyed off the module's accent (mirrors the Department Modules
+   pattern and the former drawer's per-module icon). */
+.agent-detail__module-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  height: fit-content;
+}
+
+$accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+
+@each $accent in $accents {
+  .agent-detail__module-icon--#{$accent} {
+    background-color: var(--color-surface-accent-#{$accent});
+    .ds-icon { color: var(--color-icon-accent-#{$accent}); }
+  }
+}
+
+/* "grey" has no accent tokens — neutral tile. */
+.agent-detail__module-icon--grey {
+  background-color: var(--color-surface-subtle);
+  .ds-icon { color: var(--color-icon-subtle); }
+}
+
+/* ── Ticket stat cards (outlined, status-tinted — same tones as the DS label pills) ── */
+.agent-detail__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-md);
+
+  .ds-metric-card { width: 100%; }
+}
+
+.agent-detail__stat-card {
+  box-shadow: none;
+  border: 1px solid var(--stat-border);
+  background-color: var(--stat-surface);
+
+  .ds-metric-card__header .ds-icon { color: var(--stat-icon); }
+}
+
+.agent-detail__stat-card--blue {
+  --stat-surface: var(--color-surface-accent-blue);
+  --stat-border: var(--color-border-accent-blue);
+  --stat-icon: var(--color-icon-accent-blue);
+}
+
+.agent-detail__stat-card--orange {
+  --stat-surface: var(--color-surface-accent-orange);
+  --stat-border: var(--color-border-accent-orange);
+  --stat-icon: var(--color-icon-accent-orange);
+}
+
+.agent-detail__stat-card--grey {
+  --stat-surface: var(--color-surface-secondary);
+  --stat-border: var(--color-border-primary);
+  --stat-icon: var(--color-icon-subtle);
+}
+
+.agent-detail__divider { margin: var(--spacing-lg) 0; }
+
+/* ── Shared text treatments ────────────────────────────────────────────────── */
+.agent-detail__info-value,
+.agent-detail__note-text {
+  @include ds.type-body-medium;
+  color: var(--color-text-primary);
+  word-break: break-word;
+}
+
+.agent-detail__info-label,
+.agent-detail__list-label,
+.agent-detail__note-author,
+.agent-detail__note-time {
+  @include ds.type-label-small;
+  color: var(--color-text-secondary);
+}
+
+.agent-detail__list-label { margin: 0 0 var(--spacing-sm); }
+
+.agent-detail__muted {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+.agent-detail__empty-graphic {
+  color: var(--color-icon-disabled);
+}
+
+/* ── Notes — composer + author-attributed feed ─────────────────────────────── */
+.agent-detail__note-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+
+  .ds-textarea { width: 100%; }
+}
+
+.agent-detail__note-composer-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.agent-detail__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.agent-detail__note {
+  display: flex;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface-accent-yellow);
+  border: 1px solid var(--color-border-accent-yellow);
+  border-radius: var(--radius-md);
+
+  .ds-avatar { flex: none; }
+}
+
+.agent-detail__note-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+.agent-detail__note-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+}
+
+/* author overrides the shared label-small secondary color (declared after it) */
+.agent-detail__note-author { color: var(--color-text-primary); }
+.agent-detail__note-time { flex: none; }
+.agent-detail__note-text { margin: 0; }

@@ -39,7 +39,7 @@
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
-      <app-agents-tab (viewProfile)="selectedAgentId.set($event)" />
+      <app-agents-tab (viewProfile)="openProfile($event)" />
     }
     @case ('authentication') {
       <app-authentication-tab />
@@ -52,7 +52,3 @@
     }
   }
 }
-
-<!-- Profile drawer lives in the (attached) parent, so a row click in the detached Agents
-     table still opens it via the selectedAgentId signal. -->
-<app-agent-profile-drawer [agentId]="selectedAgentId()" (close)="selectedAgentId.set(null)" />
