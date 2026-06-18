@@ -27,7 +27,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - run: npm ci
+      # npm install (not `npm ci`): the lockfile is generated on macOS and omits Linux-only
+      # optional deps (@emnapi/*, the wasm-runtime fallback), which makes the stricter `npm ci`
+      # fail on the Linux runner. `npm install` resolves them at build time.
+      - run: npm install
       # --base-href must match the Pages sub-path: https://<user>.github.io/Modules/
       # (change it if the repo is renamed or served from a custom domain).
       - run: npm run build -- --base-href=/Modules/
