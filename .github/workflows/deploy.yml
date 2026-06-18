@@ -1,0 +1,52 @@
+name: Deploy prototype to GitHub Pages
+
+# Manual by default (Run workflow → pick a branch), so nothing publishes until you choose;
+# also auto-deploys once this work is merged to main. To go live: Settings → Pages →
+# Build and deployment → Source: "GitHub Actions", then run this workflow.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Let an in-flight deploy finish; don't run two at once.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # --base-href must match the Pages sub-path: https://<user>.github.io/Modules/
+      # (change it if the repo is renamed or served from a custom domain).
+      - run: npm run build -- --base-href=/Modules/
+      - name: SPA fallback + disable Jekyll
+        # 404.html = index.html so deep links / refreshes boot the Angular router;
+        # .nojekyll stops Pages from dropping files that start with "_".
+        run: |
+          cp dist/Onflo-Project-Template/browser/index.html dist/Onflo-Project-Template/browser/404.html
+          touch dist/Onflo-Project-Template/browser/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/Onflo-Project-Template/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
