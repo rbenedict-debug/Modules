@@ -14,21 +14,23 @@
         <span class="ds-icon ds-icon--filled" aria-hidden="true">inbox</span>
         <span class="ds-nav-button__label">Tickets</span>
       </button>
-      <button class="ds-nav-button" [class.is-selected]="activeNav === 'assets'"    type="button" aria-label="Assets"    (click)="setNav('assets')">
-        <span class="ds-icon" aria-hidden="true">desktop_mac</span>
-        <span class="ds-nav-button__label">Assets</span>
-      </button>
+      @if (navVisible('assets')) {
+        <button class="ds-nav-button" [class.is-selected]="activeNav === 'assets'"    type="button" aria-label="Assets"    (click)="setNav('assets')">
+          <span class="ds-icon" aria-hidden="true">desktop_mac</span>
+          <span class="ds-nav-button__label">Assets</span>
+        </button>
+      }
       <button class="ds-nav-button" [class.is-selected]="activeNav === 'users'"     type="button" aria-label="Users"     (click)="setNav('users')">
         <span class="ds-icon" aria-hidden="true">group</span>
         <span class="ds-nav-button__label">Users</span>
       </button>
-      @if (!moduleCtx.isAgentRole()) {
+      @if (navVisible('analytics')) {
         <button class="ds-nav-button" [class.is-selected]="activeNav === 'analytics'" type="button" aria-label="Analytics" (click)="setNav('analytics')">
           <span class="ds-icon" aria-hidden="true">equalizer</span>
           <span class="ds-nav-button__label">Analytics</span>
         </button>
       }
-      @if (!moduleCtx.isAgentRole()) {
+      @if (navVisible('settings')) {
         <button class="ds-nav-button" [class.is-selected]="activeNav === 'settings'"  type="button" aria-label="Settings"  (click)="setNav('settings')">
           <span class="ds-icon ds-icon--filled" aria-hidden="true">settings</span>
           <span class="ds-nav-button__label">Settings</span>
@@ -327,13 +329,13 @@
                     <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ (settingsExpanded['integration-hub'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                   </button>
                   <div class="ds-subnav-header__children">
-                    @if (!filter || filter.has('api-tokens')) {
+                    @if (moduleCtx.isGlobal() && (!filter || filter.has('api-tokens'))) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'api-tokens'">API Tokens</button>
                     }
-                    @if (!filter || filter.has('webhooks')) {
+                    @if (moduleCtx.isGlobal() && (!filter || filter.has('webhooks'))) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'webhooks'">Webhooks</button>
                     }
-                    @if (!filter || filter.has('marketplace')) {
+                    @if (moduleCtx.isGlobal() && (!filter || filter.has('marketplace'))) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'marketplace'">Marketplace</button>
                     }
                     @if (!filter || filter.has('installed-apps')) {

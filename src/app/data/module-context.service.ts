@@ -1,10 +1,16 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
-import { Module, ModuleRole } from './models';
+import { Capability, Integration, Module, ModuleRole, moduleCapabilities } from './models';
 import { ModulesService } from './modules.service';
 import { PersonaService } from './persona.service';
+import { IntegrationsService } from './integrations.service';
 
 /** A module the active persona can act in, enriched with that persona's role in it. */
 export type AccessibleModule = Module & { role: ModuleRole };
+
+/** Every capability area — the visible set in the Global (district-wide) context. */
+const ALL_CAPABILITIES: ReadonlySet<Capability> = new Set<Capability>([
+  'ticketing', 'analytics', 'workflow', 'assets',
+]);
 
 /**
  * Derives the viewing context from the active Persona (PersonaService). Persona is the
@@ -17,6 +23,7 @@ export type AccessibleModule = Module & { role: ModuleRole };
 export class ModuleContextService {
   private readonly modulesSvc = inject(ModulesService);
   private readonly personaSvc = inject(PersonaService);
+  private readonly integrationsSvc = inject(IntegrationsService);
 
   // null = Global (district-wide) context — only reachable by global-admin personas.
   private readonly _currentModuleId = signal<string | null>(null);
@@ -47,6 +54,36 @@ export class ModuleContextService {
 
   /** Agent context = a non-global context whose persona role is Agent. Global admins are never agents. */
   readonly isAgentRole = computed(() => !this.isGlobal() && this.currentModule()?.role === 'Agent');
+
+  /**
+   * Capability areas visible in the current context: a specific module → that module's
+   * capabilities (from its features); Global context (global admin, no module) → all of them.
+   * The side-nav (Assets/Analytics) and the Settings sections gate on these.
+   */
+  readonly visibleCapabilities = computed<ReadonlySet<Capability>>(() => {
+    const mod = this.currentModule();
+    return mod ? moduleCapabilities(mod) : ALL_CAPABILITIES;
+  });
+
+  readonly hasTicketing = computed(() => this.visibleCapabilities().has('ticketing'));
+  readonly hasAnalytics = computed(() => this.visibleCapabilities().has('analytics'));
+  readonly hasWorkflow  = computed(() => this.visibleCapabilities().has('workflow'));
+  readonly hasAssets    = computed(() => this.visibleCapabilities().has('assets'));
+
+  /**
+   * Integrations the current context manages. Global context → all of them (a global admin owns the
+   * Integration Hub). Scoped into a module → only the integrations a global admin has granted that
+   * department manager access to (assigned in the Marketplace). Empty for an ungranted department.
+   */
+  readonly managedIntegrations = computed<Integration[]>(() => {
+    const id = this._currentModuleId();
+    const all = this.integrationsSvc.integrations();
+    return id === null ? all : all.filter(i => i.managerModuleIds.includes(id));
+  });
+
+  /** Integration Hub is district-level (Global context only), except a department granted manager
+   *  access to ≥1 integration sees a scoped Integration Hub too. */
+  readonly canSeeIntegrations = computed(() => this.isGlobal() || this.managedIntegrations().length > 0);
 
   readonly canManageUsers = computed(() => this.isGlobalAdmin() || this.currentModule()?.role === 'Admin');
   readonly canCreateUsers = computed(() => this.isGlobal());

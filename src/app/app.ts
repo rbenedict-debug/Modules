@@ -18,6 +18,9 @@ interface SettingsItem {
   subheaderParent?: string;
 }
 
+/** Routed Settings pages that live in the Global section — reachable only in the Global context. */
+const GLOBAL_ONLY_SETTINGS_PAGES = new Set(['department-modules', 'user-management']);
+
 @Component({
   selector: 'app-root',
   imports: [RouterOutlet, ModuleSwitcherComponent, CommandPaletteComponent, SnackbarHostComponent],
@@ -47,28 +50,50 @@ export class App implements AfterViewInit, OnDestroy {
     this.theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     this._syncNavFromUrl(router.url);
     this._syncSettingsFromUrl(router.url);
+    this._reconcileSettingsPage();
     this._routerSub = router.events.pipe(
       filter(e => e instanceof NavigationEnd)
     ).subscribe(e => {
       this._syncNavFromUrl((e as NavigationEnd).urlAfterRedirects);
       this._syncSettingsFromUrl((e as NavigationEnd).urlAfterRedirects);
+      this._reconcileSettingsPage();
       if (this.activeNav === 'settings') setTimeout(() => this._setupSettingsScrollbar(), 0);
     });
 
     // ModuleContextService.select() only flips a signal — no router event fires — so the
-    // URL-driven redirect in _syncNavFromUrl won't run when the switcher moves to an
-    // agent-role module while Settings/Analytics is showing. Watch the role signal and
-    // bounce to Tickets if we're stranded on a restricted section. Navigating updates
-    // activeNav via the router sync, so the `_agentRestricted.includes` guard prevents loops.
+    // URL-driven redirects won't run when the switcher changes the context. Read the context
+    // signals directly so this re-runs on every switch, then: bounce to Tickets if you're on a
+    // nav section the new context hides (an agent on Settings/Analytics, or a module without
+    // Assets/Analytics), or swap the open Settings page to/from the blank placeholder when you
+    // cross the Global boundary. The router sync keeps activeNav current and both targets are
+    // stable, so there's no redirect loop.
     effect(() => {
-      if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(this.activeNav)) {
+      this.moduleCtx.visibleCapabilities();
+      this.moduleCtx.isAgentRole();
+      this.moduleCtx.isGlobal();
+      if (!this.navVisible(this.activeNav)) {
         this.router.navigate(['tickets']);
+        return;
       }
+      this._reconcileSettingsPage();
     });
   }
 
-  /** Sections hidden from agent-role module contexts. */
-  private readonly _agentRestricted: NavSection[] = ['analytics', 'settings'];
+  /**
+   * Whether a top-level nav section is reachable in the current module context. Drives both the
+   * sidebar `@if` gates and the redirect that bounces you off a section the active module hides
+   * (e.g. switching into Classic while on Assets). Tickets/Users are always available — Tickets is
+   * the safe fallback. Assets needs the module's Asset-management capability; Analytics needs
+   * Dashboard analytics and is hidden for agents; Settings is hidden for agents.
+   */
+  navVisible(section: NavSection): boolean {
+    switch (section) {
+      case 'assets':    return this.moduleCtx.hasAssets();
+      case 'analytics': return !this.moduleCtx.isAgentRole() && this.moduleCtx.hasAnalytics();
+      case 'settings':  return !this.moduleCtx.isAgentRole();
+      default:          return true; // tickets, users
+    }
+  }
 
   private _syncNavFromUrl(url: string): void {
     const segment = url.split('/')[1]?.split('?')[0];
@@ -79,8 +104,9 @@ export class App implements AfterViewInit, OnDestroy {
     } else {
       next = valid.includes(segment as NavSection) ? (segment as NavSection) : 'tickets';
     }
-    // Agent-role contexts can't see Analytics/Settings — bounce them to Tickets.
-    if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(next)) {
+    // Sections the active module hides (Assets without asset mgmt, Analytics/Settings for agents)
+    // bounce to Tickets.
+    if (!this.navVisible(next)) {
       this.activeNav = 'tickets';
       this.router.navigate(['tickets']);
       return;
@@ -98,8 +124,8 @@ export class App implements AfterViewInit, OnDestroy {
   }
 
   setNav(section: NavSection): void {
-    // Agent-role contexts have no Analytics/Settings — redirect to Tickets instead.
-    if (this.moduleCtx.isAgentRole() && this._agentRestricted.includes(section)) {
+    // A section the active module hides → go to Tickets instead.
+    if (!this.navVisible(section)) {
       section = 'tickets';
     }
     this.subNavOpen = true;
@@ -116,6 +142,21 @@ export class App implements AfterViewInit, OnDestroy {
     const segments = url.split('?')[0].split('/').filter(Boolean);
     if (segments[0] === 'settings' && segments[1]) {
       this.settingsNavItem = segments[1];
+    }
+  }
+
+  /**
+   * Keep the open Settings page consistent with the context. The Global pages (Department Modules /
+   * User Management) require the Global context; scoped into a module the content area shows the
+   * blank placeholder instead, and returning to Global restores the Department Modules default.
+   * No-op unless Settings is the active section.
+   */
+  private _reconcileSettingsPage(): void {
+    if (this.activeNav !== 'settings') return;
+    if (!this.moduleCtx.isGlobal() && GLOBAL_ONLY_SETTINGS_PAGES.has(this.settingsNavItem)) {
+      this.router.navigate(['settings', 'blank']);
+    } else if (this.moduleCtx.isGlobal() && this.settingsNavItem === 'blank') {
+      this.router.navigate(['settings', 'department-modules']);
     }
   }
 
@@ -379,19 +420,32 @@ export class App implements AfterViewInit, OnDestroy {
 
   get settingsSectionVis() {
     const f = this.settingsFilteredIds;
-    if (!f) {
-      return { global: true, integrationHub: true, workflows: true,
-               ticketsSettings: true, assetsSettings: true, callCenter: true };
-    }
+    // Context/role gating, independent of the search box — which areas the current context exposes.
+    // Global is the district-wide admin area: visible ONLY in the Global context (the Global switcher
+    // selected). A global admin loses it the moment they scope into a module, and department admins —
+    // who can never enter Global context — never see it. Integration Hub is district-level like Global,
+    // except a department granted manager access to specific integrations (in the Marketplace) sees a
+    // scoped version. Workflows needs the module's workflow capability (off for custom modules); Assets
+    // needs Asset management. Tickets and Call Center stay on for every admin for now. Composed with the
+    // search filter below so you can never surface a section the context hides by searching for it.
+    const ctx = {
+      global:          this.moduleCtx.isGlobal(),
+      integrationHub:  this.moduleCtx.canSeeIntegrations(),
+      workflows:       this.moduleCtx.hasWorkflow(),
+      ticketsSettings: this.moduleCtx.hasTicketing(),
+      assetsSettings:  this.moduleCtx.hasAssets(),
+      callCenter:      true,
+    };
+    if (!f) return ctx;
     const hasAny = (section: string) =>
       this._settingsItems.some(item => item.section === section && f.has(item.id));
     return {
-      global:          hasAny('global'),
-      integrationHub:  hasAny('integration-hub'),
-      workflows:       hasAny('workflows'),
-      ticketsSettings: hasAny('tickets-settings'),
-      assetsSettings:  hasAny('assets-settings'),
-      callCenter:      hasAny('call-center'),
+      global:          ctx.global && hasAny('global'),
+      integrationHub:  ctx.integrationHub && hasAny('integration-hub'),
+      workflows:       ctx.workflows && hasAny('workflows'),
+      ticketsSettings: ctx.ticketsSettings && hasAny('tickets-settings'),
+      assetsSettings:  ctx.assetsSettings && hasAny('assets-settings'),
+      callCenter:      ctx.callCenter && hasAny('call-center'),
     };
   }
 }

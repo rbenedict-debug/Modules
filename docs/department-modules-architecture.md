@@ -8,6 +8,15 @@
 
 ---
 
+## How to read this doc
+
+This product is currently a **design-mode prototype** — a clickable Angular mock-up with no real backend yet. That matters for how to read every statement:
+
+- **What the prototype does is real and exact.** Every button label, validation message, dialog, character limit, `Coming soon` state, and empty-state text below is copied word-for-word from the built UI. Where we quote a message in `code font` — e.g. `Request submitted for "[name]".` — that is the literal string in the prototype's code today (the prototype's code, not production code).
+- **What the backend does is not built yet.** Anything about what gets sent to the server — real request submission and persistence, real failure messages, live permission enforcement, module activation/setup — does not exist in the prototype. Where the spec docs already define the intended behavior, we give it (flagged 🟡 mocked or ⛔ planned per the [status legend](#status-legend)).
+
+---
+
 ## Purpose & scope
 
 **In scope:** the **Department Modules page** (`/settings/department-modules`) and the **top-nav module

@@ -6,6 +6,7 @@ import { AnalyticsComponent } from './pages/analytics/analytics.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { DepartmentModulesComponent } from './pages/settings/department-modules/department-modules.component';
 import { UserManagementComponent } from './pages/settings/user-management/user-management.component';
+import { SettingsBlankComponent } from './pages/settings/blank/blank.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'settings/department-modules', pathMatch: 'full' },
@@ -20,6 +21,7 @@ export const routes: Routes = [
       { path: '', redirectTo: 'department-modules', pathMatch: 'full' },
       { path: 'department-modules', component: DepartmentModulesComponent },
       { path: 'user-management', component: UserManagementComponent },
+      { path: 'blank', component: SettingsBlankComponent },
     ],
   },
 ];
