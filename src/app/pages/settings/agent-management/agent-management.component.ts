@@ -1,17 +1,19 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
 import { AgentsTabComponent } from './agents-tab/agents-tab.component';
+import { AuthenticationTabComponent } from './authentication-tab/authentication-tab.component';
 import { TeamsTabComponent } from './teams-tab/teams-tab.component';
 import { PermissionSetsTabComponent } from './permission-sets-tab/permission-sets-tab.component';
 import { PermissionSetEditorComponent } from './permission-set-editor/permission-set-editor.component';
 import { AgentProfileDrawerComponent } from './agent-profile-drawer/agent-profile-drawer.component';
 
-type AgentMgmtTab = 'agents' | 'teams' | 'permission-sets';
+type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 
 @Component({
   selector: 'app-agent-management',
   standalone: true,
   imports: [
     AgentsTabComponent,
+    AuthenticationTabComponent,
     TeamsTabComponent,
     PermissionSetsTabComponent,
     PermissionSetEditorComponent,

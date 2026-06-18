@@ -1,0 +1,58 @@
+<div class="ds-page-content__main auth-tab">
+  <h2 class="ds-form-section-title">Two Factor Authentication (2FA)</h2>
+  <p class="auth-tab__intro">
+    Significantly improve the security of your district account and keep the information safe by enabling 2FA.
+  </p>
+
+  <!-- TODO eng: wire 2FA enable/disable -->
+  <label class="ds-toggle auth-tab__switch">
+    <input type="checkbox" role="switch" class="ds-toggle__control"
+           [checked]="enabled()" [attr.aria-checked]="enabled()" (change)="toggle()" />
+    <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+    <span class="ds-toggle__label">{{ enabled() ? '2FA Enabled' : '2FA Disabled' }}</span>
+  </label>
+
+  <section class="auth-tab__section">
+    <h3 class="auth-tab__heading">What Is Two Factor Authentication?</h3>
+    <p class="auth-tab__text">
+      Two factor authentication (2FA) adds an extra layer of security to your account by requiring not only
+      your username and password but also a unique code sent to your email before you can log in, this means
+      that even if someone knows your password, they cannot access your account without the additional
+      verification code.
+    </p>
+  </section>
+
+  <section class="auth-tab__section">
+    <h3 class="auth-tab__heading">How Is Two Factor Authentication Helpful?</h3>
+    <ol class="auth-tab__list">
+      <li>
+        <strong>Enhanced Security:</strong> Protects against unauthorized access as users can only login if
+        they have access to their email, where a unique code will be sent.
+      </li>
+      <li>
+        <strong>Peace of Mind:</strong> Ensures only authorized users can access their accounts from both the
+        web and the mobile admin app.
+      </li>
+      <li><strong>Anti-Phishing:</strong> Reduces the phishing attacks.</li>
+    </ol>
+  </section>
+
+  <section class="auth-tab__section">
+    <h3 class="auth-tab__heading">What Happens When Two Factor Authentication Is Turned On?</h3>
+    <ol class="auth-tab__list">
+      <li>
+        <strong>Login Process:</strong> After entering the username and password, users will receive a unique
+        code on their email.
+      </li>
+      <li>
+        <strong>Email Notifications:</strong> Every login attempt will be paired with an email notification
+        containing the code.
+      </li>
+      <li><strong>Verification:</strong> Enter the code in provided field to complete the login process.</li>
+      <li>
+        <strong>For enhanced security,</strong> all mobile app users will have to re-authorize once 2FA is
+        enabled.
+      </li>
+    </ol>
+  </section>
+</div>

@@ -1,0 +1,55 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// .auth-tab is the page's ds-page-content__main card. __main supplies the surface, radius,
+// and shadow but is an unpadded scroll boundary, so the page pads its own content — matching
+// the department-modules content page's var(--spacing-xl) page padding.
+.auth-tab {
+  padding: var(--spacing-xl);
+}
+
+.auth-tab__intro {
+  @include ds.type-body-medium;
+  color: var(--color-text-secondary);
+  margin: var(--spacing-sm) 0 var(--spacing-lg);
+}
+
+.auth-tab__switch {
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-tab__section {
+  margin-top: var(--spacing-xl);
+}
+
+.auth-tab__heading {
+  @include ds.type-body-large;
+  font-weight: var(--ref-typescale-body-large-weight-prominent);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--spacing-sm);
+}
+
+.auth-tab__text {
+  @include ds.type-body-medium;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.auth-tab__list {
+  @include ds.type-body-medium;
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding-left: var(--spacing-lg);
+
+  li {
+    margin-bottom: var(--spacing-sm);
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  strong {
+    color: var(--color-text-primary);
+    font-weight: var(--ref-typescale-body-medium-weight-prominent);
+  }
+}
