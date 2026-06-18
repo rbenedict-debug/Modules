@@ -96,6 +96,11 @@ const ALL_STATUSES: UserStatus[] = ['Active', 'Unverified', 'Inactive', 'Pending
   templateUrl: './agent-profile-drawer.component.html',
   styleUrl: './agent-profile-drawer.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  // Overlay only (scrim + panel are position:fixed). display:contents keeps the host
+  // element out of the parent's ds-page-content flex column, so it adds no trailing
+  // flex-gap — without this the always-rendered host left a --spacing-lg gap below the
+  // table, ending the page short.
+  host: { style: 'display: contents' },
 })
 export class AgentProfileDrawerComponent {
   private readonly usersSvc = inject(UsersService);

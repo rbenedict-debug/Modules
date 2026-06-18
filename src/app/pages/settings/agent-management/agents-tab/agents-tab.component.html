@@ -7,34 +7,50 @@
 <div class="ds-page-content__main ds-page-content__main--table">
   <div class="table-container">
 
-    <!-- ── Toolbar ────────────────────────────────────────────────────────────────
-         One flat row — the search is the only element that flexes (fills the width,
-         shrinks to fit); every button keeps its natural size. The filter/columns
-         buttons keep the ids table-init.js wires (#btn-filter / #btn-columns), and the
-         search keeps id="search-input" / id="search-clear". -->
+    <!-- ── Toolbar (canonical DS split layout) ─────────────────────────────────────
+         __left holds the primary action; __right holds search + filter, column-settings
+         and download. The search is the only element that flexes (fills the width, shrinks
+         to fit); every button keeps its natural size. The filter/columns buttons keep the
+         ids table-init.js wires (#btn-filter / #btn-columns), and the search keeps
+         id="search-input" / id="search-clear". -->
     <div class="ds-table-toolbar" id="toolbar">
-      <div class="ds-input ds-search users-toolbar__search" role="search">
-        <div class="ds-input__field">
-          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-          <input class="ds-input__control" type="search" placeholder="Search agents…" aria-label="Search agents" id="search-input">
-          <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
-            <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+      <div class="ds-table-toolbar__left">
+        <!-- TODO eng: wire Create Agent flow -->
+        <button class="ds-button ds-button--filled ds-button--leading-icon" type="button">
+          <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
+          Create Agent
+        </button>
+      </div>
+      <div class="ds-table-toolbar__right">
+        <div class="ds-input ds-search" role="search">
+          <div class="ds-input__field">
+            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+            <input class="ds-input__control" type="search" placeholder="Search agents…" aria-label="Search agents" id="search-input">
+            <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+            </button>
+          </div>
+        </div>
+        <div class="ds-tooltip-wrapper">
+          <button class="ds-table-toolbar__btn" type="button" aria-label="Open filters" id="btn-filter">
+            <span class="ds-icon ds-icon--filled" aria-hidden="true">filter_alt</span>
           </button>
+          <div class="ds-tooltip" role="tooltip">Filters</div>
+        </div>
+        <div class="ds-tooltip-wrapper">
+          <button class="ds-table-toolbar__btn ds-table-toolbar__btn--toggle" type="button" aria-pressed="false" aria-label="Column settings" id="btn-columns">
+            <span class="ds-icon ds-icon--filled" aria-hidden="true">settings</span>
+          </button>
+          <div class="ds-tooltip" role="tooltip">Column settings</div>
+        </div>
+        <div class="ds-tooltip-wrapper">
+          <!-- TODO eng: wire download / export -->
+          <button class="ds-table-toolbar__btn" type="button" aria-label="Download">
+            <span class="ds-icon ds-icon--filled" aria-hidden="true">download</span>
+          </button>
+          <div class="ds-tooltip" role="tooltip">Download</div>
         </div>
       </div>
-      <!-- TODO eng: wire Create Agent flow -->
-      <button class="ds-button ds-button--filled ds-button--leading-icon" type="button">
-        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">person_add</span>
-        Create Agent
-      </button>
-      <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
-              type="button" aria-label="Filter" id="btn-filter">
-        <span class="ds-icon ds-icon--filled" aria-hidden="true">filter_alt</span>
-      </button>
-      <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
-              type="button" aria-pressed="false" aria-label="Column settings" id="btn-columns">
-        <span class="ds-icon ds-icon--filled" aria-hidden="true">settings</span>
-      </button>
     </div>
 
     <!-- ── Filter bar (hidden until filters applied) ──────────────────────── -->

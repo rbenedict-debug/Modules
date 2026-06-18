@@ -5,30 +5,46 @@
 // flex — comes from onflo.css + table-sim.css. Only the few page-specific touches below
 // live here, mirroring tickets.component.scss.
 
-// ── Toolbar ─────────────────────────────────────────────────────────────────────
-// One flat flex row — the search is the ONLY flexible child: it fills the free width and
-// shrinks to fit, while every button keeps its natural size. (The bundle's
-// .ds-table-toolbar isn't a flex container in design mode, hence forcing it here.)
+// ── Toolbar (canonical DS split layout) ──────────────────────────────────────────
+// __left holds the primary action; __right holds search + filter, column-settings and
+// download. The search is the ONLY flexible child of __right — it fills the free width and
+// shrinks to fit, while every button keeps its natural size. (The bundle's .ds-table-toolbar
+// isn't a flex container in design mode, hence forcing the split here.)
 .ds-table-toolbar {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  flex-wrap: nowrap;
 }
 
-// Every toolbar child holds its size; only the search (below) is allowed to flex.
-.ds-table-toolbar > * {
+.ds-table-toolbar__left,
+.ds-table-toolbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.ds-table-toolbar__left {
   flex-shrink: 0;
 }
 
-.ds-input.ds-search.psets-toolbar__search {
+// The right group takes the remaining width; its buttons hold their size and only the
+// search flexes to fill the gap between the primary action and the trailing buttons.
+.ds-table-toolbar__right {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ds-table-toolbar__right > * {
+  flex-shrink: 0;
+}
+
+.ds-table-toolbar__right .ds-search {
   flex: 1 1 0;
   min-width: 0;
   max-width: none;
 }
 
-// Let the inner input shrink instead of holding the field open at its default size.
-.ds-input.ds-search.psets-toolbar__search .ds-input__control {
+.ds-table-toolbar__right .ds-search .ds-input__control {
   min-width: 0;
 }
 
