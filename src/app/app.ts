@@ -19,7 +19,7 @@ interface SettingsItem {
 }
 
 /** Routed Settings pages that live in the Global section — reachable only in the Global context. */
-const GLOBAL_ONLY_SETTINGS_PAGES = new Set(['department-modules', 'user-management']);
+const GLOBAL_ONLY_SETTINGS_PAGES = new Set(['department-modules', 'agent-management']);
 
 @Component({
   selector: 'app-root',
@@ -147,7 +147,7 @@ export class App implements AfterViewInit, OnDestroy {
 
   /**
    * Keep the open Settings page consistent with the context. The Global pages (Department Modules /
-   * User Management) require the Global context; scoped into a module the content area shows the
+   * Agent Management) require the Global context; scoped into a module the content area shows the
    * blank placeholder instead, and returning to Global restores the Department Modules default.
    * No-op unless Settings is the active section.
    */
@@ -348,7 +348,7 @@ export class App implements AfterViewInit, OnDestroy {
     { id: 'tags',                   label: 'Tags',                   section: 'global',           isSubheader: true },
     { id: 'tags-tickets',           label: 'Tickets',                section: 'global',           subheaderParent: 'tags' },
     { id: 'tags-assets',            label: 'Assets',                 section: 'global',           subheaderParent: 'tags' },
-    { id: 'user-management',        label: 'User Management',        section: 'global' },
+    { id: 'agent-management',       label: 'Agent Management',       section: 'global' },
     // Integration Hub
     { id: 'api-tokens',             label: 'API Tokens',             section: 'integration-hub' },
     { id: 'webhooks',               label: 'Webhooks',               section: 'integration-hub' },

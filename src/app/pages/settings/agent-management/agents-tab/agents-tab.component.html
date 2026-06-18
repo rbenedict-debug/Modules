@@ -1,28 +1,31 @@
-<!-- Teams tab. Renders inside the parent User Management page's ds-page-content card,
-     below the inner-page tabs — so this template owns no page heading or card shell.
-     The canonical Design System table (driven by table-init.js, wired in angular.json)
-     starts at ds-page-content__main--table. -->
+<!-- Agents tab — canonical Onflo table (driven by table-init.js, wired in angular.json).
+     Rendered inside the parent agent-management component's ds-page-content / __main, so
+     this owns ONLY the toolbar + table + overlays — no page shell, heading, or <h1>
+     (the parent supplies those). The table becomes a static design-mode visual once
+     ngAfterViewInit() calls cdr.detach(); the per-row click → profile is bound during
+     the initial render, so it survives detach + table-init's row reordering. -->
 <div class="ds-page-content__main ds-page-content__main--table">
   <div class="table-container">
 
-    <!-- ── Toolbar ───────────────────────────────────────────────────────────────
-         One flat row — no left/right split. The search is the only element that flexes
-         (fills the width, shrinks to fit); every button stays its natural size. The
-         filter/columns buttons keep the ids table-init.js wires (#btn-filter / #btn-columns). -->
+    <!-- ── Toolbar ────────────────────────────────────────────────────────────────
+         One flat row — the search is the only element that flexes (fills the width,
+         shrinks to fit); every button keeps its natural size. The filter/columns
+         buttons keep the ids table-init.js wires (#btn-filter / #btn-columns), and the
+         search keeps id="search-input" / id="search-clear". -->
     <div class="ds-table-toolbar" id="toolbar">
-      <div class="ds-input ds-search teams-toolbar__search" role="search">
+      <div class="ds-input ds-search users-toolbar__search" role="search">
         <div class="ds-input__field">
           <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-          <input class="ds-input__control" type="search" placeholder="Search teams…" aria-label="Search teams" id="search-input">
+          <input class="ds-input__control" type="search" placeholder="Search agents…" aria-label="Search agents" id="search-input">
           <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
             <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
           </button>
         </div>
       </div>
-      <!-- TODO eng: wire Create Team flow -->
-      <button class="ds-button ds-button--filled" type="button">
-        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
-        Create Team
+      <!-- TODO eng: wire Create Agent flow -->
+      <button class="ds-button ds-button--filled ds-button--leading-icon" type="button">
+        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">person_add</span>
+        Create Agent
       </button>
       <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
               type="button" aria-label="Filter" id="btn-filter">
@@ -64,16 +67,34 @@
           <table class="ds-table" id="main-table" [style.min-width.px]="totalWidth">
             <thead>
               <tr>
-                <th style="width:220px">
+                <th style="width:240px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Team Name</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Team Name">
+                    <span class="ds-table__header-label">Name</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Name">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
                 <th style="width:200px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Roles</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Roles">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:130px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Status</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Status">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:180px">
                   <div class="ds-table__header-content">
                     <span class="ds-table__header-label">Module(s)</span>
                     <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Module(s)">
@@ -82,34 +103,34 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:220px">
+                <th style="width:180px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Topics</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Topics">
+                    <span class="ds-table__header-label">Teams</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Teams">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:110px">
+                <th style="width:170px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Members</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Members">
+                    <span class="ds-table__header-label">Locations</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Locations">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:200px">
+                <th style="width:150px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Permission Set</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Permission Set">
+                    <span class="ds-table__header-label">Phone</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Phone">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:160px">
+                <th style="width:150px">
                   <div class="ds-table__header-content">
                     <span class="ds-table__header-label">Source</span>
                     <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Source">
@@ -118,19 +139,107 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
+                <th style="width:160px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Job Title</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Job Title">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:140px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Last Login</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Last Login">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:130px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Date Added</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Date Added">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
               </tr>
             </thead>
             <tbody>
-              @for (row of rows(); track row.id) {
-                <tr>
-                  <td>{{ row.name }}</td>
-                  <td>{{ row.moduleNames.length ? row.moduleNames.join(', ') : '—' }}</td>
-                  <td>{{ row.topics.length ? row.topics.join(', ') : '—' }}</td>
-                  <td>{{ row.memberCount }}</td>
-                  <td>{{ row.permissionSetName }}</td>
+              @for (u of items(); track u.id) {
+                <tr class="users-row" style="cursor: pointer" (click)="openProfile(u.id)">
                   <td>
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ sourceColor(row.source) }}">{{ row.source }}</span>
+                    <span class="users-name">
+                      <span class="users-name__primary">{{ fullName(u) }}</span>
+                      <span class="users-name__email">{{ u.email }}</span>
+                    </span>
                   </td>
+                  <td>
+                    @if (u.roles.length) {
+                      <span class="users-roles">
+                        @for (r of visibleRoles(u); track r) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ r }}</span>
+                        }
+                        @if (roleOverflow(u) > 0) {
+                          <span class="ds-label ds-label--pill ds-label--xs ds-label--grey users-roles__overflow">+{{ roleOverflow(u) }}</span>
+                        }
+                      </span>
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="ds-label ds-label--pill ds-label--xs ds-label--has-dot ds-label--{{ statusColor(u.status) }}">
+                      <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (moduleNames(u).length) {
+                      {{ moduleNames(u).join(', ') }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (teamNames(u).length) {
+                      {{ teamNames(u).join(', ') }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (u.locations.length) {
+                      {{ u.locations.join(', ') }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (u.phone) {
+                      {{ u.phone }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>{{ u.source }}</td>
+                  <td>
+                    @if (u.jobTitle) {
+                      {{ u.jobTitle }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>
+                    @if (u.lastLogin) {
+                      {{ u.lastLogin | date: 'mediumDate' }}
+                    } @else {
+                      <span class="users-empty">—</span>
+                    }
+                  </td>
+                  <td>{{ u.dateAdded | date: 'mediumDate' }}</td>
                 </tr>
               }
             </tbody>
@@ -231,7 +340,7 @@
 
     </div><!-- /table-content-row -->
 
-    <!-- Paginator removed for this view (features.paginator = false). -->
+    <!-- Paginator removed for this view (table-init.js does not manage it; paginator: false). -->
 
 
   </div><!-- /table-container -->
@@ -454,4 +563,4 @@
 </div>
 
 <!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
-     is called from teams-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->
+     is called from agents-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

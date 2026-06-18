@@ -1,29 +1,28 @@
-<!-- Permission Sets tab — the canonical Design System table (driven by table-init.js, wired
-     in angular.json). Rendered inside the parent User Management page's content area, below
-     the inner-page tabs, so this template owns no page heading or card shell — it starts at
-     ds-page-content__main--table (like the Tickets page). A row click opens that set's editor
-     via (editSet); the parent swaps in app-permission-set-editor. -->
-
+<!-- Teams tab. Renders inside the parent Agent Management page's ds-page-content card,
+     below the inner-page tabs — so this template owns no page heading or card shell.
+     The canonical Design System table (driven by table-init.js, wired in angular.json)
+     starts at ds-page-content__main--table. -->
 <div class="ds-page-content__main ds-page-content__main--table">
   <div class="table-container">
 
     <!-- ── Toolbar ───────────────────────────────────────────────────────────────
-         One flat row — the search flexes; every button keeps its natural size. The
-         filter/columns buttons keep the ids table-init.js wires (#btn-filter / #btn-columns),
-         and the search keeps #search-input / #search-clear. -->
+         One flat row — no left/right split. The search is the only element that flexes
+         (fills the width, shrinks to fit); every button stays its natural size. The
+         filter/columns buttons keep the ids table-init.js wires (#btn-filter / #btn-columns). -->
     <div class="ds-table-toolbar" id="toolbar">
-      <div class="ds-input ds-search psets-toolbar__search" role="search">
+      <div class="ds-input ds-search teams-toolbar__search" role="search">
         <div class="ds-input__field">
           <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-          <input class="ds-input__control" type="search" placeholder="Search permission sets…" aria-label="Search permission sets" id="search-input">
+          <input class="ds-input__control" type="search" placeholder="Search teams…" aria-label="Search teams" id="search-input">
           <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
             <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
           </button>
         </div>
       </div>
-      <button class="ds-button ds-button--filled" type="button" (click)="createSet()">
+      <!-- TODO eng: wire Create Team flow -->
+      <button class="ds-button ds-button--filled" type="button">
         <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
-        Create permission set
+        Create Team
       </button>
       <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
               type="button" aria-label="Filter" id="btn-filter">
@@ -65,19 +64,10 @@
           <table class="ds-table" id="main-table" [style.min-width.px]="totalWidth">
             <thead>
               <tr>
-                <th style="width:260px">
+                <th style="width:220px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Name</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Name">
-                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
-                    </button>
-                  </div>
-                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
-                </th>
-                <th style="width:130px">
-                  <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Type</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Type">
+                    <span class="ds-table__header-label">Team Name</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Team Name">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -85,17 +75,44 @@
                 </th>
                 <th style="width:200px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Scope</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Scope">
+                    <span class="ds-table__header-label">Module(s)</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Module(s)">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:130px">
+                <th style="width:220px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Status</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Status">
+                    <span class="ds-table__header-label">Topics</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Topics">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:110px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Members</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Members">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:200px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Permission Set</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Permission Set">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:160px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Source</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Source">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -104,27 +121,15 @@
               </tr>
             </thead>
             <tbody>
-              @for (set of rows(); track set.id) {
-                <tr class="psets__row" [attr.aria-label]="'Open ' + set.name" (click)="openEditor(set.id)">
-                  <td>{{ set.name }}</td>
+              @for (row of rows(); track row.id) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.moduleNames.length ? row.moduleNames.join(', ') : '—' }}</td>
+                  <td>{{ row.topics.length ? row.topics.join(', ') : '—' }}</td>
+                  <td>{{ row.memberCount }}</td>
+                  <td>{{ row.permissionSetName }}</td>
                   <td>
-                    @if (set.type === 'System') {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--blue">System</span>
-                    } @else {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--grey">Custom</span>
-                    }
-                  </td>
-                  <td>{{ set.scope }}</td>
-                  <td>
-                    @if (set.isLocked) {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--grey">
-                        <span class="ds-label__dot" aria-hidden="true"></span>Locked
-                      </span>
-                    } @else {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--green">
-                        <span class="ds-label__dot" aria-hidden="true"></span>Editable
-                      </span>
-                    }
+                    <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ sourceColor(row.source) }}">{{ row.source }}</span>
                   </td>
                 </tr>
               }
@@ -225,6 +230,9 @@
     </div><!-- /col-panel-wrapper -->
 
     </div><!-- /table-content-row -->
+
+    <!-- Paginator removed for this view (features.paginator = false). -->
+
 
   </div><!-- /table-container -->
 </div><!-- /ds-page-content__main--table -->
@@ -446,4 +454,4 @@
 </div>
 
 <!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
-     is called from permission-sets-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->
+     is called from teams-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

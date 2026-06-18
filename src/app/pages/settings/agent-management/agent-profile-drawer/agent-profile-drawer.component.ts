@@ -90,29 +90,29 @@ const STATUS_COLOR: Record<UserStatus, 'green' | 'yellow' | 'grey' | 'purple'> =
 const ALL_STATUSES: UserStatus[] = ['Active', 'Unverified', 'Inactive', 'Pending'];
 
 @Component({
-  selector: 'app-user-profile-drawer',
+  selector: 'app-agent-profile-drawer',
   standalone: true,
   imports: [FormsModule],
-  templateUrl: './user-profile-drawer.component.html',
-  styleUrl: './user-profile-drawer.component.scss',
+  templateUrl: './agent-profile-drawer.component.html',
+  styleUrl: './agent-profile-drawer.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class UserProfileDrawerComponent {
+export class AgentProfileDrawerComponent {
   private readonly usersSvc = inject(UsersService);
   private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);
   private readonly ticketsSvc = inject(TicketsService);
 
-  /** Id of the user to show; null means the drawer is closed. */
+  /** Id of the agent to show; null means the drawer is closed. */
   private readonly _userId = signal<string | null>(null);
-  @Input() set userId(value: string | null) {
+  @Input() set agentId(value: string | null) {
     this._userId.set(value);
-    // Opening a different user always resets to a clean view (not mid-edit).
+    // Opening a different agent always resets to a clean view (not mid-edit).
     this.editing.set(false);
     this.activeTab.set('details');
   }
-  get userId(): string | null {
+  get agentId(): string | null {
     return this._userId();
   }
 

@@ -1,16 +1,16 @@
 <div class="ds-page-content__heading">
-  <h1 class="ds-page-content__title">User Management</h1>
+  <h1 class="ds-page-content__title">Agent Management</h1>
 
   <!-- Page-level tabs (ds-tabs) sit in the heading, the canonical page-with-tabs pattern
        (same as the Tickets page). Hidden while the permission-set editor is open, since the
        editor takes over the content area. -->
   @if (!editingSetId()) {
-    <div class="ds-tabs" role="tablist" aria-label="User management sections">
+    <div class="ds-tabs" role="tablist" aria-label="Agent management sections">
       <button class="ds-tabs__tab" role="tab"
-              [class.is-selected]="activeTab() === 'users'"
-              [attr.aria-selected]="activeTab() === 'users'"
-              [attr.tabindex]="activeTab() === 'users' ? 0 : -1"
-              (click)="setTab('users')">Users</button>
+              [class.is-selected]="activeTab() === 'agents'"
+              [attr.aria-selected]="activeTab() === 'agents'"
+              [attr.tabindex]="activeTab() === 'agents' ? 0 : -1"
+              (click)="setTab('agents')">Agents</button>
       <button class="ds-tabs__tab" role="tab"
               [class.is-selected]="activeTab() === 'teams'"
               [attr.aria-selected]="activeTab() === 'teams'"
@@ -33,8 +33,8 @@
   <app-permission-set-editor [setId]="setId" (back)="editingSetId.set(null)" />
 } @else {
   @switch (activeTab()) {
-    @case ('users') {
-      <app-users-tab (viewProfile)="selectedUserId.set($event)" />
+    @case ('agents') {
+      <app-agents-tab (viewProfile)="selectedAgentId.set($event)" />
     }
     @case ('teams') {
       <app-teams-tab />
@@ -45,6 +45,6 @@
   }
 }
 
-<!-- Profile drawer lives in the (attached) parent, so a row click in the detached Users
-     table still opens it via the selectedUserId signal. -->
-<app-user-profile-drawer [userId]="selectedUserId()" (close)="selectedUserId.set(null)" />
+<!-- Profile drawer lives in the (attached) parent, so a row click in the detached Agents
+     table still opens it via the selectedAgentId signal. -->
+<app-agent-profile-drawer [agentId]="selectedAgentId()" (close)="selectedAgentId.set(null)" />

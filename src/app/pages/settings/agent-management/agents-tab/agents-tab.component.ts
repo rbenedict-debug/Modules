@@ -20,19 +20,19 @@ import { User, UserRole, UserStatus, fullName } from '../../../../data/models';
 declare const OnfloTableInit: { initTable: (config: unknown) => void };
 
 @Component({
-  selector: 'app-users-tab',
+  selector: 'app-agents-tab',
   standalone: true,
   imports: [DatePipe],
-  templateUrl: './users-tab.component.html',
-  styleUrl: './users-tab.component.scss',
+  templateUrl: './agents-tab.component.html',
+  styleUrl: './agents-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  // Transparent wrapper: the parent user-management component owns the
+  // Transparent wrapper: the parent agent-management component owns the
   // ds-page-content host, the page <h1>, and the tab bar. This tab supplies
   // only the toolbar + table + overlays.
   host: { style: 'display: contents' },
 })
-export class UsersTabComponent implements AfterViewInit {
-  /** Emits the id of the user whose profile should open. The parent opens the drawer. */
+export class AgentsTabComponent implements AfterViewInit {
+  /** Emits the id of the agent whose profile should open. The parent opens the drawer. */
   @Output() viewProfile = new EventEmitter<string>();
 
   private readonly modulesSvc = inject(ModulesService);
@@ -97,8 +97,8 @@ export class UsersTabComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     OnfloTableInit.initTable({
-      entity: 'User',
-      entityPlural: 'users',
+      entity: 'Agent',
+      entityPlural: 'agents',
       columns: this.columns,
       features: {
         pivot: true, rowGroups: true, values: true,

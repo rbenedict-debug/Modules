@@ -1,37 +1,37 @@
 import { ChangeDetectionStrategy, Component, signal } from '@angular/core';
-import { UsersTabComponent } from './users-tab/users-tab.component';
+import { AgentsTabComponent } from './agents-tab/agents-tab.component';
 import { TeamsTabComponent } from './teams-tab/teams-tab.component';
 import { PermissionSetsTabComponent } from './permission-sets-tab/permission-sets-tab.component';
 import { PermissionSetEditorComponent } from './permission-set-editor/permission-set-editor.component';
-import { UserProfileDrawerComponent } from './user-profile-drawer/user-profile-drawer.component';
+import { AgentProfileDrawerComponent } from './agent-profile-drawer/agent-profile-drawer.component';
 
-type UserMgmtTab = 'users' | 'teams' | 'permission-sets';
+type AgentMgmtTab = 'agents' | 'teams' | 'permission-sets';
 
 @Component({
-  selector: 'app-user-management',
+  selector: 'app-agent-management',
   standalone: true,
   imports: [
-    UsersTabComponent,
+    AgentsTabComponent,
     TeamsTabComponent,
     PermissionSetsTabComponent,
     PermissionSetEditorComponent,
-    UserProfileDrawerComponent,
+    AgentProfileDrawerComponent,
   ],
-  templateUrl: './user-management.component.html',
-  styleUrl: './user-management.component.scss',
+  templateUrl: './agent-management.component.html',
+  styleUrl: './agent-management.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'ds-page-content', role: 'main' },
 })
-export class UserManagementComponent {
-  readonly activeTab = signal<UserMgmtTab>('users');
+export class AgentManagementComponent {
+  readonly activeTab = signal<AgentMgmtTab>('agents');
 
   // Profile drawer + permission editor are owned here (the parent stays attached), so row
   // clicks from the detached table tabs can open them by setting these signals.
-  readonly selectedUserId = signal<string | null>(null);
+  readonly selectedAgentId = signal<string | null>(null);
   /** Permission set being edited (null = list/tabs view). Drives the full-area editor. */
   readonly editingSetId = signal<string | null>(null);
 
-  setTab(tab: UserMgmtTab): void {
+  setTab(tab: AgentMgmtTab): void {
     this.activeTab.set(tab);
   }
 }
