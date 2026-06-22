@@ -195,110 +195,41 @@
         </div>
       }
 
-      <!-- Tickets: full history table (every status) -->
+      <!-- Tickets: the canonical Design System table (table-init.js), in its own component.
+           Mounted only while active so its engine never shares the DOM with the Activity
+           table's — both bind every element by global id, so two can't coexist. -->
       @case ('tickets') {
-        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-tickets" aria-labelledby="ap-tab-tickets">
-          <section class="ds-card ds-card--elevated" aria-labelledby="ap-tickets-title">
-            <div class="ds-card__body">
-              <div class="agent-detail__section-head agent-detail__section-head--count">
-                <h2 class="agent-detail__section-title" id="ap-tickets-title">Tickets</h2>
-                <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ ownedTickets().length }}</span>
+        <div class="agent-detail__panel agent-detail__panel--tickets" role="tabpanel"
+             id="ap-panel-tickets" aria-labelledby="ap-tab-tickets">
+          <div class="agent-detail__section-head agent-detail__section-head--count">
+            <h2 class="agent-detail__section-title">Tickets</h2>
+            <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ ownedTickets().length }}</span>
+          </div>
+          @if (ticketRows().length) {
+            <app-agent-tickets-table [rows]="ticketRows()" />
+          } @else {
+            <div class="ds-empty-state">
+              <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
+                <span class="ds-icon ds-icon--lg">confirmation_number</span>
               </div>
-
-              <!-- Quick counts so an admin can read the history at a glance. -->
-              <div class="agent-detail__stats">
-                @for (stat of ticketStats(); track stat.label) {
-                  <div class="ds-metric-card agent-detail__stat-card agent-detail__stat-card--{{ stat.tone }}">
-                    <div class="ds-metric-card__header">
-                      <span class="ds-metric-card__label">{{ stat.label }}</span>
-                      <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">{{ stat.icon }}</span>
-                    </div>
-                    <div class="ds-metric-card__value">{{ stat.value }}</div>
-                  </div>
-                }
+              <div class="ds-empty-state__body">
+                <p class="ds-empty-state__heading">No tickets</p>
+                <p class="ds-empty-state__description">This agent is not on any tickets yet.</p>
               </div>
-
-              <div class="ds-divider agent-detail__divider" role="separator" aria-hidden="true"></div>
-
-              @if (ownedTickets().length) {
-                <div class="agent-detail__table-scroll">
-                  <table class="ds-table">
-                    <thead>
-                      <tr>
-                        <th>Ticket</th>
-                        <th>Subject</th>
-                        <th>Status</th>
-                        <th>Priority</th>
-                        <th>Module</th>
-                        <th>Received</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (ticket of ownedTickets(); track ticket.id) {
-                        <tr>
-                          <td>{{ ticket.number }}</td>
-                          <td>{{ ticket.subject }}</td>
-                          <td>
-                            <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketStatusColor(ticket.status) }}">{{ ticket.status }}</span>
-                          </td>
-                          <td>
-                            <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--{{ ticketPriorityColor(ticket.priority) }}">{{ ticket.priority }}</span>
-                          </td>
-                          <td>{{ moduleName(ticket.moduleId) }}</td>
-                          <td>{{ formatDate(ticket.receivedAt) }}</td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-                <!-- TODO eng: replace with AG Grid + onfloTheme for a sortable/filterable history. -->
-              } @else {
-                <div class="ds-empty-state">
-                  <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
-                    <span class="ds-icon ds-icon--lg">confirmation_number</span>
-                  </div>
-                  <div class="ds-empty-state__body">
-                    <p class="ds-empty-state__heading">No tickets</p>
-                    <p class="ds-empty-state__description">This agent is not on any tickets yet.</p>
-                  </div>
-                </div>
-              }
             </div>
-          </section>
+          }
         </div>
       }
 
-      <!-- Activity: audit history -->
+      <!-- Activity: the agent's audit history as the canonical Design System table
+           (table-init.js) — search, filter, sort, download. Same mount rule as Tickets. -->
       @case ('activity') {
-        <div class="agent-detail__panel" role="tabpanel" id="ap-panel-activity" aria-labelledby="ap-tab-activity">
-          <section class="ds-card ds-card--elevated" aria-labelledby="ap-activity-title">
-            <div class="ds-card__body">
-              <div class="agent-detail__section-head">
-                <h2 class="agent-detail__section-title" id="ap-activity-title">Activity</h2>
-              </div>
-
-              <ol class="agent-detail__timeline">
-                @for (event of auditEvents(); track $index) {
-                  <li class="agent-detail__event">
-                    <span class="agent-detail__event-icon agent-detail__event-icon--{{ event.tone }}" aria-hidden="true">
-                      <span class="ds-icon ds-icon--sm ds-icon--filled">{{ event.icon }}</span>
-                    </span>
-                    <div class="agent-detail__event-body">
-                      <div class="agent-detail__event-head">
-                        <span class="agent-detail__event-title">{{ event.title }}</span>
-                        <span class="agent-detail__event-time">{{ event.timestamp }}</span>
-                      </div>
-                      @if (event.detail) {
-                        <span class="agent-detail__event-detail">{{ event.detail }}</span>
-                      }
-                      <span class="agent-detail__event-actor">{{ event.actor }}</span>
-                    </div>
-                  </li>
-                }
-              </ol>
-            </div>
-            <!-- TODO eng: wire the real audit log for this agent. -->
-          </section>
+        <div class="agent-detail__panel agent-detail__panel--activity" role="tabpanel"
+             id="ap-panel-activity" aria-labelledby="ap-tab-activity">
+          <div class="agent-detail__section-head">
+            <h2 class="agent-detail__section-title">Activity</h2>
+          </div>
+          <app-agent-activity-tab />
         </div>
       }
     }

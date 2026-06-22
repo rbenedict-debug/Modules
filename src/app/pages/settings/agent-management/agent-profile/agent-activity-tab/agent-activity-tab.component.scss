@@ -1,0 +1,57 @@
+// The canonical table engine (table-init.js + table-sim.css) is built to fill a full-height
+// page shell. Embedded inside a profile tab there's no page height to inherit, so we give
+// the table a bounded, viewport-relative height and let the engine's flex chain
+// (.table-container → .table-content-row → .table-body) fill it and scroll internally.
+// Mirrors agent-tickets-table.component.scss so the two table tabs read identically.
+:host {
+  display: block;
+}
+
+.agent-activity-table {
+  display: flex;
+  flex-direction: column;
+  height: clamp(440px, 62vh, 760px);
+}
+
+// Card shell fills the bounded height; cancel any page-main margin it carries.
+.agent-activity-table > .ds-page-content__main--table {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+}
+
+// table-sim.css caps .table-body for the standalone gallery; here we want it to fill.
+.agent-activity-table .table-container,
+.agent-activity-table .table-body {
+  min-height: 0;
+}
+
+.agent-activity-table .table-body {
+  max-height: none;
+}
+
+// ── Toolbar ──────────────────────────────────────────────────────────────────────
+// One flat flex row — the search is the only flexible child (fills free width, shrinks to
+// fit); the action buttons hold their natural size. (The bundle's .ds-table-toolbar isn't a
+// flex container in design mode, so force it here — same treatment as the Tickets table.)
+.agent-activity-table .ds-table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex-wrap: nowrap;
+}
+
+.agent-activity-table .ds-table-toolbar > * {
+  flex-shrink: 0;
+}
+
+.agent-activity-table__search {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+}
+
+// Let the inner input shrink instead of holding the field open at its default size.
+.agent-activity-table__search .ds-input__control {
+  min-width: 0;
+}

@@ -1,0 +1,444 @@
+<!-- Canonical Design System table (driven by table-init.js, wired in angular.json).
+     Scaffold mirrors the Agent Tickets table; the toolbar is trimmed to Search / Filter /
+     Tool panel / Download. Do NOT rename any id — table-init.js resolves elements by id. -->
+<div class="agent-activity-table">
+  <div class="ds-page-content__main ds-page-content__main--table">
+    <div class="table-container">
+
+      <!-- ── Toolbar ──────────────────────────────────────────────────────────────
+           Search flexes to fill; the three actions hold their size. -->
+      <div class="ds-table-toolbar" id="toolbar">
+        <div class="ds-input ds-search agent-activity-table__search" role="search">
+          <div class="ds-input__field">
+            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+            <input class="ds-input__control" type="search" placeholder="Search activity…" aria-label="Search activity" id="search-input">
+            <button class="ds-input__action" type="button" aria-label="Clear search" id="search-clear" style="display:none">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+            </button>
+          </div>
+        </div>
+        <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
+                type="button" aria-label="Filter" id="btn-filter">
+          <span class="ds-icon ds-icon--filled" aria-hidden="true">filter_alt</span>
+        </button>
+        <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
+                type="button" aria-pressed="false" aria-label="Tool panel" id="btn-columns">
+          <span class="ds-icon ds-icon--filled" aria-hidden="true">view_column</span>
+        </button>
+        <button class="ds-icon-button ds-icon-button--outlined"
+                type="button" aria-label="Download" (click)="downloadCsv()">
+          <span class="ds-icon ds-icon--filled" aria-hidden="true">download</span>
+        </button>
+      </div>
+
+      <!-- ── Filter bar (hidden until filters applied) ──────────────────────── -->
+      <div class="filter-applied-bar" id="surveys-filter-bar" style="display:none;">
+        <span class="ds-label ds-label--brand ds-label--pill ds-label--sm filter-bar__count-chip" id="surveys-filter-count-chip" aria-hidden="true">0 active filters</span>
+        <div class="filter-applied-bar__cards" id="surveys-filter-cards" role="group" aria-label="Applied filters"></div>
+        <button class="filter-bar__toggle" id="surveys-filter-bar-toggle" type="button" aria-expanded="true" aria-label="Hide filters">
+          <span class="filter-bar__toggle-label">Hide filters</span>
+          <span class="ds-icon ds-icon--sm filter-bar__toggle-arrow" aria-hidden="true">arrow_drop_down</span>
+        </button>
+      </div>
+
+      <div class="table-content-row">
+      <div class="table-content-left">
+
+      <!-- ── Row Groups Bar (hidden until row groups are active or drag starts) ─ -->
+      <div class="ds-table-row-groups-bar" id="row-groups-bar" hidden>
+        <div class="ds-table-row-groups-bar__drop-zone">
+          <span class="ds-icon ds-icon--sm ds-table-row-groups-bar__drag-icon" aria-hidden="true">cell_merge</span>
+          <div class="ds-table-row-groups-bar__chips" id="row-groups-bar-chips"></div>
+          <span class="ds-table-row-groups-bar__placeholder" id="row-groups-bar-placeholder" aria-hidden="true">Drag here to set row groups</span>
+        </div>
+      </div>
+
+      <!-- ── Table body (scroll area + column panel) ──────────────────────────── -->
+      <div class="table-body">
+
+        <div class="table-scroll-wrap">
+          <div class="table-scroll" id="table-scroll">
+            <table class="ds-table" id="main-table" [style.min-width.px]="totalWidth">
+              <thead>
+                <tr>
+                  <th style="width:200px">
+                    <div class="ds-table__header-content">
+                      <span class="ds-table__header-label">Date</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Date">
+                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                      </button>
+                    </div>
+                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                  </th>
+                  <th style="width:280px">
+                    <div class="ds-table__header-content">
+                      <span class="ds-table__header-label">Activity</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Activity">
+                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                      </button>
+                    </div>
+                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                  </th>
+                  <th style="width:140px">
+                    <div class="ds-table__header-content">
+                      <span class="ds-table__header-label">Type</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Type">
+                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                      </button>
+                    </div>
+                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                  </th>
+                  <th style="width:300px">
+                    <div class="ds-table__header-content">
+                      <span class="ds-table__header-label">Details</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Details">
+                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                      </button>
+                    </div>
+                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                  </th>
+                  <th style="width:170px">
+                    <div class="ds-table__header-content">
+                      <span class="ds-table__header-label">Performed by</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Performed by">
+                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                      </button>
+                    </div>
+                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of rows; track row.id) {
+                  <tr>
+                    <td>{{ formatTimestamp(row.timestamp) }}</td>
+                    <td>{{ row.activity }}</td>
+                    <td>
+                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--{{ typeColor(row.type) }}">{{ row.type }}</span>
+                    </td>
+                    <td>{{ row.detail }}</td>
+                    <td>{{ row.performedBy }}</td>
+                  </tr>
+                }
+              </tbody>
+              <!-- TODO eng: replace with AG Grid + onfloTheme (real sort, filter, resize, row grouping) -->
+              <tfoot id="main-table-foot"></tfoot>
+            </table>
+          </div><!-- /table-scroll -->
+          <div class="ds-table-vbar-header"></div>
+          <div class="ds-table-vbar" id="ds-table-vbar"><div class="ds-table-vbar__thumb" id="ds-table-vbar-thumb"></div></div>
+          <div class="ds-table-hbar" id="ds-table-hbar"><div class="ds-table-hbar__thumb" id="ds-table-hbar-thumb"></div></div>
+          <div class="ds-table-scroll-corner"></div>
+        </div><!-- /table-scroll-wrap -->
+
+      </div><!-- /table-body -->
+
+      </div><!-- /table-content-left -->
+
+      <!-- ── Column panel (hidden until tool-panel button is toggled) ────────── -->
+      <div id="col-panel-wrapper">
+        <div id="col-panel-scroll">
+        <div class="ds-column-panel">
+
+            <!-- 1. Density -->
+            <div class="ds-column-panel__density">
+              <div class="ds-button-group" role="group" aria-label="Row density" style="width:100%;">
+                <button type="button" id="cp-density-comfort"
+                        class="ds-button ds-button--outlined ds-button--sm ds-button--leading-icon is-selected"
+                        aria-pressed="true" style="flex:1 0 0;">
+                  <span class="ds-icon ds-icon--sm" aria-hidden="true">density_medium</span>Comfort
+                </button>
+                <button type="button" id="cp-density-compact"
+                        class="ds-button ds-button--outlined ds-button--sm ds-button--leading-icon"
+                        aria-pressed="false" style="flex:1 0 0;">
+                  <span class="ds-icon ds-icon--sm" aria-hidden="true">density_small</span>Compact
+                </button>
+              </div>
+            </div>
+
+            <!-- 2. Column Visibility -->
+            <button type="button" class="ds-column-panel__section-hd" id="cp-col-hd" aria-expanded="true">
+              <span class="ds-icon ds-icon--filled ds-column-panel__section-icon" aria-hidden="true">visibility</span>
+              <span class="ds-column-panel__section-title">Column Visibility</span>
+              <span class="ds-icon ds-icon--sm ds-column-panel__expand-icon" aria-hidden="true">arrow_drop_down</span>
+            </button>
+            <div class="ds-column-panel__col-list" id="cp-col-list"></div>
+
+            <!-- 3. Pivot Mode -->
+            <div class="ds-divider" role="separator" aria-hidden="true"></div>
+            <div class="ds-column-panel__pivot-row">
+              <label class="ds-toggle" aria-label="Enable pivot mode">
+                <input type="checkbox" class="ds-toggle__control" id="cp-pivot-toggle" role="switch" />
+                <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+              </label>
+              <span class="ds-column-panel__pivot-label">Pivot Mode</span>
+            </div>
+
+            <!-- 3b. Column Labels (pivot on only) -->
+            <div id="cp-col-labels-section" style="display:none">
+              <div class="ds-column-panel__section-hd">
+                <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">view_column</span>
+                <span class="ds-column-panel__section-title">Column Labels</span>
+              </div>
+              <div class="ds-column-panel__pivot-col-list" id="cp-col-labels"></div>
+              <button type="button" class="ds-column-panel__add-btn" id="cp-col-labels-add" aria-expanded="false">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+                Add Column
+              </button>
+            </div>
+
+            <!-- 4. Row Groups -->
+            <div class="ds-divider" role="separator" aria-hidden="true"></div>
+            <div class="ds-column-panel__section-hd">
+              <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">cell_merge</span>
+              <span class="ds-column-panel__section-title">Row Groups</span>
+            </div>
+            <div class="ds-column-panel__pivot-col-list" id="cp-row-groups"></div>
+            <button type="button" class="ds-column-panel__add-btn" id="cp-row-groups-add" aria-expanded="false">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+              Add Column
+            </button>
+
+            <!-- 5. Values -->
+            <div class="ds-divider" role="separator" aria-hidden="true"></div>
+            <div class="ds-column-panel__section-hd">
+              <span class="ds-icon ds-column-panel__section-icon" aria-hidden="true">functions</span>
+              <span class="ds-column-panel__section-title">Values</span>
+            </div>
+            <div class="ds-column-panel__pivot-col-list" id="cp-values"></div>
+            <button type="button" class="ds-column-panel__add-btn" id="cp-values-add" aria-expanded="false">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">add_circle_outline</span>
+              Add Column
+            </button>
+
+        </div><!-- /ds-column-panel -->
+        </div><!-- /col-panel-scroll -->
+        <div class="ds-table-vbar" id="cp-vbar"><div class="ds-table-vbar__thumb" id="cp-vbar-thumb"></div></div>
+      </div><!-- /col-panel-wrapper -->
+
+      </div><!-- /table-content-row -->
+
+      <!-- Paginator removed for this view (table-init.js does not manage it; paginator: false). -->
+
+    </div><!-- /table-container -->
+  </div><!-- /ds-page-content__main--table -->
+</div><!-- /agent-activity-table -->
+
+<!-- ── Column panel picker overlay (position:fixed, shared) ──────────── -->
+<div id="cp-picker-overlay" class="ds-column-panel__picker-overlay" style="display:none;" role="dialog" aria-label="Add column">
+  <div class="ds-column-panel__picker-search">
+    <span class="ds-icon ds-icon--sm" aria-hidden="true">search</span>
+    <input type="text" id="cp-picker-search" placeholder="Search columns…" autocomplete="off" aria-label="Search columns" />
+  </div>
+  <div id="cp-picker-list" class="ds-column-panel__picker-list" role="list"></div>
+</div>
+
+<!-- ── Filter overlay ──────────────────────────────────────────────────── -->
+<div
+  class="filter-overlay"
+  id="surveys-filter-overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="surveys-filter-modal-title"
+  hidden
+>
+  <div class="filter-modal" id="surveys-filter-modal">
+
+    <button class="ds-icon-button ds-icon-button--icon filter-modal__close" id="surveys-close-modal-btn" aria-label="Close filters">
+      <span class="ds-icon ds-icon--sm">close</span>
+    </button>
+
+    <div class="filter-modal__body">
+
+      <!-- LEFT PANEL -->
+      <div class="filter-modal__left">
+        <div class="filter-modal__header">
+          <h2 class="filter-modal__title" id="surveys-filter-modal-title">Filters</h2>
+          <div class="ds-input ds-search filter-modal__search" role="search" id="surveys-filter-search-wrapper">
+            <div class="ds-input__field">
+              <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+              <input
+                class="ds-input__control"
+                type="search"
+                id="surveys-filter-search-input"
+                placeholder="Search filters..."
+                aria-label="Search all filters"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                class="ds-input__action"
+                id="surveys-search-clear-btn"
+                type="button"
+                aria-label="Clear search"
+                hidden
+              >
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-modal__content">
+          <nav class="filter-modal__nav" id="surveys-filter-nav" aria-label="Filter categories"></nav>
+          <div
+            class="filter-modal__options"
+            id="surveys-filter-options"
+            role="region"
+            aria-label="Filter options"
+            aria-live="polite"
+          ></div>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL: selected filters -->
+      <div class="filter-modal__right">
+        <div class="filter-modal__selected-header">
+          <div class="filter-modal__selected-header-row">
+            <h2 class="filter-modal__selected-title">Selected Filters</h2>
+          </div>
+          <div class="filter-modal__selected-header-actions">
+            <button class="ds-button ds-button--outlined ds-button--xs ds-button--leading-icon filter-saved-sets-toggle-btn" id="surveys-saved-sets-toggle-btn" aria-pressed="false">
+              <span class="ds-icon" aria-hidden="true">bookmark</span>Load Filters
+            </button>
+            <button class="ds-button ds-button--text ds-button--xs" id="surveys-header-clear-btn" hidden>Clear all</button>
+          </div>
+        </div>
+
+        <div class="filter-modal__selected-body" id="surveys-selected-body">
+          <div class="filter-active-set-chip" id="surveys-active-set-chip" hidden>
+            <span class="filter-active-set-chip__name" id="surveys-active-set-name"></span>
+            <button class="filter-active-set-chip__update" id="surveys-update-set-btn" aria-label="Update saved set" title="Update saved set" hidden>
+              <span class="ds-icon" aria-hidden="true">sync</span>
+            </button>
+          </div>
+
+          <div class="ds-empty-state" id="surveys-selected-empty">
+            <div class="ds-empty-state__graphic" aria-hidden="true">
+              <span class="ds-icon ds-icon--xl">filter_alt_off</span>
+            </div>
+            <div class="ds-empty-state__body">
+              <p class="ds-empty-state__heading">No filters selected</p>
+              <p class="ds-empty-state__description">Pick options from the left panel.</p>
+            </div>
+          </div>
+
+          <ul class="selected-filter-list" id="surveys-selected-list" aria-label="Selected filters" hidden></ul>
+        </div>
+
+        <div class="filter-saved-sets-panel" id="surveys-saved-sets-panel" hidden>
+          <div class="filter-saved-sets-panel__header">
+            <h2 class="filter-saved-sets-panel__title">Saved Filter Sets</h2>
+          </div>
+          <div class="filter-saved-sets-panel__body" id="surveys-saved-sets-body"></div>
+        </div>
+      </div>
+
+    </div><!-- /.filter-modal__body -->
+
+    <div class="filter-modal__footer">
+      <div class="filter-modal__footer-summary" id="surveys-footer-summary"></div>
+      <div class="filter-modal__footer-actions">
+        <button class="ds-button ds-button--text" id="surveys-cancel-btn">Cancel</button>
+        <button class="ds-button ds-button--filled" id="surveys-apply-btn">Apply Filters</button>
+      </div>
+    </div>
+
+  </div><!-- /.filter-modal -->
+</div><!-- /.filter-overlay -->
+
+<!-- ── Right-click context menus ────────────────────────────────────────── -->
+
+<!-- Header context menu -->
+<div id="ctx-header" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3000;min-width:220px;">
+  <button class="ds-menu__item" id="ctx-h-pin" role="menuitem" aria-haspopup="true" aria-expanded="false">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">push_pin</span>
+    Pin Column
+    <span class="ds-menu__item-trailing"><span class="ds-icon ds-icon--sm">chevron_right</span></span>
+  </button>
+  <button class="ds-menu__item" id="ctx-h-autosize" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">straighten</span>
+    Auto-size Column
+  </button>
+  <button class="ds-menu__item" id="ctx-h-autosize-all" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">straighten</span>
+    Auto-size All Columns
+  </button>
+  <button class="ds-menu__item" id="ctx-h-reset" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">restart_alt</span>
+    Reset Columns
+  </button>
+  <hr class="ds-menu__divider" id="ctx-h-group-divider">
+  <button class="ds-menu__item" id="ctx-h-group" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">cell_merge</span>
+    <span id="ctx-h-group-label">Group by</span>
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item" id="ctx-h-hide" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">visibility_off</span>
+    Hide Column
+  </button>
+</div>
+
+<!-- Pin submenu -->
+<div id="ctx-pin" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3001;min-width:150px;">
+  <button class="ds-menu__item" role="menuitemradio" aria-checked="false" data-pin="left">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">first_page</span>
+    Left
+  </button>
+  <button class="ds-menu__item" role="menuitemradio" aria-checked="false" data-pin="right">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">last_page</span>
+    Right
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item ds-menu__item--selected" role="menuitemradio" aria-checked="true" data-pin="none">
+    <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" style="font-size:18px;" aria-hidden="true">check</span></span>
+    No Pin
+  </button>
+</div>
+
+<!-- Cell context menu -->
+<div id="ctx-cell" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3000;min-width:220px;">
+  <button class="ds-menu__item" id="ctx-c-copy-cell" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">content_copy</span>
+    Copy Cell
+  </button>
+  <button class="ds-menu__item" id="ctx-c-copy-row" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">table_rows</span>
+    Copy Row
+  </button>
+  <button class="ds-menu__item" id="ctx-c-copy-headers" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">table_view</span>
+    Copy Row with Headers
+  </button>
+  <hr class="ds-menu__divider">
+  <button class="ds-menu__item" id="ctx-c-export" role="menuitem" aria-haspopup="true" aria-expanded="false">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">download</span>
+    Export
+    <span class="ds-menu__item-trailing"><span class="ds-icon ds-icon--sm">chevron_right</span></span>
+  </button>
+  <hr class="ds-menu__divider" id="ctx-c-group-sep" style="display:none;">
+  <button class="ds-menu__item" id="ctx-c-expand" role="menuitem" style="display:none;">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">unfold_more</span>
+    Expand All
+  </button>
+  <button class="ds-menu__item" id="ctx-c-collapse" role="menuitem" style="display:none;">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">unfold_less</span>
+    Collapse All
+  </button>
+</div>
+
+<!-- Export submenu -->
+<div id="ctx-export" class="ds-menu" role="menu" style="display:none;position:fixed;z-index:3001;min-width:180px;">
+  <button class="ds-menu__item" id="ctx-e-csv" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">description</span>
+    CSV Export
+  </button>
+  <button class="ds-menu__item" id="ctx-e-excel" role="menuitem">
+    <span class="ds-icon ds-icon--sm ds-icon--filled ds-menu__item-icon">grid_on</span>
+    Excel Export (.xlsx)
+  </button>
+</div>
+
+<!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
+     is called from agent-activity-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

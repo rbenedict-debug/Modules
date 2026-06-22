@@ -9,6 +9,8 @@ import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { TicketsService } from '../../../../data/tickets.service';
 import { ChromeService } from '../../../../data/chrome.service';
+import { AgentTicketsTableComponent, AgentTicketRow } from './agent-tickets-table/agent-tickets-table.component';
+import { AgentActivityTabComponent } from './agent-activity-tab/agent-activity-tab.component';
 
 // A Basic-Information row: a label with one value, several stacked values, or a set
 // of values rendered as chips (roles / locations / topics). Mirrors the User-Explorer
@@ -36,24 +38,6 @@ interface ModulePermissionCard {
   accent: string;
   permissionSetName: string;
   teams: string[];
-}
-
-interface TicketStat {
-  icon: string;
-  label: string;
-  value: string;
-  tone: 'blue' | 'orange' | 'grey';
-}
-
-// One entry in the agent's audit history (Activity tab) — a major action taken by or
-// on this agent. TODO eng: source from the real audit log.
-interface AuditEvent {
-  icon: string;
-  tone: 'blue' | 'green' | 'orange' | 'grey' | 'red';
-  title: string;
-  detail?: string;
-  actor: string;
-  timestamp: string;
 }
 
 // Which information panel shows below the hero.
@@ -97,7 +81,7 @@ const STATUS_ICON: Record<UserStatus, string> = {
 @Component({
   selector: 'app-agent-profile',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, AgentTicketsTableComponent, AgentActivityTabComponent],
   templateUrl: './agent-profile.component.html',
   styleUrl: './agent-profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -132,6 +116,10 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     { id: 'activity', label: 'Activity' },
   ];
   readonly activeTab = signal<TabId>('details');
+  // The Tickets and Activity tabs each host the canonical table-init.js engine, which takes
+  // over the DOM, detaches change detection, and binds every element by GLOBAL id. Two such
+  // tables can't coexist in the DOM, so both tabs render only while active (mutually
+  // exclusive, inside the @switch) — see AgentTicketsTableComponent / AgentActivityTabComponent.
 
   ngOnInit(): void {
     // Full-area takeover view: collapse the subnav on open, restore it on leave.
@@ -292,17 +280,21 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
       .sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1));
   });
 
-  readonly ticketStats = computed<TicketStat[]>(() => {
-    const all = this.ownedTickets();
-    const open = all.filter((t) => t.status !== 'Closed').length;
-    const inProgress = all.filter((t) => t.status === 'In Progress').length;
-    const closed = all.filter((t) => t.status === 'Closed').length;
-    return [
-      { icon: 'inbox', label: 'Open', value: String(open), tone: 'blue' },
-      { icon: 'autorenew', label: 'In Progress', value: String(inProgress), tone: 'orange' },
-      { icon: 'check_circle', label: 'Closed', value: String(closed), tone: 'grey' },
-    ];
-  });
+  // Shape the owned tickets for the table-init.js host (label colors + formatted date
+  // resolved here, so the table component stays a dumb view).
+  readonly ticketRows = computed<AgentTicketRow[]>(() =>
+    this.ownedTickets().map((t) => ({
+      id: t.id,
+      number: t.number,
+      subject: t.subject,
+      status: t.status,
+      statusColor: this.ticketStatusColor(t.status),
+      priority: t.priority,
+      priorityColor: this.ticketPriorityColor(t.priority),
+      moduleName: this.moduleName(t.moduleId),
+      received: this.formatDate(t.receivedAt),
+    })),
+  );
 
   // Status → DS label color. Mirrors the inbox: Unopened grey, In Progress blue,
   // Waiting yellow, Closed green.
@@ -336,20 +328,6 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   moduleName(moduleId: string): string {
     return this.modulesSvc.modules().find((m) => m.id === moduleId)?.name ?? moduleId;
   }
-
-  // ── Activity — audit history (mock — TODO eng) ─────────────────────────────────
-  // The major things this agent has done (and changes made to their account), newest
-  // first. TODO eng: source from the real audit log for this agent.
-  readonly auditEvents = signal<AuditEvent[]>([
-    { icon: 'check_circle', tone: 'green', title: 'Resolved ticket INC-1042', detail: 'Password reset — North High School', actor: 'This agent', timestamp: 'Jun 17, 2026 · 3:24 PM' },
-    { icon: 'login', tone: 'blue', title: 'Signed in', detail: 'Chrome on Windows', actor: 'This agent', timestamp: 'Jun 17, 2026 · 8:02 AM' },
-    { icon: 'autorenew', tone: 'blue', title: 'Moved ticket INC-1039 to In Progress', detail: 'Projector not connecting — Room 214', actor: 'This agent', timestamp: 'Jun 16, 2026 · 1:11 PM' },
-    { icon: 'lock_reset', tone: 'orange', title: 'Permission set changed', detail: 'IT Support → IT Admin (IT module)', actor: 'Devon Clark', timestamp: 'Jun 12, 2026 · 10:47 AM' },
-    { icon: 'group_add', tone: 'green', title: 'Added to team', detail: 'North Campus IT', actor: 'Devon Clark', timestamp: 'Jun 12, 2026 · 10:45 AM' },
-    { icon: 'confirmation_number', tone: 'blue', title: 'Took ownership of ticket INC-1031', detail: 'Laptop won’t charge — Front Office', actor: 'This agent', timestamp: 'Jun 9, 2026 · 9:30 AM' },
-    { icon: 'edit', tone: 'grey', title: 'Updated profile', detail: 'Phone number', actor: 'This agent', timestamp: 'Jun 2, 2026 · 4:18 PM' },
-    { icon: 'badge', tone: 'grey', title: 'Account created', detail: 'Synced from Active Directory', actor: 'System', timestamp: 'May 28, 2026 · 6:00 AM' },
-  ]);
 
   // ── Formatting ─────────────────────────────────────────────────────────────────
   /** Display id like "USR-00002" from the internal id (e.g. "u2"). */
