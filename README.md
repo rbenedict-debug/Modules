@@ -6,7 +6,7 @@ Settings. Built with the real [Onflo Design System](https://github.com/rbenedict
 
 > **It's a prototype — no backend.** Button labels, dialogs, and flows are real and clickable, but
 > nothing is saved to a server. For what's built vs. mocked vs. planned — and how to read it —
-> see **[docs/department-modules-architecture.md](docs/department-modules-architecture.md)**.
+> see **[docs/engineering-architecture.md](docs/engineering-architecture.md)**.
 
 ---
 
@@ -67,7 +67,7 @@ npm start        # → http://localhost:4200
 | `src/app/components/` | Module switcher, ⌘K command palette, snackbar host |
 | `src/app/pages/` | Tickets, Assets, Users, Analytics, Settings (incl. Department Modules) |
 | `src/app/app.ts` · `app.html` | Shell: nav, routing, Settings subnav + gating |
-| `docs/department-modules-architecture.md` | Engineering handoff doc — built vs. mocked vs. planned |
+| `docs/engineering-architecture.md` | Engineering handoff doc — Department Modules, Agent Management & Permission Sets; built vs. mocked vs. planned |
 | `.github/workflows/deploy.yml` | GitHub Pages deploy (see [Live preview](#live-preview)) |
 
 ---
@@ -82,5 +82,5 @@ npm start        # → http://localhost:4200
 ## Engineering handoff
 
 Share this repo with engineering. Start with
-**[docs/department-modules-architecture.md](docs/department-modules-architecture.md)**, then switch
+**[docs/engineering-architecture.md](docs/engineering-architecture.md)**, then switch
 the mode in `CLAUDE.md` from design to engineering to wire up real data and behavior.
