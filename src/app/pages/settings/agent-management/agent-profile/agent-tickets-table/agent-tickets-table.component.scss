@@ -54,3 +54,37 @@
 .agent-tickets-table__search .ds-input__control {
   min-width: 0;
 }
+
+// ── Full-screen view ───────────────────────────────────────────────────────────
+// "Expand" promotes this same wrapper to a viewport-filling modal — we never mount a second
+// table, because table-init.js resolves every element by global id and two would collide.
+// position:fixed escapes to the viewport here (no transformed ancestor; .agent-detail only
+// sets overflow, which doesn't trap fixed) — the engine's own filter overlay relies on the
+// same. height:auto is required so inset:0 (not the base clamp height) drives the size.
+.agent-tickets-table.is-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  height: auto;
+  padding: var(--spacing-lg);
+  background: var(--color-surface-scrim);
+}
+
+// The card shell becomes the modal surface — lift it to dialog elevation.
+.agent-tickets-table.is-fullscreen > .ds-page-content__main--table {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevation-3);
+  overflow: hidden;
+}
+
+// Toolbar toggle icon: "fullscreen" normally, "fullscreen_exit" while expanded. Only the
+// off-state icon is hidden, so the visible one always keeps the ds-icon default display.
+.agent-tickets-table:not(.is-fullscreen) .agent-tickets-table__fs-icon--close { display: none; }
+.agent-tickets-table.is-fullscreen .agent-tickets-table__fs-icon--open { display: none; }
+
+// Keep the engine's overlays above the full-screen surface so Filter / Add-column still work
+// while expanded (right-click context menus already sit at z-index 3000). #cp-picker-overlay
+// is relocated to <body> by the engine but keeps this view's encapsulation attribute, so the
+// rule still matches it there.
+.filter-overlay,
+#cp-picker-overlay { z-index: 1101; }

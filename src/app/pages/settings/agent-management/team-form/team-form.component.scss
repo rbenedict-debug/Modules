@@ -1,0 +1,69 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+/* Full-viewport scrim; the ds-modal panel centers within it. */
+.team-form__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background: var(--color-surface-scrim);
+}
+
+/* Narrower than the agent form — this is a short, single-column form. Cap the height so the
+   body scrolls between the sticky header/footer if it ever overflows. */
+.team-form__modal.ds-modal {
+  width: 100%;
+  max-width: 560px;
+  max-height: calc(100vh - (var(--spacing-xl) * 2));
+}
+
+.team-form__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.team-form__header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-accent-blue);
+
+  .ds-icon {
+    color: var(--color-icon-accent-blue);
+  }
+}
+
+.team-form__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+/* `flex: 1 1 auto` (not the DS body's `1 1 0%`) so the body sizes to its content under our
+   max-height cap instead of collapsing to its padding — same fix as the agent form. */
+.team-form__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.team-form__body .ds-input {
+  width: 100%;
+}
+
+.team-form__divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+}

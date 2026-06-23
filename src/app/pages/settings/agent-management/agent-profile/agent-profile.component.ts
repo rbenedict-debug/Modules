@@ -11,18 +11,13 @@ import { TicketsService } from '../../../../data/tickets.service';
 import { ChromeService } from '../../../../data/chrome.service';
 import { AgentTicketsTableComponent, AgentTicketRow } from './agent-tickets-table/agent-tickets-table.component';
 import { AgentActivityTabComponent } from './agent-activity-tab/agent-activity-tab.component';
+import { AgentFormComponent } from '../agent-form/agent-form.component';
 
-// A Basic-Information row: a label with one value, several stacked values, or a set
-// of values rendered as chips (roles / locations / topics). Mirrors the User-Explorer
-// profile's field model so the template stays data-driven.
+// A Basic-Information row: a label with one value or several stacked values. Mirrors the
+// User-Explorer profile's field model so the template stays data-driven.
 interface InfoField {
   label: string;
   value: string | string[];
-  chips?: boolean;
-  chipColor?: 'blue' | 'grey';
-  // Department-module chips, each coloured by its module accent (ties the field to the
-  // project's department-module system).
-  moduleChips?: { name: string; accent: string }[];
   // Leading icon + tint on a single-value field (Account Status, Source).
   icon?: string;
   iconColor?: 'green' | 'yellow' | 'grey' | 'purple' | 'blue';
@@ -30,7 +25,7 @@ interface InfoField {
   managedBy?: string;
 }
 
-// One module the agent belongs to, with its permission set + the teams scoped to it.
+// One module the agent belongs to, with its permission set + the teams and topics scoped to it.
 interface ModulePermissionCard {
   id: string;
   name: string;
@@ -38,6 +33,7 @@ interface ModulePermissionCard {
   accent: string;
   permissionSetName: string;
   teams: string[];
+  topics: string[];
 }
 
 // Which information panel shows below the hero.
@@ -81,7 +77,7 @@ const STATUS_ICON: Record<UserStatus, string> = {
 @Component({
   selector: 'app-agent-profile',
   standalone: true,
-  imports: [RouterLink, AgentTicketsTableComponent, AgentActivityTabComponent],
+  imports: [RouterLink, AgentTicketsTableComponent, AgentActivityTabComponent, AgentFormComponent],
   templateUrl: './agent-profile.component.html',
   styleUrl: './agent-profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -116,6 +112,9 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     { id: 'activity', label: 'Activity' },
   ];
   readonly activeTab = signal<TabId>('details');
+
+  /** True while the Edit Agent form is open (this page is not detached, so a signal drives it). */
+  readonly editOpen = signal(false);
   // The Tickets and Activity tabs each host the canonical table-init.js engine, which takes
   // over the DOM, detaches change detection, and binds every element by GLOBAL id. Two such
   // tables can't coexist in the DOM, so both tabs render only while active (mutually
@@ -185,28 +184,12 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     const u = this.user();
     if (!u) return [];
 
-    const chipField = (
-      label: string,
-      values: string[],
-      chipColor: 'blue' | 'grey',
-    ): InfoField => (values.length ? { label, value: values, chips: true, chipColor } : { label, value: '—' });
-
     // Synced sources lock a subset of fields (SOURCE_LOCKED_FIELDS); those carry a
     // "Managed by {integration}" note so admins know the value is owned upstream.
     const synced = u.source !== 'Manual';
     const locked = SOURCE_LOCKED_FIELDS[u.source];
     const managedBy = (key: keyof User): string | undefined =>
       synced && locked.includes(key) ? u.source : undefined;
-
-    const teamNames = this.teamsSvc.teams()
-      .filter((t) => u.teams.includes(t.id))
-      .map((t) => t.name);
-    // Departments ARE the project's department modules — resolve each to its name +
-    // accent so the field reads consistently with the rest of the module system.
-    const departments = u.modules.map((id) => {
-      const m = this.modulesSvc.modules().find((mod) => mod.id === id);
-      return { name: m?.name ?? id, accent: m?.accent ?? 'grey' };
-    });
 
     return [
       { label: 'User ID', value: this.formatUserId(u.id) },
@@ -216,15 +199,9 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
       { label: 'Email', value: u.email, managedBy: managedBy('email') },
       { label: 'Phone', value: u.phone || '—' },
       { label: 'Account Status', value: u.status, icon: STATUS_ICON[u.status], iconColor: STATUS_COLOR[u.status], managedBy: managedBy('status') },
-      chipField('Role', u.roles, 'blue'),
-      chipField('Locations', u.locations, 'grey'),
+      { label: 'Locations', value: u.locations.length ? u.locations : '—' },
       { label: 'Source', value: u.source, icon: synced ? 'cloud' : undefined, iconColor: synced ? 'blue' : undefined },
-      departments.length
-        ? { label: 'Department(s)', value: '', moduleChips: departments }
-        : { label: 'Department(s)', value: '—' },
-      chipField('Team(s)', teamNames, 'grey'),
       { label: 'Job Title', value: u.jobTitle || '—' },
-      chipField('Topic(s)', u.topics, 'grey'),
       { label: 'Last Login', value: this.formatDate(u.lastLogin) },
       { label: 'Date Added', value: this.formatDate(u.dateAdded) },
     ];
@@ -244,6 +221,20 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     const sets = this.permissionSetsSvc.sets();
     const teams = this.teamsSvc.teams();
 
+    // Topics are module-scoped: a topic belongs to the module(s) whose teams define it
+    // (Team.topics + Team.modules are the source of truth). Build that map once, then
+    // surface each of the agent's topics under its module — claiming it as we go so a
+    // topic is never shown under two of this agent's modules (topics never cross modules).
+    const topicModules = new Map<string, Set<string>>();
+    for (const t of teams) {
+      for (const topic of t.topics) {
+        const mods = topicModules.get(topic) ?? new Set<string>();
+        t.modules.forEach((m) => mods.add(m));
+        topicModules.set(topic, mods);
+      }
+    }
+    const claimedTopics = new Set<string>();
+
     return u.modules.map((moduleId) => {
       const mod = modules.find((m) => m.id === moduleId);
       const setId = u.permissionSetByModule[moduleId];
@@ -251,6 +242,10 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
       const moduleTeams = teams
         .filter((t) => u.teams.includes(t.id) && t.modules.includes(moduleId))
         .map((t) => t.name);
+      const moduleTopics = u.topics.filter(
+        (topic) => !claimedTopics.has(topic) && topicModules.get(topic)?.has(moduleId),
+      );
+      moduleTopics.forEach((topic) => claimedTopics.add(topic));
 
       return {
         id: moduleId,
@@ -259,6 +254,7 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
         accent: mod?.accent ?? 'grey',
         permissionSetName: set?.name ?? 'Not assigned',
         teams: moduleTeams,
+        topics: moduleTopics,
       };
     });
   });

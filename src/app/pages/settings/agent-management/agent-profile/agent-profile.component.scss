@@ -1,4 +1,5 @@
 @use '@onflo/design-system/tokens/scss' as ds;
+@use '@onflo/design-system/tokens/scss/breakpoints' as bp;
 
 /* No heading→content gap override here: the DS default (--spacing-lg) plus the scroll
    container's --spacing-xs top padding give 20px below the breadcrumb, which matches the
@@ -204,8 +205,16 @@
 /* ── Basic Information grid ────────────────────────────────────────────────── */
 .agent-detail__info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--spacing-lg);
+  /* Two roomy columns (three on wide desktops) instead of a fan-out of narrow auto-fit
+     columns: every label/value pair gets enough width that emails and dates don't wrap,
+     and the generous, even gap sets each pair off as its own unit so the eye can scan
+     cleanly — fixes the dense grid that read as both scattered and bunched. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-xl);
+
+  @include bp.respond-to('lg') {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .agent-detail__info-item {
@@ -247,7 +256,9 @@
 .agent-detail__perm-body {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-sm);
+  /* Separates the module-name row, Teams, and Topics so the three groups read as distinct
+     rather than cramped (the 4px gap inside each field keeps its label glued to its chips). */
+  gap: var(--spacing-lg);
   min-width: 0;
   flex: 1;
 }
@@ -285,7 +296,9 @@
   height: fit-content;
 }
 
-$accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+// Quoted so Sass treats each as a plain string token (not a color value) when interpolated
+// into selectors / token names below — bare color keywords trigger a build warning.
+$accents: 'blue', 'green', 'navy', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow';
 
 @each $accent in $accents {
   .agent-detail__module-icon--#{$accent} {
@@ -298,16 +311,6 @@ $accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
 .agent-detail__module-icon--grey {
   background-color: var(--color-surface-subtle);
   .ds-icon { color: var(--color-icon-subtle); }
-}
-
-/* ── Table tabs (Tickets / Activity): the canonical table lives in its own component. ──
-   Each renders only while active (mutually exclusive in the DOM) so table-init.js — which
-   binds every element by global id — never sees two tables at once. The panel's own flex
-   gap spaces the heading from the table, so drop the section-head's default bottom margin
-   (it was tuned for headings inside a card body). */
-.agent-detail__panel--tickets .agent-detail__section-head,
-.agent-detail__panel--activity .agent-detail__section-head {
-  margin-bottom: 0;
 }
 
 /* ── Shared text treatments ────────────────────────────────────────────────── */

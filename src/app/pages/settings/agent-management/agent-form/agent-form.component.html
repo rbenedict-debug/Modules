@@ -1,0 +1,218 @@
+<!-- Scrim closes on click; the modal stops propagation so inner clicks never reach it. -->
+<div class="agent-form__backdrop" (click)="cancel()">
+  <div class="ds-modal agent-form__modal" role="dialog" aria-modal="true" aria-labelledby="agent-form-title"
+       (click)="$event.stopPropagation()">
+
+    <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="cancel()">
+      <span class="ds-icon" aria-hidden="true">close</span>
+    </button>
+
+    <header class="ds-modal__header agent-form__header">
+      <span class="agent-form__header-icon" aria-hidden="true">
+        <span class="ds-icon ds-icon--filled">{{ isEdit() ? 'manage_accounts' : 'person_add' }}</span>
+      </span>
+      <div class="agent-form__header-text">
+        <h2 class="ds-modal__title" id="agent-form-title">{{ title() }}</h2>
+        <p class="ds-modal__subtitle">{{ subtitle() }}</p>
+      </div>
+    </header>
+
+    <div class="ds-modal__body agent-form__body">
+
+      <!-- Synced provenance: integration-managed fields are locked below. -->
+      @if (isSynced()) {
+        <div class="ds-alert ds-alert--info" role="alert">
+          <div class="ds-alert__header">
+            <span class="ds-icon ds-alert__icon" aria-hidden="true">sync</span>
+            <div class="ds-alert__content">
+              <div class="ds-alert__text">
+                <p class="ds-alert__message">
+                  This agent is synced from {{ source() }}. Fields managed by the integration are locked
+                  here — change them in {{ source() }}.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- ── Identity ──────────────────────────────────────────────────────────── -->
+      <section class="agent-form__section">
+        <div class="agent-form__grid agent-form__grid--3">
+          <div class="ds-input" [class.is-disabled]="locked('firstName')">
+            <label class="ds-input__label" for="af-first">First Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+            <div class="ds-input__field">
+              <input id="af-first" class="ds-input__control" type="text" placeholder="First name"
+                     [value]="editing()?.firstName ?? ''" [disabled]="locked('firstName')" />
+            </div>
+            @if (locked('firstName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+          </div>
+
+          <div class="ds-input">
+            <label class="ds-input__label" for="af-middle">Middle Name</label>
+            <div class="ds-input__field">
+              <input id="af-middle" class="ds-input__control" type="text" placeholder="Middle name"
+                     [value]="editing()?.middleName ?? ''" />
+            </div>
+          </div>
+
+          <div class="ds-input" [class.is-disabled]="locked('lastName')">
+            <label class="ds-input__label" for="af-last">Last Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+            <div class="ds-input__field">
+              <input id="af-last" class="ds-input__control" type="text" placeholder="Last name"
+                     [value]="editing()?.lastName ?? ''" [disabled]="locked('lastName')" />
+            </div>
+            @if (locked('lastName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+          </div>
+        </div>
+
+        <div class="agent-form__grid agent-form__grid--2">
+          <div class="ds-input" [class.is-disabled]="locked('email')">
+            <label class="ds-input__label" for="af-email">Email Address<span class="ds-input__required" aria-hidden="true">*</span></label>
+            <div class="ds-input__field">
+              <input id="af-email" class="ds-input__control" type="email" placeholder="user@district.edu"
+                     [value]="editing()?.email ?? ''" [disabled]="locked('email')" />
+            </div>
+            @if (locked('email')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+          </div>
+
+          <div class="ds-input">
+            <label class="ds-input__label" for="af-phone">Phone Number</label>
+            <div class="ds-input__field">
+              <input id="af-phone" class="ds-input__control" type="tel" placeholder="(555) 000-0000"
+                     [value]="editing()?.phone ?? ''" />
+            </div>
+          </div>
+        </div>
+
+        <div class="agent-form__grid agent-form__grid--2">
+          <div class="ds-input">
+            <label class="ds-input__label" for="af-emp">Employee ID</label>
+            <div class="ds-input__field">
+              <input id="af-emp" class="ds-input__control" type="text" placeholder="Enter employee ID (optional)"
+                     [value]="editing()?.employeeId ?? ''" />
+            </div>
+          </div>
+
+          <div class="ds-input">
+            <label class="ds-input__label" for="af-job">Job Title</label>
+            <div class="ds-input__field">
+              <input id="af-job" class="ds-input__control" type="text" placeholder="Enter job title (optional)"
+                     [value]="editing()?.jobTitle ?? ''" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="agent-form__divider" aria-hidden="true"></div>
+
+      <!-- ── Modules & Access ──────────────────────────────────────────────────── -->
+      <section class="agent-form__section">
+        <div class="agent-form__section-head">
+          <h3 class="agent-form__section-title">Modules &amp; Access</h3>
+          <p class="agent-form__section-hint">
+            Assign the departments this agent works in, the permission set granting their capabilities,
+            and any teams that route work to them.
+          </p>
+        </div>
+
+        @for (row of accessRows(); track row.id) {
+          <div class="agent-form__access-row">
+            <div class="agent-form__grid agent-form__grid--3 agent-form__access-fields">
+              <app-form-select label="Department" [options]="departments()"
+                [selected]="row.moduleName" placeholder="Select department…" [required]="true" />
+              <app-form-select label="Permission Set" [options]="permissionSetNames()"
+                [selected]="row.permissionSetName" placeholder="Select permission set…" [required]="true" />
+              <app-form-select label="Teams" [options]="teamNames()"
+                [selected]="row.teamNames" [multiple]="true" placeholder="Select teams (optional)…" />
+            </div>
+            @if (accessRows().length > 1) {
+              <button class="ds-icon-button ds-icon-button--icon agent-form__row-remove" type="button"
+                      aria-label="Remove department" (click)="removeRow(row.id)">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+              </button>
+            }
+          </div>
+        }
+
+        <div>
+          <button class="ds-button ds-button--text ds-button--leading-icon" type="button" (click)="addRow()">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">add</span>
+            Add another department
+          </button>
+        </div>
+
+        <app-form-select label="Locations" [options]="locationOptions()"
+          [selected]="currentLocations()" [multiple]="true" placeholder="Select location(s) (optional)…" />
+      </section>
+
+      <div class="agent-form__divider" aria-hidden="true"></div>
+
+      <!-- ── Custom Fields (district-defined; integration-toggleable) ──────────── -->
+      <section class="agent-form__section">
+        <div class="agent-form__section-head">
+          <h3 class="agent-form__section-title">Custom Fields</h3>
+          <p class="agent-form__section-hint">District-defined fields — these vary by district.</p>
+        </div>
+        <!-- TODO eng: render from the district custom-field schema; integrations toggle fields on/off. -->
+        <div class="agent-form__grid agent-form__grid--2">
+          @for (cf of customFields; track cf.key) {
+            @if (cf.type === 'text') {
+              <div class="ds-input">
+                <label class="ds-input__label" [attr.for]="'af-cf-' + cf.key">{{ cf.label }}</label>
+                <div class="ds-input__field">
+                  <input [id]="'af-cf-' + cf.key" class="ds-input__control" type="text" [placeholder]="cf.placeholder ?? ''" />
+                </div>
+              </div>
+            } @else {
+              <app-form-select [label]="cf.label" [options]="cf.options ?? []" placeholder="Select…" />
+            }
+          }
+        </div>
+      </section>
+
+      <div class="agent-form__divider" aria-hidden="true"></div>
+
+      <!-- ── Activation (create) / Status (edit) ───────────────────────────────── -->
+      <section class="agent-form__section">
+        @if (isEdit()) {
+          <div class="agent-form__field-block agent-form__field-block--narrow">
+            <app-form-select label="Account Status" [options]="statusOptions"
+              [selected]="editing()?.status" [disabled]="locked('status')"
+              [helper]="locked('status') ? 'Managed by ' + source() : undefined" />
+          </div>
+        } @else {
+          <span class="agent-form__field-label">Select activation type</span>
+          <div class="ds-radio-group agent-form__activation">
+            <label class="ds-radio">
+              <input type="radio" class="ds-radio__control" name="af-activation" value="email" checked />
+              <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+              <span class="ds-radio__label">Send activation email</span>
+            </label>
+            <label class="ds-radio">
+              <input type="radio" class="ds-radio__control" name="af-activation" value="activate" />
+              <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+              <span class="ds-radio__label">Activate user</span>
+            </label>
+            <label class="ds-radio">
+              <input type="radio" class="ds-radio__control" name="af-activation" value="none" />
+              <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+              <span class="ds-radio__label">Do not activate</span>
+            </label>
+          </div>
+        }
+      </section>
+
+    </div>
+
+    <footer class="ds-modal__actions">
+      <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
+      <button class="ds-button ds-button--filled ds-button--md ds-button--leading-icon" type="button" (click)="submit()">
+        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">{{ isEdit() ? 'check' : 'person_add' }}</span>
+        {{ isEdit() ? 'Save Changes' : 'Create Agent' }}
+      </button>
+    </footer>
+
+  </div>
+</div>
+<!-- TODO eng: wire real submit (validation + persistence) and integration field-toggle config. -->

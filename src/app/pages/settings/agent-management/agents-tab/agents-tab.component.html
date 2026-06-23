@@ -15,8 +15,7 @@
          id="search-input" / id="search-clear". -->
     <div class="ds-table-toolbar" id="toolbar">
       <div class="ds-table-toolbar__left">
-        <!-- TODO eng: wire Create Agent flow -->
-        <button class="ds-button ds-button--filled ds-button--leading-icon" type="button">
+        <button class="ds-button ds-button--filled ds-button--leading-icon" type="button" (click)="createAgent.emit()">
           <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
           Create Agent
         </button>

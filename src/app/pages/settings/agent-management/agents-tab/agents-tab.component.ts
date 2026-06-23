@@ -36,6 +36,10 @@ export class AgentsTabComponent implements AfterViewInit {
   /** Emits the id of the agent whose profile should open. The parent opens the drawer. */
   @Output() viewProfile = new EventEmitter<string>();
 
+  /** Emits when "Create Agent" is clicked. The (non-detached) parent hosts the form,
+   *  since this component detaches change detection for table-init.js. */
+  @Output() createAgent = new EventEmitter<void>();
+
   private readonly modulesSvc = inject(ModulesService);
   private readonly usersSvc = inject(UsersService);
   private readonly teamsSvc = inject(TeamsService);

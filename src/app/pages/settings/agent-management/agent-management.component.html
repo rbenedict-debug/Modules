@@ -39,16 +39,27 @@
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
-      <app-agents-tab (viewProfile)="openProfile($event)" />
+      <app-agents-tab (viewProfile)="openProfile($event)" (createAgent)="creatingAgent.set(true)" />
     }
     @case ('authentication') {
       <app-authentication-tab />
     }
     @case ('teams') {
-      <app-teams-tab />
+      <app-teams-tab (createTeam)="creatingTeam.set(true)" />
     }
     @case ('permission-sets') {
       <app-permission-sets-tab (editSet)="editingSetId.set($event)" />
     }
   }
+}
+
+<!-- Create Agent popup (no agent input = create mode). Hosted at the page root so its
+     fixed-position scrim overlays everything. -->
+@if (creatingAgent()) {
+  <app-agent-form (close)="creatingAgent.set(false)" />
+}
+
+<!-- Create Team popup. Hosted at the page root so its fixed-position scrim overlays everything. -->
+@if (creatingTeam()) {
+  <app-team-form (close)="creatingTeam.set(false)" />
 }

@@ -1,0 +1,149 @@
+@use '@onflo/design-system/tokens/scss' as ds;
+
+/* Full-viewport scrim; the ds-modal panel centers within it. Uses the DS scrim token so
+   dark mode swaps automatically. */
+.agent-form__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background: var(--color-surface-scrim);
+}
+
+/* Widen past the ds-modal default (500px) for a multi-column form, and cap the height so
+   the body scrolls between the sticky header and footer. */
+.agent-form__modal.ds-modal {
+  width: 100%;
+  max-width: 760px;
+  max-height: calc(100vh - (var(--spacing-xl) * 2));
+}
+
+/* Header: leading accent tile + title/subtitle column (keeps the DS header padding). */
+.agent-form__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.agent-form__header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-accent-blue);
+
+  .ds-icon {
+    color: var(--color-icon-accent-blue);
+  }
+}
+
+.agent-form__header-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  min-width: 0;
+}
+
+/* Body: own the padding (ds-modal__body ships none) and stack sections with a clear rhythm.
+   The DS body is `flex: 1 1 0%`, which only fills when the modal has a *definite* height
+   (the DS demos hard-set one). We cap height with max-height instead, so a 0% basis would
+   contribute no intrinsic height and the body collapses to ~its padding. `flex-basis: auto`
+   sizes the body to its content (modal grows to fit, up to max-height) while min-height:0 +
+   overflow keeps it shrinking + scrolling once capped. */
+.agent-form__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.agent-form__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.agent-form__divider {
+  height: 1px;
+  background: var(--color-border-subtle);
+}
+
+.agent-form__section-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.agent-form__section-title {
+  margin: 0;
+  @include ds.type-body-medium;
+  font-weight: var(--ref-typescale-body-medium-weight-prominent);
+  color: var(--color-text-primary);
+}
+
+.agent-form__section-hint {
+  margin: 0;
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+}
+
+/* Field grids — every field fills its cell. */
+.agent-form__grid {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.agent-form__grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.agent-form__grid--3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.agent-form__grid .ds-input {
+  width: 100%;
+}
+
+/* One module-access grant: the three selects flex, the remove control sits beside them
+   (nudged down to line up with the field controls below their labels). */
+.agent-form__access-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-sm);
+}
+
+.agent-form__access-fields {
+  flex: 1;
+  min-width: 0;
+}
+
+.agent-form__row-remove {
+  flex: none;
+  margin-top: var(--spacing-xl);
+}
+
+.agent-form__field-block--narrow {
+  max-width: 280px;
+}
+
+.agent-form__field-label {
+  @include ds.type-label-small;
+  color: var(--color-text-secondary);
+}
+
+/* Activation radios sit in a row (the DS group stacks by default). */
+.agent-form__activation.ds-radio-group {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--spacing-lg);
+}

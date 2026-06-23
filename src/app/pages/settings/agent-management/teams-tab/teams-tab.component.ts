@@ -3,6 +3,8 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  EventEmitter,
+  Output,
   inject,
   signal,
 } from '@angular/core';
@@ -40,6 +42,10 @@ interface TeamRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeamsTabComponent implements AfterViewInit {
+  /** Emits when "Create Team" is clicked. The (non-detached) parent hosts the form,
+   *  since this component detaches change detection for table-init.js. */
+  @Output() createTeam = new EventEmitter<void>();
+
   private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);

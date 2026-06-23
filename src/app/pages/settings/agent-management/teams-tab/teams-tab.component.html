@@ -12,8 +12,7 @@
          ids table-init.js wires (#btn-filter / #btn-columns). -->
     <div class="ds-table-toolbar" id="toolbar">
       <div class="ds-table-toolbar__left">
-        <!-- TODO eng: wire Create Team flow -->
-        <button class="ds-button ds-button--filled ds-button--leading-icon" type="button">
+        <button class="ds-button ds-button--filled ds-button--leading-icon" type="button" (click)="createTeam.emit()">
           <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
           Create Team
         </button>

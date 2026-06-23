@@ -1,7 +1,7 @@
 <!-- Canonical Design System table (driven by table-init.js, wired in angular.json).
      Scaffold mirrors the Agent Tickets table; the toolbar is trimmed to Search / Filter /
      Tool panel / Download. Do NOT rename any id — table-init.js resolves elements by id. -->
-<div class="agent-activity-table">
+<div class="agent-activity-table" #tableRoot>
   <div class="ds-page-content__main ds-page-content__main--table">
     <div class="table-container">
 
@@ -28,6 +28,15 @@
         <button class="ds-icon-button ds-icon-button--outlined"
                 type="button" aria-label="Download" (click)="downloadCsv()">
           <span class="ds-icon ds-icon--filled" aria-hidden="true">download</span>
+        </button>
+        <!-- Expand the table into a full-screen modal for maximum viewing space. Toggles a
+             class on the #tableRoot wrapper (see component .ts/.scss) — never a second table,
+             which would collide with table-init.js's global element ids. -->
+        <button class="ds-icon-button ds-icon-button--outlined"
+                type="button" aria-pressed="false" aria-label="Expand table to full screen"
+                #fsBtn (click)="toggleFullscreen()">
+          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--open" aria-hidden="true">fullscreen</span>
+          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--close" aria-hidden="true">fullscreen_exit</span>
         </button>
       </div>
 

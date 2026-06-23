@@ -55,8 +55,8 @@
       <div class="psets-editor__nav-list">
         @for (s of filteredSections(); track s.id) {
           <button class="ds-subnav-button psets-editor__nav-item" type="button"
-                  [class.is-selected]="visibleSection()?.id === s.id"
-                  [attr.aria-pressed]="visibleSection()?.id === s.id"
+                  [class.is-selected]="visibleSection().id === s.id"
+                  [attr.aria-pressed]="visibleSection().id === s.id"
                   (click)="selectSection(s.id)">
             <span class="ds-icon ds-icon--sm psets-editor__nav-icon" aria-hidden="true">{{ s.icon }}</span>
             <span class="psets-editor__nav-label">{{ s.label }}</span>

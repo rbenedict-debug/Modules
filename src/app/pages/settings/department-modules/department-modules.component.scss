@@ -140,7 +140,9 @@
 
 // Each module gets a paired accent tile: surface-accent background + the matching
 // icon-accent glyph. The `accent` field on each module (component .ts) picks which.
-$module-accents: blue, green, navy, orange, pink, purple, red, teal, yellow;
+// Quoted so Sass treats each as a plain string token (not a color value) when interpolated
+// into selectors / token names below — bare color keywords trigger a build warning.
+$module-accents: 'blue', 'green', 'navy', 'orange', 'pink', 'purple', 'red', 'teal', 'yellow';
 
 @each $accent in $module-accents {
   .modules__icon-box--#{$accent} {

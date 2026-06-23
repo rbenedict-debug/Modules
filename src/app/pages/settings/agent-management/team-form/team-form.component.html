@@ -1,0 +1,62 @@
+<!-- Scrim closes on click; the modal stops propagation so inner clicks never reach it. -->
+<div class="team-form__backdrop" (click)="cancel()">
+  <div class="ds-modal team-form__modal" role="dialog" aria-modal="true" aria-labelledby="team-form-title"
+       (click)="$event.stopPropagation()">
+
+    <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="cancel()">
+      <span class="ds-icon" aria-hidden="true">close</span>
+    </button>
+
+    <header class="ds-modal__header team-form__header">
+      <span class="team-form__header-icon" aria-hidden="true">
+        <span class="ds-icon ds-icon--filled">groups</span>
+      </span>
+      <div class="team-form__header-text">
+        <h2 class="ds-modal__title" id="team-form-title">Create New Team</h2>
+        <p class="ds-modal__subtitle">Add a new team to the system</p>
+      </div>
+    </header>
+
+    <div class="ds-modal__body team-form__body">
+
+      <div class="ds-input">
+        <label class="ds-input__label" for="tf-name">Team Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+        <div class="ds-input__field">
+          <input id="tf-name" class="ds-input__control" type="text" placeholder="Enter team name" />
+        </div>
+      </div>
+
+      <app-form-select label="Department" [options]="departments()" [multiple]="true"
+        placeholder="Select department(s)…" [required]="true" />
+
+      <app-form-select label="Topic" [options]="topicOptions()" [multiple]="true"
+        placeholder="Select topic(s) (optional)…" />
+
+      <app-form-select label="Permission Set" [options]="permissionSetNames()"
+        placeholder="Select permission set (optional)…" />
+
+      <div class="team-form__divider" aria-hidden="true"></div>
+
+      <!-- Members: search-to-add stand-in. TODO eng: wire user search + selected-member chips. -->
+      <div class="ds-input ds-search team-form__members" role="search">
+        <label class="ds-input__label" for="tf-members">Members</label>
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input id="tf-members" class="ds-input__control" type="search"
+                 placeholder="Search users to add…" aria-label="Search users to add" />
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="ds-modal__actions">
+      <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
+      <button class="ds-button ds-button--filled ds-button--md ds-button--leading-icon" type="button" (click)="submit()">
+        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">add</span>
+        Create
+      </button>
+    </footer>
+
+  </div>
+</div>
+<!-- TODO eng: wire real submit (validation + persistence) and member search. -->

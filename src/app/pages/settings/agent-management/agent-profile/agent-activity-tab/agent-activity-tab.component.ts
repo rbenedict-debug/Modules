@@ -3,6 +3,9 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
+  OnDestroy,
+  ViewChild,
 } from '@angular/core';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
@@ -43,7 +46,7 @@ interface ActivityRow {
   styleUrl: './agent-activity-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AgentActivityTabComponent implements AfterViewInit {
+export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
   constructor(private cdr: ChangeDetectorRef) {}
 
   // Mock audit history, newest first — read once during the initial render, after which
@@ -159,5 +162,58 @@ export class AgentActivityTabComponent implements AfterViewInit {
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  // ── Full-screen view ──────────────────────────────────────────────────────────
+  // "Expand" promotes THIS wrapper to a viewport-filling modal (CSS .is-fullscreen) instead
+  // of rendering a second table — table-init.js resolves every element by global id, so a
+  // duplicate would collide. The engine's DOM is left alone; only the wrapper's box changes,
+  // so active filters/sort/columns/scroll carry straight into full screen. Change detection
+  // is detached (the engine owns the DOM), so — like downloadCsv — we toggle by hand.
+  @ViewChild('tableRoot') private tableRoot?: ElementRef<HTMLElement>;
+  @ViewChild('fsBtn') private fsBtn?: ElementRef<HTMLButtonElement>;
+
+  private isFullscreen = false;
+  private prevBodyOverflow = '';
+
+  // Bound once so add/removeEventListener pair up. Esc exits full screen.
+  private readonly onKeydown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape') this.setFullscreen(false);
+  };
+
+  toggleFullscreen(): void {
+    this.setFullscreen(!this.isFullscreen);
+  }
+
+  private setFullscreen(on: boolean): void {
+    const root = this.tableRoot?.nativeElement;
+    if (!root || on === this.isFullscreen) return;
+    this.isFullscreen = on;
+    root.classList.toggle('is-fullscreen', on);
+
+    const btn = this.fsBtn?.nativeElement;
+    if (btn) {
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', on ? 'Exit full screen' : 'Expand table to full screen');
+    }
+
+    if (on) {
+      this.prevBodyOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      document.addEventListener('keydown', this.onKeydown);
+    } else {
+      document.body.style.overflow = this.prevBodyOverflow;
+      document.removeEventListener('keydown', this.onKeydown);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // The tab can be switched away or closed while expanded — make sure we never leave the
+    // body scroll locked or the Esc listener attached. (The engine's own document listeners
+    // are a separate, known design-mode leak — see the class doc above.)
+    if (this.isFullscreen) {
+      document.body.style.overflow = this.prevBodyOverflow;
+      document.removeEventListener('keydown', this.onKeydown);
+    }
   }
 }

@@ -50,7 +50,7 @@
             <p class="agent-detail__hero-sub">{{ subtitle() }}</p>
           </div>
           <!-- Top-right hero action. TODO eng: wire edit behavior. -->
-          <button class="ds-button ds-button--outlined ds-button--leading-icon agent-detail__hero-edit" type="button">
+          <button class="ds-button ds-button--outlined ds-button--leading-icon agent-detail__hero-edit" type="button" (click)="editOpen.set(true)">
             <span class="ds-icon">edit</span>
             Edit
           </button>
@@ -89,30 +89,16 @@
                 @for (field of basicInfo(); track field.label) {
                   <div class="agent-detail__info-item">
                     <span class="agent-detail__info-label">{{ field.label }}</span>
-                    @if (field.moduleChips) {
-                      <div class="agent-detail__chips">
-                        @for (m of field.moduleChips; track m.name) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ m.accent }}">{{ m.name }}</span>
-                        }
-                      </div>
-                    } @else if (field.chips) {
-                      <div class="agent-detail__chips">
-                        @for (v of fieldValues(field); track $index) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ field.chipColor }}">{{ v }}</span>
-                        }
-                      </div>
-                    } @else {
-                      <div class="agent-detail__info-values">
-                        @for (v of fieldValues(field); track $index) {
-                          <span class="agent-detail__info-value">
-                            @if (field.icon) {
-                              <span class="ds-icon ds-icon--sm ds-icon--filled agent-detail__info-icon agent-detail__info-icon--{{ field.iconColor }}" aria-hidden="true">{{ field.icon }}</span>
-                            }
-                            {{ v }}
-                          </span>
-                        }
-                      </div>
-                    }
+                    <div class="agent-detail__info-values">
+                      @for (v of fieldValues(field); track $index) {
+                        <span class="agent-detail__info-value">
+                          @if (field.icon) {
+                            <span class="ds-icon ds-icon--sm ds-icon--filled agent-detail__info-icon agent-detail__info-icon--{{ field.iconColor }}" aria-hidden="true">{{ field.icon }}</span>
+                          }
+                          {{ v }}
+                        </span>
+                      }
+                    </div>
                     @if (field.managedBy) {
                       <span class="agent-detail__managed">
                         <span class="ds-icon ds-icon--xs agent-detail__managed-icon" aria-hidden="true">cloud</span>
@@ -164,6 +150,16 @@
                             }
                           </div>
                         </div>
+                        <div class="agent-detail__perm-field">
+                          <span class="agent-detail__info-label">Topics</span>
+                          <div class="agent-detail__chips">
+                            @for (topic of card.topics; track topic) {
+                              <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ topic }}</span>
+                            } @empty {
+                              <span class="agent-detail__muted">No topics</span>
+                            }
+                          </div>
+                        </div>
                       </div>
                     </div>
                   } @empty {
@@ -201,10 +197,6 @@
       @case ('tickets') {
         <div class="agent-detail__panel agent-detail__panel--tickets" role="tabpanel"
              id="ap-panel-tickets" aria-labelledby="ap-tab-tickets">
-          <div class="agent-detail__section-head agent-detail__section-head--count">
-            <h2 class="agent-detail__section-title">Tickets</h2>
-            <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ ownedTickets().length }}</span>
-          </div>
           @if (ticketRows().length) {
             <app-agent-tickets-table [rows]="ticketRows()" />
           } @else {
@@ -226,15 +218,17 @@
       @case ('activity') {
         <div class="agent-detail__panel agent-detail__panel--activity" role="tabpanel"
              id="ap-panel-activity" aria-labelledby="ap-tab-activity">
-          <div class="agent-detail__section-head">
-            <h2 class="agent-detail__section-title">Activity</h2>
-          </div>
           <app-agent-activity-tab />
         </div>
       }
     }
 
   </div>
+
+  <!-- Edit Agent popup, pre-filled from this agent (synced agents lock integration-managed fields). -->
+  @if (editOpen()) {
+    <app-agent-form [agent]="u" (close)="editOpen.set(false)" />
+  }
 } @else {
   <!-- Unknown id (e.g. a stale link) — the breadcrumb above is the way back. -->
   <div class="agent-detail">
