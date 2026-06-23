@@ -259,6 +259,64 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     });
   });
 
+  // ── Topic list display (per module card) ──────────────────────────────────────
+  // A module can carry 20–50+ topics; rendering them all by default buries the rest of the
+  // card and wrecks module-to-module scanning. So each card shows the first TOPIC_CAP topics
+  // with a "+N more" toggle that reveals the rest inline, plus a filter field once an expanded
+  // list is long enough to warrant one. State is keyed by moduleId so each card is independent.
+  /** Topics shown before the "+N more" cap kicks in (≈ two rows of chips). */
+  readonly TOPIC_CAP = 12;
+  /** Above this many topics, an expanded card also gets a filter field. */
+  private readonly TOPIC_SEARCH_THRESHOLD = 15;
+
+  /** Module ids whose full topic list is currently expanded. */
+  private readonly expandedTopics = signal<ReadonlySet<string>>(new Set<string>());
+  /** Per-module topic filter query (only meaningful while that module is expanded). */
+  private readonly topicQuery = signal<Record<string, string>>({});
+
+  isTopicsExpanded(moduleId: string): boolean {
+    return this.expandedTopics().has(moduleId);
+  }
+
+  toggleTopics(moduleId: string): void {
+    const willExpand = !this.expandedTopics().has(moduleId);
+    this.expandedTopics.update((set) => {
+      const next = new Set(set);
+      if (willExpand) next.add(moduleId);
+      else next.delete(moduleId);
+      return next;
+    });
+    // Reset the filter when collapsing so a reopened card starts from the full list.
+    if (!willExpand) this.setTopicQuery(moduleId, '');
+  }
+
+  topicQueryFor(moduleId: string): string {
+    return this.topicQuery()[moduleId] ?? '';
+  }
+
+  setTopicQuery(moduleId: string, value: string): void {
+    this.topicQuery.update((m) => ({ ...m, [moduleId]: value }));
+  }
+
+  /** The topics to render for a card: collapsed → the first TOPIC_CAP; expanded → the full
+   *  list filtered by its query. */
+  visibleTopics(card: ModulePermissionCard): string[] {
+    if (!this.isTopicsExpanded(card.id)) return card.topics.slice(0, this.TOPIC_CAP);
+    const q = this.topicQueryFor(card.id).trim().toLowerCase();
+    return q ? card.topics.filter((t) => t.toLowerCase().includes(q)) : card.topics;
+  }
+
+  /** Topics hidden behind the "+N more" control (collapsed only; 0 once expanded). */
+  hiddenTopicCount(card: ModulePermissionCard): number {
+    if (this.isTopicsExpanded(card.id)) return 0;
+    return Math.max(0, card.topics.length - this.TOPIC_CAP);
+  }
+
+  /** Show the filter field only when expanded and the list is long enough to need it. */
+  showTopicSearch(card: ModulePermissionCard): boolean {
+    return this.isTopicsExpanded(card.id) && card.topics.length > this.TOPIC_SEARCH_THRESHOLD;
+  }
+
   // ── Tickets owned by this agent (real data) ───────────────────────────────────
   // Match on full name, falling back to first+last (seed ticket ownerName values omit
   // the middle names that fullName() includes).

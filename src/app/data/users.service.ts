@@ -12,7 +12,10 @@ export class UsersService {
     {
       id: 'u1', firstName: 'Maria', lastName: 'Hernandez', email: 'maria.hernandez@district.edu',
       phone: '555-0101', status: 'Active', source: 'Manual', roles: ['District Admin', 'Agent'],
-      modules: ['classic', 'it'], teams: ['t2', 't1', 't6'], locations: ['District Office'], topics: ['Access', 'Hardware'],
+      modules: ['classic', 'it'], teams: ['t2', 't1', 't6'], locations: ['District Office'],
+      // Full IT catalog: 43 surface under the IT module (classic claims the shared Access/General),
+      // demonstrating the capped + expandable topic list on the profile's Permissions tab.
+      topics: ['Hardware', 'Software', 'Network', 'Access', 'Password Reset', 'VPN Access', 'Email & Outlook', 'Wi-Fi Connectivity', 'Printer Setup', 'Laptop Imaging', 'Desktop Support', 'Active Directory', 'Multi-Factor Auth', 'Software Licensing', 'Account Provisioning', 'Account Deactivation', 'Chromebook Support', 'iPad / Tablet Support', 'Network Outage', 'File Share Access', 'Cloud Storage', 'Microsoft Teams', 'Video Conferencing', 'Phone / VoIP', 'SMART Board Support', 'Projector Support', 'Security Incident', 'Phishing Report', 'Endpoint / Antivirus', 'Patch Management', 'Server Access', 'Database Access', 'Web Filtering', 'Firewall Request', 'New Hire Setup', 'Equipment Checkout', 'Asset Tagging', 'Mobile Device Mgmt', 'Single Sign-On', 'Application Error', 'Performance Issue', 'Data Recovery', 'Backup Request', 'Remote Desktop', 'General', 'Technology'],
       jobTitle: 'IT Director', employeeId: 'E1001', pronouns: 'she/her',
       permissionSetByModule: { classic: 'ps-sysadmin', it: 'ps-it-desk-lead' },
       lastLogin: '2026-06-15T08:12:00Z', dateAdded: '2023-01-10T09:00:00Z',

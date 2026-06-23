@@ -8,8 +8,12 @@ export class TeamsService {
   // `modules` matches a ModulesService module, and `permissionSetId` (when present)
   // matches a PermissionSetsService set.
   readonly teams = signal<Team[]>([
+    // IT Help Desk carries the full IT service catalog (~40 topics). It is the team that maps
+    // that long topic list onto the `it` module, so an IT agent's profile can demonstrate the
+    // capped/expandable topic list. Other teams keep short, focused topic sets.
     {
-      id: 't1', name: 'IT Help Desk', modules: ['it'], topics: ['Hardware', 'Software', 'Network', 'Access'],
+      id: 't1', name: 'IT Help Desk', modules: ['it'],
+      topics: ['Hardware', 'Software', 'Network', 'Access', 'Password Reset', 'VPN Access', 'Email & Outlook', 'Wi-Fi Connectivity', 'Printer Setup', 'Laptop Imaging', 'Desktop Support', 'Active Directory', 'Multi-Factor Auth', 'Software Licensing', 'Account Provisioning', 'Account Deactivation', 'Chromebook Support', 'iPad / Tablet Support', 'Network Outage', 'File Share Access', 'Cloud Storage', 'Microsoft Teams', 'Video Conferencing', 'Phone / VoIP', 'SMART Board Support', 'Projector Support', 'Security Incident', 'Phishing Report', 'Endpoint / Antivirus', 'Patch Management', 'Server Access', 'Database Access', 'Web Filtering', 'Firewall Request', 'New Hire Setup', 'Equipment Checkout', 'Asset Tagging', 'Mobile Device Mgmt', 'Single Sign-On', 'Application Error', 'Performance Issue', 'Data Recovery', 'Backup Request', 'Remote Desktop'],
       memberIds: ['u1', 'u2', 'u3', 'u4', 'u26', 'u29'], permissionSetId: 'ps-it-desk-lead', source: 'Active Directory',
     },
     {

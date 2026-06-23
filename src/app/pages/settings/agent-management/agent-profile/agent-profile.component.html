@@ -136,30 +136,80 @@
                         <span class="ds-icon ds-icon--filled ds-icon--sm">{{ card.icon }}</span>
                       </span>
                       <div class="agent-detail__perm-body">
+
+                        <!-- Identity: module name + the agent's permission set in it, bound together so the
+                             access level reads right beside the module — never stranded at the card's far edge. -->
                         <div class="agent-detail__perm-head">
                           <span class="agent-detail__perm-name">{{ card.name }}</span>
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ card.permissionSetName }}</span>
+                          <span class="agent-detail__perm-set">
+                            <span class="agent-detail__info-label">Permission set</span>
+                            <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--blue">{{ card.permissionSetName }}</span>
+                          </span>
                         </div>
-                        <div class="agent-detail__perm-field">
-                          <span class="agent-detail__info-label">Teams</span>
-                          <div class="agent-detail__chips">
-                            @for (team of card.teams; track team) {
-                              <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ team }}</span>
-                            } @empty {
-                              <span class="agent-detail__muted">Not assigned to any team</span>
-                            }
+
+                        <!-- Assignments: teams + topics. Grey chips stay quiet so the blue permission set
+                             above remains the eye's anchor when scanning module to module. -->
+                        <div class="agent-detail__perm-assignments">
+                          <div class="agent-detail__perm-field">
+                            <span class="agent-detail__info-label">Teams · {{ card.teams.length }}</span>
+                            <div class="agent-detail__chips">
+                              @for (team of card.teams; track team) {
+                                <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--grey">{{ team }}</span>
+                              } @empty {
+                                <span class="agent-detail__muted">Not assigned to any team</span>
+                              }
+                            </div>
                           </div>
-                        </div>
-                        <div class="agent-detail__perm-field">
-                          <span class="agent-detail__info-label">Topics</span>
-                          <div class="agent-detail__chips">
-                            @for (topic of card.topics; track topic) {
-                              <span class="ds-label ds-label--pill ds-label--xs ds-label--grey">{{ topic }}</span>
-                            } @empty {
+
+                          <div class="agent-detail__perm-field">
+                            <span class="agent-detail__info-label">Topics · {{ card.topics.length }}</span>
+
+                            @if (card.topics.length) {
+                              <!-- Filter — appears only once the list is expanded and long enough to need it.
+                                   TODO eng: wire to real topic filtering on handoff. -->
+                              @if (showTopicSearch(card)) {
+                                <div class="ds-input ds-search agent-detail__topic-search" role="search">
+                                  <div class="ds-input__field">
+                                    <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                                    <input class="ds-input__control" type="search"
+                                           [value]="topicQueryFor(card.id)"
+                                           (input)="setTopicQuery(card.id, $any($event.target).value)"
+                                           [attr.placeholder]="'Filter ' + card.topics.length + ' topics…'"
+                                           [attr.aria-label]="'Filter topics in ' + card.name" />
+                                    @if (topicQueryFor(card.id)) {
+                                      <button class="ds-input__action" type="button" aria-label="Clear filter"
+                                              (click)="setTopicQuery(card.id, '')">
+                                        <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+                                      </button>
+                                    }
+                                  </div>
+                                </div>
+                              }
+
+                              <div class="agent-detail__chips" [class.agent-detail__chips--scroll]="showTopicSearch(card)" [id]="'ap-topics-' + card.id">
+                                @for (topic of visibleTopics(card); track topic) {
+                                  <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--grey">{{ topic }}</span>
+                                } @empty {
+                                  <span class="agent-detail__muted">No topics match “{{ topicQueryFor(card.id) }}”</span>
+                                }
+                              </div>
+
+                              <!-- Cap toggle: collapsed shows the first TOPIC_CAP chips; expand reveals the rest. -->
+                              @if (card.topics.length > TOPIC_CAP) {
+                                <button type="button" class="agent-detail__topic-toggle"
+                                        (click)="toggleTopics(card.id)"
+                                        [attr.aria-expanded]="isTopicsExpanded(card.id)"
+                                        [attr.aria-controls]="'ap-topics-' + card.id">
+                                  <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ isTopicsExpanded(card.id) ? 'expand_less' : 'expand_more' }}</span>
+                                  {{ isTopicsExpanded(card.id) ? 'Show less' : '+' + hiddenTopicCount(card) + ' more' }}
+                                </button>
+                              }
+                            } @else {
                               <span class="agent-detail__muted">No topics</span>
                             }
                           </div>
                         </div>
+
                       </div>
                     </div>
                   } @empty {

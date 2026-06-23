@@ -31,8 +31,12 @@
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-lg);
-  padding: var(--spacing-lg);
+  // xl rhythm between blocks: with the divider margin reset to 0, this puts 24px above AND
+  // below each <hr> (48px between section content) — clear separation off one token.
+  gap: var(--spacing-xl);
+  // More top/bottom air off the sticky header/footer; horizontal stays lg to keep fields
+  // aligned with the modal title and action buttons.
+  padding: var(--spacing-xl) var(--spacing-lg);
   overflow-y: auto;
   min-height: 0;
 
@@ -51,12 +55,22 @@
 .agent-form__section {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-md);
+  gap: var(--spacing-xl);
 }
 
-.agent-form__divider {
-  height: 1px;
-  background: var(--color-border-subtle);
+/* Field stack within a section — generous row-to-row rhythm, looser than the in-row
+   column gap so stacked fields read as distinct rows rather than a dense block. */
+.agent-form__section-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+/* DS section dividers (`<hr class="ds-divider">`). Reset the UA <hr> margin so the only
+   spacing around them is the body's flex gap — keeps the gap above and below each divider
+   even, and ~2x the in-section rhythm so sections read as clearly separate areas. */
+.agent-form__body > .ds-divider {
+  margin: 0;
 }
 
 .agent-form__section-head {
@@ -65,11 +79,10 @@
   gap: var(--spacing-xs);
 }
 
+/* Typography + color come from the DS `ds-form-section-title` (Title H3) applied alongside
+   this class on the <h3>. We only reset margin so the section's flex gap owns the spacing. */
 .agent-form__section-title {
   margin: 0;
-  @include ds.type-body-medium;
-  font-weight: var(--ref-typescale-body-medium-weight-prominent);
-  color: var(--color-text-primary);
 }
 
 .agent-form__section-hint {
@@ -78,10 +91,12 @@
   color: var(--color-text-secondary);
 }
 
-/* Field grids — every field fills its cell. */
+/* Field grids — every field fills its cell. Columns get comfortable air; multi-row grids
+   (e.g. Custom Fields) use the looser section row rhythm vertically. */
 .agent-form__grid {
   display: grid;
-  gap: var(--spacing-md);
+  column-gap: var(--spacing-lg);
+  row-gap: var(--spacing-xl);
 }
 
 .agent-form__grid--2 {
@@ -96,8 +111,8 @@
   width: 100%;
 }
 
-/* One module-access grant: the three selects flex, the remove control sits beside them
-   (nudged down to line up with the field controls below their labels). */
+/* One module-access grant: the three selects flex, the remove control sits beside them as
+   its own label-over-control column so the button lines up with the selects' controls. */
 .agent-form__access-row {
   display: flex;
   align-items: flex-start;
@@ -111,16 +126,18 @@
 
 .agent-form__row-remove {
   flex: none;
-  margin-top: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Invisible clone of a field label — reserves the same height above the button as the
+   selects' labels do, so the button aligns with the select controls. */
+.agent-form__row-remove-spacer {
+  visibility: hidden;
 }
 
 .agent-form__field-block--narrow {
   max-width: 280px;
-}
-
-.agent-form__field-label {
-  @include ds.type-label-small;
-  color: var(--color-text-secondary);
 }
 
 /* Activation radios sit in a row (the DS group stacks by default). */
@@ -128,5 +145,5 @@
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: var(--spacing-lg);
+  gap: var(--spacing-xl);
 }

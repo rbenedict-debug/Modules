@@ -231,11 +231,35 @@
   min-width: 0;
 }
 
-/* Chip stacks (roles / locations / topics / teams) */
+/* Chip stacks (roles / locations / topics / teams). Outline pills + a roomier gap so each one
+   reads as a distinct, legible token rather than a run-together grey block. */
 .agent-detail__chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-xs);
+  gap: var(--spacing-sm);
+}
+
+/* Long, filterable topic lists render in a fixed-height scroll panel: typing in the filter
+   changes only what's *inside* the panel, so its height never changes and the card (and the
+   rest of the page) stays put while you type — no per-keystroke reflow. */
+.agent-detail__chips--scroll {
+  height: 13rem;              /* fixed (not max) so filtering down to a few chips never shrinks it */
+  align-content: flex-start;  /* pack rows to the top; spare space sits below */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--spacing-sm);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+
+  /* DS scrollbar treatment (mirrors .agent-detail). */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+  &::-webkit-scrollbar-track { background: transparent; }
 }
 
 /* ── Permissions: one bordered sub-card per module ─────────────────────────── */
@@ -256,19 +280,40 @@
 .agent-detail__perm-body {
   display: flex;
   flex-direction: column;
-  /* Separates the module-name row, Teams, and Topics so the three groups read as distinct
-     rather than cramped (the 4px gap inside each field keeps its label glued to its chips). */
-  gap: var(--spacing-lg);
+  /* Identity block (name + permission set) sits above the assignments block; the assignments
+     block draws its own divider, so a medium gap is enough to set the two halves apart. */
+  gap: var(--spacing-md);
   min-width: 0;
   flex: 1;
 }
 
+/* Identity: module name with the permission set stacked directly beneath it, left-aligned.
+   This is the fix for the permission set getting stranded at the card's far-right edge by the
+   old space-between row — it now reads as one unit with the module name. */
 .agent-detail__perm-head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: flex-start;
   gap: var(--spacing-sm);
-  flex-wrap: wrap;
+}
+
+/* Permission set = the single accent element in the card, so the eye finds "what can this
+   agent do here" instantly. Caption above, blue label below. */
+.agent-detail__perm-set {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--spacing-xs);
+}
+
+/* Assignments (teams + topics), separated from the identity block by a hairline so the two
+   halves of the card read distinctly. */
+.agent-detail__perm-assignments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
 }
 
 .agent-detail__perm-name {
@@ -280,8 +325,41 @@
 .agent-detail__perm-field {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-xs);
+  /* The topics field stacks count label → filter → chips → toggle, so it needs a touch more
+     air than the 4px label-to-chips gap; teams uses the same field and reads fine with it. */
+  gap: var(--spacing-sm);
   min-width: 0;
+}
+
+/* Topic filter — constrained so it doesn't span the whole card; shown only when an expanded
+   list is long enough to need it. ds-input + ds-search supply the field styling. */
+.agent-detail__topic-search {
+  width: 100%;
+  max-width: 320px;
+}
+
+/* "+N more" / "Show less" — a compact text affordance under the chips, sized as a label so it
+   sits quietly beneath the topic list. Negative inline margin pulls its padding box flush with
+   the chips' left edge. */
+.agent-detail__topic-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  align-self: flex-start;
+  margin-left: calc(-1 * var(--spacing-sm));
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-brand);
+  cursor: pointer;
+  @include ds.type-label-medium;
+
+  &:hover { background-color: var(--color-surface-subtle); }
+  &:focus { outline: none; }
+  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
+
+  .ds-icon { color: inherit; }
 }
 
 /* Accent icon tile keyed off the module's accent (mirrors the Department Modules
