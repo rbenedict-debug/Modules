@@ -90,11 +90,9 @@ export class TeamsTabComponent implements AfterViewInit {
     { name: 'Team Name',      width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
     { name: 'Module(s)',      width: 200, type: 'text',   _categorical: false, _badgeOptions: null },
     { name: 'Topics',         width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
-    { name: 'Members',        width: 110, type: 'number', _categorical: false, _badgeOptions: null },
+    { name: 'Agents',         width: 110, type: 'number', _categorical: false, _badgeOptions: null },
     { name: 'Permission Set', width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
-    { name: 'Source',         width: 160, type: 'badge',  _categorical: true,  _badgeOptions: [
-      { l: 'Manual', c: 'grey' }, { l: 'Active Directory', c: 'blue' }, { l: 'Azure', c: 'blue' }, { l: 'Google', c: 'blue' },
-    ]},
+    { name: 'Source',         width: 160, type: 'text',   _categorical: true,  _badgeOptions: null },
   ];
 
   get totalWidth(): number {
@@ -115,12 +113,5 @@ export class TeamsTabComponent implements AfterViewInit {
     });
     // Hand full DOM control to table-init.js after Angular's initial render.
     this.cdr.detach();
-  }
-
-  // ── Cell display helpers (run during the initial render, before detach) ──────────
-
-  // Source → DS label color for the Source badge cell. Mirrors the column _badgeOptions.
-  sourceColor(source: TeamSource): string {
-    return source === 'Manual' ? 'grey' : 'blue';
   }
 }

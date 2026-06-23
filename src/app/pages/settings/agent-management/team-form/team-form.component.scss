@@ -20,33 +20,6 @@
   max-height: calc(100vh - (var(--spacing-xl) * 2));
 }
 
-.team-form__header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-md);
-}
-
-.team-form__header-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-accent-blue);
-
-  .ds-icon {
-    color: var(--color-icon-accent-blue);
-  }
-}
-
-.team-form__header-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  min-width: 0;
-}
-
 /* `flex: 1 1 auto` (not the DS body's `1 1 0%`) so the body sizes to its content under our
    max-height cap instead of collapsing to its padding — same fix as the agent form. */
 .team-form__body {
@@ -57,6 +30,17 @@
   padding: var(--spacing-lg);
   overflow-y: auto;
   min-height: 0;
+
+  // DS scrollbar: thin --color-surface-scroll thumb over a transparent track.
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  &::-webkit-scrollbar { width: var(--spacing-sm); }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
 }
 
 .team-form__body .ds-input {

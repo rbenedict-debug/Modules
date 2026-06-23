@@ -7,14 +7,9 @@
       <span class="ds-icon" aria-hidden="true">close</span>
     </button>
 
-    <header class="ds-modal__header agent-form__header">
-      <span class="agent-form__header-icon" aria-hidden="true">
-        <span class="ds-icon ds-icon--filled">{{ isEdit() ? 'manage_accounts' : 'person_add' }}</span>
-      </span>
-      <div class="agent-form__header-text">
-        <h2 class="ds-modal__title" id="agent-form-title">{{ title() }}</h2>
-        <p class="ds-modal__subtitle">{{ subtitle() }}</p>
-      </div>
+    <header class="ds-modal__header">
+      <h2 class="ds-modal__title" id="agent-form-title">{{ title() }}</h2>
+      <p class="ds-modal__subtitle">{{ subtitle() }}</p>
     </header>
 
     <div class="ds-modal__body agent-form__body">
@@ -207,9 +202,8 @@
 
     <footer class="ds-modal__actions">
       <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
-      <button class="ds-button ds-button--filled ds-button--md ds-button--leading-icon" type="button" (click)="submit()">
-        <span class="ds-icon ds-icon--sm ds-icon--filled" aria-hidden="true">{{ isEdit() ? 'check' : 'person_add' }}</span>
-        {{ isEdit() ? 'Save Changes' : 'Create Agent' }}
+      <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="submit()">
+        {{ isEdit() ? 'Save Changes' : 'Add Agent' }}
       </button>
     </footer>
 

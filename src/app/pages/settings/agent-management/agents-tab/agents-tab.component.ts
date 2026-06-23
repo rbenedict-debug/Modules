@@ -91,9 +91,10 @@ export class AgentsTabComponent implements AfterViewInit {
   // textContent and would otherwise pick up emails / "+N" overflow text).
   readonly columns = [
     { name: 'Name',            width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Email',           width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Permission Sets', width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Status',          width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
-      { l: 'Active', c: 'green' }, { l: 'Pending', c: 'yellow' }, { l: 'Unverified', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
+      { l: 'Active', c: 'green' }, { l: 'Pending', c: 'purple' }, { l: 'Unverified', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
     ]},
     { name: 'Module(s)',       width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Teams',           width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
@@ -144,20 +145,12 @@ export class AgentsTabComponent implements AfterViewInit {
     return [...new Set(resolved)];
   }
 
-  // Overflow — show up to 2 chips per row; the rest collapse into a "+N" pill.
-  private readonly PERMISSION_SET_VISIBLE = 2;
-  visiblePermissionSets(u: User): string[] {
-    return this.permissionSetNames(u).slice(0, this.PERMISSION_SET_VISIBLE);
-  }
-  permissionSetOverflow(u: User): number {
-    return Math.max(0, this.permissionSetNames(u).length - this.PERMISSION_SET_VISIBLE);
-  }
-
   statusColor(s: UserStatus): string {
     switch (s) {
       case 'Active':
         return 'green';
       case 'Pending':
+        return 'purple';
       case 'Unverified':
         return 'yellow';
       case 'Inactive':

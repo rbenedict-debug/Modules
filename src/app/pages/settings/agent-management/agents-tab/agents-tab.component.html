@@ -93,6 +93,15 @@
                 </th>
                 <th style="width:240px">
                   <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Email</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Email">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
+                <th style="width:240px">
+                  <div class="ds-table__header-content">
                     <span class="ds-table__header-label">Permission Sets</span>
                     <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Permission Sets">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
@@ -186,28 +195,17 @@
             <tbody>
               @for (u of items(); track u.id) {
                 <tr class="users-row" style="cursor: pointer" (click)="openProfile(u.id)">
-                  <td>
-                    <span class="users-name">
-                      <span class="users-name__primary">{{ fullName(u) }}</span>
-                      <span class="users-name__email">{{ u.email }}</span>
-                    </span>
-                  </td>
+                  <td>{{ fullName(u) }}</td>
+                  <td>{{ u.email }}</td>
                   <td>
                     @if (permissionSetNames(u).length) {
-                      <span class="users-roles">
-                        @for (set of visiblePermissionSets(u); track set) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue">{{ set }}</span>
-                        }
-                        @if (permissionSetOverflow(u) > 0) {
-                          <span class="ds-label ds-label--pill ds-label--xs ds-label--blue users-roles__overflow">+{{ permissionSetOverflow(u) }}</span>
-                        }
-                      </span>
+                      {{ permissionSetNames(u).join(', ') }}
                     } @else {
                       <span class="users-empty">—</span>
                     }
                   </td>
                   <td>
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--has-dot ds-label--{{ statusColor(u.status) }}">
+                    <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--has-dot ds-label--{{ statusColor(u.status) }}">
                       <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
                     </span>
                   </td>

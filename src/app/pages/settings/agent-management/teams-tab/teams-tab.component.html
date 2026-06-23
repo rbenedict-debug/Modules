@@ -108,8 +108,8 @@
                 </th>
                 <th style="width:110px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Members</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Members">
+                    <span class="ds-table__header-label">Agents</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Agents">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -143,9 +143,7 @@
                   <td>{{ row.topics.length ? row.topics.join(', ') : '—' }}</td>
                   <td>{{ row.memberCount }}</td>
                   <td>{{ row.permissionSetName }}</td>
-                  <td>
-                    <span class="ds-label ds-label--pill ds-label--xs ds-label--{{ sourceColor(row.source) }}">{{ row.source }}</span>
-                  </td>
+                  <td>{{ row.source }}</td>
                 </tr>
               }
             </tbody>

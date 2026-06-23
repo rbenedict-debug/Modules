@@ -58,38 +58,6 @@
   background-color: var(--overlay-hovered);
 }
 
-// ── Name cell ───────────────────────────────────────────────────────────────────
-// Primary name over a quieter email line.
-.users-name {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
-  min-width: 0;
-}
-
-.users-name__primary {
-  @include ds.type-body-medium;
-  color: var(--color-text-primary);
-}
-
-.users-name__email {
-  @include ds.type-body-small;
-  color: var(--color-text-secondary);
-}
-
-// ── Permission-set chips + overflow pill ───────────────────────────────────────────
-// (.users-roles is the generic chip-row layout — reused for the Permission Sets cell.)
-.users-roles {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  flex-wrap: nowrap;
-}
-
-.users-roles__overflow {
-  flex-shrink: 0;
-}
-
 // ── Em-dash placeholder for empty values ────────────────────────────────────────────
 .users-empty {
   color: var(--color-text-disabled);

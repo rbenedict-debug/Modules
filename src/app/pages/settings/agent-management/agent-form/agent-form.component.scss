@@ -21,34 +21,6 @@
   max-height: calc(100vh - (var(--spacing-xl) * 2));
 }
 
-/* Header: leading accent tile + title/subtitle column (keeps the DS header padding). */
-.agent-form__header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--spacing-md);
-}
-
-.agent-form__header-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  padding: var(--spacing-sm);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-accent-blue);
-
-  .ds-icon {
-    color: var(--color-icon-accent-blue);
-  }
-}
-
-.agent-form__header-text {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-xs);
-  min-width: 0;
-}
-
 /* Body: own the padding (ds-modal__body ships none) and stack sections with a clear rhythm.
    The DS body is `flex: 1 1 0%`, which only fills when the modal has a *definite* height
    (the DS demos hard-set one). We cap height with max-height instead, so a 0% basis would
@@ -63,6 +35,17 @@
   padding: var(--spacing-lg);
   overflow-y: auto;
   min-height: 0;
+
+  // DS scrollbar: thin --color-surface-scroll thumb over a transparent track.
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  &::-webkit-scrollbar { width: var(--spacing-sm); }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
 }
 
 .agent-form__section {
