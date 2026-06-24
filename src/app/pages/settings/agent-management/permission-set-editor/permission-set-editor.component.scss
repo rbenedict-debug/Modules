@@ -135,6 +135,17 @@
   }
 }
 
+// Each section is a scroll anchor in the single continuous right-hand column; the left nav jumps
+// between them (see PsetMatrixTabComponent). Consecutive sections get a divider for separation.
+.psets-editor__section {
+  scroll-margin-top: var(--spacing-xl);
+}
+.psets-editor__section + .psets-editor__section {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
 .psets-editor__section-head {
   display: flex;
   align-items: center;

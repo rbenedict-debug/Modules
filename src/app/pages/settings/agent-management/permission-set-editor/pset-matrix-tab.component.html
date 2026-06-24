@@ -1,5 +1,7 @@
-<!-- Two-column permission matrix (Actions / Settings). Left = section nav + search; right = the
-     active section's perm rows with bulk presets. Reads/writes via PermissionEditorStateService. -->
+<!-- Permission matrix (Actions / Settings). Left = a section "skip" nav + search; right = ALL
+     sections stacked in one scroller. Clicking a nav item jumps to that section; scrolling
+     highlights the section in view (scroll-spy). Not a tab switcher. Reads/writes via
+     PermissionEditorStateService. -->
 <nav class="psets-editor__nav" aria-label="Permission sections">
   <div class="ds-input ds-search psets-editor__search" role="search">
     <div class="ds-input__field">
@@ -17,10 +19,10 @@
   <div class="psets-editor__nav-list">
     @for (s of filteredSections(); track s.section.id) {
       <button class="ds-subnav-button psets-editor__nav-item" type="button"
-              [class.is-selected]="visibleId() === s.section.id"
-              [attr.aria-pressed]="visibleId() === s.section.id"
+              [class.is-selected]="activeSectionId() === s.section.id"
+              [attr.aria-current]="activeSectionId() === s.section.id ? 'true' : null"
               (click)="select(s.section.id)">
-        <span class="ds-icon ds-icon--sm psets-editor__nav-icon" aria-hidden="true">{{ s.section.icon }}</span>
+        <span class="ds-icon ds-icon--sm psets-editor__nav-icon" [class.ds-icon--filled]="s.section.iconFilled" aria-hidden="true">{{ s.section.icon }}</span>
         <span class="psets-editor__nav-label">{{ s.section.label }}</span>
         @if (s.matchCount > 0) {
           <span class="psets-editor__nav-count">{{ s.matchCount }}</span>
@@ -51,52 +53,59 @@
       </div>
     </div>
   }
-  @if (visible(); as v) {
-    <!-- Dim sits here, not on the scroller, so the notice above stays crisp. The controls inside
-         are each individually [disabled] when read-only, so no pointer-events lock is needed. -->
-    <div class="psets-editor__matrix-pane" [class.is-readonly]="state.readOnly()"
-         [attr.aria-disabled]="state.readOnly() ? 'true' : null">
-      <div class="psets-editor__section-head">
-        <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">{{ v.section.icon }}</span>
-        <h3 class="psets-editor__section-title">{{ v.section.label }}</h3>
-        <div class="psets-editor__presets" role="group" aria-label="Section access preset">
-          @for (p of state.presetsFor(v.section); track p) {
-            <button class="psets-editor__preset" type="button"
-                    [class.is-active]="state.currentPreset(v.section) === p"
-                    [class.is-disabled]="state.readOnly()" [disabled]="state.readOnly()"
-                    [attr.aria-pressed]="state.currentPreset(v.section) === p"
-                    (click)="state.applyPreset(v.section, p)">{{ presetLabels[p] }}</button>
+
+  <!-- Every section renders here, stacked; the left nav scrolls between them. The read-only dim
+       sits on this pane (not the scroller) so the notice above stays crisp and scrolling keeps
+       working; controls inside are each individually [disabled], so no pointer-events lock. -->
+  <div class="psets-editor__matrix-pane" [class.is-readonly]="state.readOnly()"
+       [attr.aria-disabled]="state.readOnly() ? 'true' : null">
+    @for (v of filteredSections(); track v.section.id) {
+      <section class="psets-editor__section" [attr.data-section-id]="v.section.id"
+               [attr.aria-label]="v.section.label">
+        <div class="psets-editor__section-head">
+          <span class="ds-icon ds-icon--sm psets-editor__section-icon" [class.ds-icon--filled]="v.section.iconFilled" aria-hidden="true">{{ v.section.icon }}</span>
+          <h3 class="psets-editor__section-title">{{ v.section.label }}</h3>
+          <div class="psets-editor__presets" role="group" aria-label="Section access preset">
+            @for (p of state.presetsFor(v.section); track p) {
+              <button class="psets-editor__preset" type="button"
+                      [class.is-active]="state.currentPreset(v.section) === p"
+                      [class.is-disabled]="state.readOnly()" [disabled]="state.readOnly()"
+                      [attr.aria-pressed]="state.currentPreset(v.section) === p"
+                      (click)="state.applyPreset(v.section, p)">{{ presetLabels[p] }}</button>
+            }
+          </div>
+        </div>
+
+        <div class="psets-editor__perms">
+          @for (run of groupPerms(v.perms); track $index) {
+            @if (run.kind === 'item') {
+              <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
+            } @else {
+              <div class="psets-editor__group">
+                <button class="psets-editor__group-head" type="button"
+                        [attr.aria-expanded]="!isCollapsed(v.section.id, run.label)"
+                        (click)="toggleGroup(v.section.id, run.label)">
+                  <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
+                        [class.is-collapsed]="isCollapsed(v.section.id, run.label)" aria-hidden="true">expand_more</span>
+                  <span class="psets-editor__group-label">{{ run.label }}</span>
+                  <span class="psets-editor__group-rule" aria-hidden="true"></span>
+                </button>
+                @if (!isCollapsed(v.section.id, run.label)) {
+                  <div class="psets-editor__group-body">
+                    @for (perm of run.perms; track perm.id) {
+                      <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
+                    }
+                  </div>
+                }
+              </div>
+            }
           }
         </div>
-      </div>
-
-      <div class="psets-editor__perms">
-        @for (run of groupPerms(v.perms); track $index) {
-          @if (run.kind === 'item') {
-            <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
-          } @else {
-            <div class="psets-editor__group">
-              <button class="psets-editor__group-head" type="button"
-                      [attr.aria-expanded]="!isCollapsed(v.section.id, run.label)"
-                      (click)="toggleGroup(v.section.id, run.label)">
-                <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
-                      [class.is-collapsed]="isCollapsed(v.section.id, run.label)" aria-hidden="true">expand_more</span>
-                <span class="psets-editor__group-label">{{ run.label }}</span>
-                <span class="psets-editor__group-rule" aria-hidden="true"></span>
-              </button>
-              @if (!isCollapsed(v.section.id, run.label)) {
-                <div class="psets-editor__group-body">
-                  @for (perm of run.perms; track perm.id) {
-                    <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
-                  }
-                </div>
-              }
-            </div>
-          }
-        }
-      </div>
-    </div>
-  }
+      </section>
+    } @empty {
+      <p class="psets-editor__nav-empty">No permissions match.</p>
+    }
+  </div>
 </div>
 
 <!-- Reusable permission row (toggle or segmented control + Manage sub-checkboxes). -->

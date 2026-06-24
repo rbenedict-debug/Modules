@@ -35,6 +35,8 @@ export interface PermissionSection {
   id: string;
   label: string;
   icon: string;
+  /** Render the leading icon as the filled Material Symbols variant (adds ds-icon--filled). */
+  iconFilled?: boolean;
   perms: PermissionDef[];
   /** Presets this section offers (Actions Tickets/Assets omit 'view-only'). Defaults to all four. */
   availablePresets?: SectionPreset[];
@@ -47,7 +49,8 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
   {
     id: 'tickets',
     label: 'Tickets',
-    icon: 'confirmation_number',
+    icon: 'inbox',
+    iconFilled: true,
     availablePresets: ['no-access', 'full-access', 'custom'],
     perms: [
       { id: 'tk-create-general', label: 'Create General Ticket', description: 'Controls ability to create new general tickets via the pen icon dropdown in the header.', controlType: 'toggle', accessTier: 'manage' },
@@ -85,7 +88,7 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
   {
     id: 'assets',
     label: 'Assets',
-    icon: 'devices',
+    icon: 'desktop_mac',
     availablePresets: ['no-access', 'full-access', 'custom'],
     perms: [
       { id: 'as-add-asset', label: 'Add Asset', description: 'Allow manually adding new asset records using the Add Asset form', controlType: 'toggle', accessTier: 'manage' },
@@ -121,7 +124,7 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
   {
     id: 'analytics',
     label: 'Analytics',
-    icon: 'analytics',
+    icon: 'equalizer',
     perms: [
       { id: 'an-service-overview', label: 'Service Overview Dashboard', description: 'Controls visibility of the Service Overview dashboard showing key ticket metrics for the district', controlType: 'segment', segmentOptions: ['Hide', 'View'] },
       { id: 'an-chatbot-dashboard', label: 'Chatbot Dashboard', description: 'Controls visibility of chatbot dashboards: overview, optimization, chat logs', controlType: 'segment', segmentOptions: ['Hide', 'View'] },
@@ -136,6 +139,7 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
     id: 'campaigns',
     label: 'Campaigns',
     icon: 'campaign',
+    iconFilled: true,
     perms: [
       { id: 'cp-campaigns', label: 'Campaigns', description: 'Controls visibility and management of campaigns including creation, editing, and deletion', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'cp-contacts', label: 'Contacts', description: 'Controls visibility and management of contacts used for campaign manager', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
@@ -174,7 +178,8 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
   {
     id: 'tickets',
     label: 'Tickets',
-    icon: 'confirmation_number',
+    icon: 'inbox',
+    iconFilled: true,
     perms: [
       { id: 'stk-portals-it-service', label: 'IT Service', description: 'Controls visibility and management of IT Customer Service portals', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Portals' },
       { id: 'stk-portals-landing-page', label: 'Landing Page', description: 'Controls visibility and management of district landing pages', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Portals' },
@@ -189,7 +194,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
   {
     id: 'assets',
     label: 'Assets',
-    icon: 'devices',
+    icon: 'desktop_mac',
     perms: [
       { id: 'sas-archived-assets', label: 'Archived Assets', description: 'Controls visibility and management of soft-deleted assets. Special Manage options: Recover (restore) and Delete Permanently', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], manageSubOptions: ['Recover', 'Permanently Delete'] },
       { id: 'sas-asset-fields', label: 'Asset Fields', description: 'Controls visibility and management of asset field definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
