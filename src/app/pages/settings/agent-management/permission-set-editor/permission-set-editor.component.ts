@@ -8,7 +8,7 @@ import {
   Output,
   ViewEncapsulation,
   inject,
-  signal,
+  input,
 } from '@angular/core';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { ChromeService } from '../../../../data/chrome.service';
@@ -17,7 +17,7 @@ import { PsetMatrixTabComponent } from './pset-matrix-tab.component';
 import { PsetDataVisibilityTabComponent } from './pset-data-visibility-tab.component';
 import { PsetDetailsTabComponent } from './pset-details-tab.component';
 
-type EditorTab = 'details' | 'data-visibility' | 'actions' | 'settings';
+export type EditorTab = 'details' | 'data-visibility' | 'actions' | 'settings';
 
 /**
  * Permission-set editor shell — rendered full-area by the Agent Management page when its
@@ -61,13 +61,8 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   readonly actionsSections = this.setsSvc.actionsSections;
   readonly settingsSections = this.setsSvc.settingsSections;
 
-  readonly activeTab = signal<EditorTab>('details');
-  readonly tabs: { id: EditorTab; label: string; icon: string }[] = [
-    { id: 'details', label: 'Details', icon: 'info' },
-    { id: 'data-visibility', label: 'Data Visibility', icon: 'visibility' },
-    { id: 'actions', label: 'Actions', icon: 'bolt' },
-    { id: 'settings', label: 'Settings', icon: 'admin_panel_settings' },
-  ];
+  /** Active tab — owned by the parent now (the tab bar moved to the page heading). */
+  readonly activeTab = input<EditorTab>('details');
 
   ngOnInit(): void {
     // Collapse the section subnav while this full-area editor is on screen.
@@ -81,11 +76,6 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
     const set = this.setsSvc.sets().find(s => s.id === this._setId);
     if (!set) return;
     this.state.init(set);
-    this.activeTab.set('details');
-  }
-
-  setTab(tab: EditorTab): void {
-    this.activeTab.set(tab);
   }
 
   save(): void {

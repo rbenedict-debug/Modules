@@ -1,10 +1,50 @@
 <div class="ds-page-content__heading">
-  <h1 class="ds-page-content__title">Agent Management</h1>
+  @if (editingSet(); as es) {
+    <!-- Full-area permission-set editor: the set name becomes the page title (with a System
+         badge for read-only sets), and a breadcrumb is the way back — the editor's own header
+         bar was removed. Editable sets get Save / Cancel as heading actions. -->
+    <nav class="breadcrumb" aria-label="Breadcrumb">
+      <ol class="breadcrumb__list">
+        <li class="breadcrumb__item">
+          <button type="button" class="breadcrumb__link" (click)="editingSetId.set(null)">Agent Management</button>
+        </li>
+        <li class="breadcrumb__sep" aria-hidden="true">
+          <span class="ds-icon ds-icon--xs">chevron_right</span>
+        </li>
+        <li class="breadcrumb__item">
+          <span class="breadcrumb__current" aria-current="page">{{ es.name }}</span>
+        </li>
+      </ol>
+    </nav>
+    <h1 class="ds-page-content__title am-editor-title">
+      {{ es.name }}
+      @if (es.readOnly) {
+        <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline">System</span>
+      }
+    </h1>
+    @if (!es.readOnly) {
+      <div class="am-editor-actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="editingSetId.set(null)">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="saveEditor()">Save Changes</button>
+      </div>
+    }
 
-  <!-- Page-level tabs (ds-tabs) sit in the heading, the canonical page-with-tabs pattern
-       (same as the Tickets page). Hidden while the permission-set editor is open, since the
-       editor takes over the content area. -->
-  @if (!editingSetId()) {
+    <!-- Editor sections as page tabs (ds-tabs), right under the title — the canonical
+         page-with-tabs pattern. The parent owns the active tab; the editor renders the body. -->
+    <div class="ds-tabs" role="tablist" aria-label="Permission set sections">
+      @for (t of editorTabs; track t.id) {
+        <button class="ds-tabs__tab" role="tab"
+                [class.is-selected]="editorTab() === t.id"
+                [attr.aria-selected]="editorTab() === t.id"
+                [attr.tabindex]="editorTab() === t.id ? 0 : -1"
+                (click)="setEditorTab(t.id)">{{ t.label }}</button>
+      }
+    </div>
+  } @else {
+    <h1 class="ds-page-content__title">Agent Management</h1>
+
+    <!-- Page-level tabs (ds-tabs) sit in the heading, the canonical page-with-tabs pattern
+         (same as the Tickets page). -->
     <div class="ds-tabs" role="tablist" aria-label="Agent management sections">
       <button class="ds-tabs__tab" role="tab"
               [class.is-selected]="activeTab() === 'agents'"
@@ -35,7 +75,7 @@
      tab's Onflo table renders. Rendering one table at a time keeps table-init.js's global
      ids from colliding. -->
 @if (editingSetId(); as setId) {
-  <app-permission-set-editor [setId]="setId" (back)="editingSetId.set(null)" (openSet)="editingSetId.set($event)" />
+  <app-permission-set-editor [setId]="setId" [activeTab]="editorTab()" (back)="editingSetId.set(null)" (openSet)="openEditor($event)" />
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
@@ -60,7 +100,7 @@
            context-filtered rows. The tab detaches change detection after its first render, so
            a keyed re-create (not a signal update) is what swaps the rows for the new context. -->
       @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
-        <app-permission-sets-tab (editSet)="editingSetId.set($event)" (create)="creatingSet.set(true)" />
+        <app-permission-sets-tab (editSet)="openEditor($event)" (create)="creatingSet.set(true)" />
       }
     }
   }

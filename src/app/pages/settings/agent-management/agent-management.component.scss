@@ -1,6 +1,77 @@
-// User Management shell. The host is ds-page-content (a flex column, gap --spacing-lg):
+@use '@onflo/design-system/tokens/scss' as ds;
+
+// Agent Management shell. The host is ds-page-content (a flex column, gap --spacing-lg):
 // the heading holds the page title + page tabs (ds-tabs), and the active tab's
 // ds-page-content__main--table fills the remaining height below.
 //
-// No custom heading/tab styling — ds-page-content__heading is built to hold "title +
-// optional tabs" (see specs-layout.md), matching the canonical page-default-tabs pattern.
+// In the list/tabs view there's no custom heading styling — ds-page-content__heading is
+// built to hold "title + optional tabs" (see specs-layout.md). The rules below only style
+// the full-area permission-set-editor heading: a breadcrumb back + the set name as the
+// page title (the editor's own header bar was removed). Mirrors the agent-profile pattern.
+
+.breadcrumb {
+  margin-bottom: var(--spacing-xs);
+  // Match ds-page-content__title's padding box so the crumb left-aligns with the title.
+  padding: var(--spacing-sm) 0 0 var(--spacing-lg);
+
+  &__list {
+    @include ds.type-body-small;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  &__item,
+  &__sep {
+    display: inline-flex;
+    align-items: center;
+  }
+
+  &__sep { color: var(--color-icon-subtle); }
+
+  &__link {
+    // This crumb is a button (it closes the editor), styled to read as a link.
+    border: 0;
+    background: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+
+    &:hover { color: var(--color-text-primary); text-decoration: underline; }
+    &:focus { outline: none; }
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring);
+      border-radius: var(--radius-sm);
+    }
+  }
+
+  &__current { color: var(--color-text-primary); }
+}
+
+// The heading is the positioning context for the editable Save / Cancel cluster.
+.ds-page-content__heading { position: relative; }
+
+// Set name is the page title; the System badge sits inline beside it. The h1 keeps its
+// native DS spacing, so the page tabs below sit exactly where the DS places them.
+.am-editor-title .ds-label {
+  vertical-align: middle;
+  margin-left: var(--spacing-sm);
+}
+
+// Editable sets only: Save / Cancel pinned top-right, out of flow so the title→tabs
+// spacing is left exactly as the DS lays it out.
+.am-editor-actions {
+  position: absolute;
+  top: var(--spacing-sm);
+  right: var(--spacing-lg);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}

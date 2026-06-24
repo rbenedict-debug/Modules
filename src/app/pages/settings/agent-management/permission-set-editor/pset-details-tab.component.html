@@ -33,11 +33,9 @@
       <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedUsers().length }} {{ assignedUsers().length === 1 ? 'user' : 'users' }}</span>
       <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedTeams().length }} {{ assignedTeams().length === 1 ? 'team' : 'teams' }}</span>
     </span>
-    @if (!state.readOnly()) {
-      <button class="ds-button ds-button--filled ds-button--sm psets-editor__assign-add" type="button" (click)="showAssign.set(true)">
-        <span class="ds-icon ds-icon--sm" aria-hidden="true">person_add</span>Add Assignment
-      </button>
-    }
+    <button class="ds-button ds-button--filled ds-button--sm psets-editor__assign-add" type="button" (click)="showAssign.set(true)">
+      <span class="ds-icon ds-icon--sm" aria-hidden="true">person_add</span>Add Assignment
+    </button>
   </div>
 
   @if (assignedUsers().length === 0 && assignedTeams().length === 0) {
@@ -59,10 +57,8 @@
               <span class="psets-editor__assign-name">{{ t.name }}</span>
               <span class="psets-editor__assign-meta">{{ teamMeta(t) }}</span>
             </div>
-            @if (!state.readOnly()) {
-              <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
-                      (click)="askRemove('team', t.id, t.name)">Remove</button>
-            }
+            <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
+                    (click)="askRemove('team', t.id, t.name)">Remove</button>
           </div>
         }
       }
@@ -75,10 +71,8 @@
               <span class="psets-editor__assign-name">{{ fullName(u) }}</span>
               <span class="psets-editor__assign-meta">{{ userMeta(u) }}</span>
             </div>
-            @if (!state.readOnly()) {
-              <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
-                      (click)="askRemove('user', u.id, fullName(u))">Remove</button>
-            }
+            <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
+                    (click)="askRemove('user', u.id, fullName(u))">Remove</button>
           </div>
         }
       }

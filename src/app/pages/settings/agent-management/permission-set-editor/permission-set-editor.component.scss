@@ -16,40 +16,13 @@
   min-height: 480px;
 }
 
-.psets-editor__bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--spacing-md);
-  padding: var(--spacing-lg) var(--spacing-xl);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.psets-editor__bar-left {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  min-width: 0;
-}
-
-.psets-editor__title {
-  @include ds.type-title-h3;
-  margin: 0;
-  color: var(--color-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.psets-editor__bar-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  flex-shrink: 0;
-}
-
 .psets-editor__notice {
   margin: var(--spacing-lg) var(--spacing-xl) 0;
+  // ds-alert sets overflow:hidden, which makes its flex auto-min-height resolve to 0 — so in
+  // this flex column, next to the tall matrix/DV pane, it gets crushed to a sliver and clips
+  // its own content. Pin it so it always keeps its natural height; the tab body absorbs the
+  // squeeze and scrolls instead.
+  flex-shrink: 0;
 }
 
 .psets-editor__body {
@@ -458,21 +431,10 @@
 // sub-components (matrix / data-visibility / details / assign modal) are styled too.
 // ════════════════════════════════════════════════════════════════════════════════
 
-.psets-editor__tabs {
-  margin: var(--spacing-md) var(--spacing-xl) 0;
-  flex-shrink: 0;
-}
-.psets-editor__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-}
 .psets-editor__tab-body {
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
-  margin-top: var(--spacing-md);
-  border-top: 1px solid var(--color-border-subtle);
 }
 
 // Matrix tab = the two-column nav + content row, filling the body.

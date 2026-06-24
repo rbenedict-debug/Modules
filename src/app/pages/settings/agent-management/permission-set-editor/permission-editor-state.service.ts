@@ -266,18 +266,28 @@ export class PermissionEditorStateService {
   }
 
   // ── Assignments ────────────────────────────────────────────────────────────────
+  // Assignments stay editable even on read-only (system) sets — this is where you pick who
+  // gets the set. System sets have no Save button, so their changes persist immediately;
+  // editable sets buffer into the working state and flush on Save.
   applyAssignments(userIds: string[], teamIds: string[]): void {
-    if (this.readOnly()) return;
     this.assignedUserIds.update(cur => [...new Set([...cur, ...userIds])]);
     this.assignedTeamIds.update(cur => [...new Set([...cur, ...teamIds])]);
+    if (this.readOnly()) this.persistAssignments();
   }
   removeUser(id: string): void {
-    if (this.readOnly()) return;
     this.assignedUserIds.update(cur => cur.filter(u => u !== id));
+    if (this.readOnly()) this.persistAssignments();
   }
   removeTeam(id: string): void {
-    if (this.readOnly()) return;
     this.assignedTeamIds.update(cur => cur.filter(t => t !== id));
+    if (this.readOnly()) this.persistAssignments();
+  }
+  /** Write just the assignment fields through to the service (read-only sets have no Save). */
+  private persistAssignments(): void {
+    this.setsSvc.update(this.setId, {
+      assignedUserIds: this.assignedUserIds(),
+      assignedTeamIds: this.assignedTeamIds(),
+    });
   }
 
   // ── Save ─────────────────────────────────────────────────────────────────────────

@@ -1,48 +1,24 @@
 <!-- Permission-set editor. Rendered full-area by the Agent Management page when editingSetId is
      set. Header + 4-tab bar + read-only banner; tabs read/write PermissionEditorStateService. -->
 <div class="psets-editor">
-  <header class="psets-editor__bar">
-    <div class="psets-editor__bar-left">
-      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm" type="button"
-              aria-label="Back to permission sets" (click)="closeEditor()">
-        <span class="ds-icon ds-icon--sm">arrow_back</span>
-      </button>
-      <h2 class="psets-editor__title">{{ state.name() || 'Permission Set' }}</h2>
-      @if (state.readOnly()) {
-        <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline">System</span>
-      }
-    </div>
-    <div class="psets-editor__bar-actions">
-      @if (state.readOnly()) {
-        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeEditor()">Back</button>
-        <button class="ds-button ds-button--outlined ds-button--md" type="button" (click)="duplicate()">Duplicate</button>
-      } @else {
-        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="closeEditor()">Cancel</button>
-        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="save()">Save Changes</button>
-      }
-    </div>
-  </header>
+  <!-- The header (back + set name + actions) lives in the page heading now
+       (agent-management.component) — this card is just the read-only notice + the 4-tab editor. -->
 
-  @if (state.readOnly()) {
+  <!-- Banner is hidden on Details — that tab lets you assign users/teams, so a "cannot be
+       edited" notice would contradict it. It stays on the read-only Data Visibility / Actions /
+       Settings tabs. -->
+  @if (state.readOnly() && activeTab() !== 'details') {
     <div class="ds-alert ds-alert--warning psets-editor__notice" role="status">
-      <span class="ds-icon ds-icon--sm ds-icon--filled ds-alert__icon" aria-hidden="true">lock</span>
-      <div class="ds-alert__content">
-        <p class="ds-alert__message">This is a system permission set and cannot be edited. Duplicate it to create a customizable copy.</p>
+      <div class="ds-alert__header">
+        <span class="ds-icon ds-alert__icon" aria-hidden="true">lock</span>
+        <div class="ds-alert__content">
+          <div class="ds-alert__text">
+            <p class="ds-alert__message">This is a system permission set and cannot be edited.</p>
+          </div>
+        </div>
       </div>
     </div>
   }
-
-  <div class="ds-inner-page-tabs psets-editor__tabs" role="tablist" aria-label="Permission set sections">
-    @for (t of tabs; track t.id) {
-      <button class="ds-inner-page-tabs__tab psets-editor__tab" role="tab"
-              [class.is-selected]="activeTab() === t.id"
-              [attr.aria-selected]="activeTab() === t.id"
-              [attr.tabindex]="activeTab() === t.id ? 0 : -1"
-              (click)="setTab(t.id)">
-        <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ t.icon }}</span>{{ t.label }}
-      </button>
-    }
-  </div>
 
   <div class="psets-editor__tab-body">
     @switch (activeTab()) {
