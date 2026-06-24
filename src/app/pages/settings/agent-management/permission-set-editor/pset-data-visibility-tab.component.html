@@ -1,3 +1,18 @@
+<!-- Read-only notice lives inside the scroller (the host .psets-editor__dv) so it scrolls with
+     the content rather than staying pinned above it. -->
+@if (state.readOnly()) {
+  <div class="ds-alert ds-alert--warning psets-editor__notice" role="status">
+    <div class="ds-alert__header">
+      <span class="ds-icon ds-alert__icon" aria-hidden="true">lock</span>
+      <div class="ds-alert__content">
+        <div class="ds-alert__text">
+          <p class="ds-alert__message">This is a system permission set and cannot be edited.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
 <p class="psets-editor__dv-lead">Control which records this set can see, beyond what the action permissions allow.</p>
 
 <!-- Tickets scope -->

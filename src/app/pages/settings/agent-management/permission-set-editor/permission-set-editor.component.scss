@@ -7,22 +7,22 @@
   min-height: 0;
 }
 
-// A tall flex column: a top bar, an optional notice, then the two-column body that fills the
-// remaining height of the host card.
+// Fills the host card as a flex column (optional notice + the two-column tab body). Uses
+// min-height:0 — NOT a fixed floor: a floor taller than the card pushes the inner scroll
+// boundary below the fold, so the perm grid stops scrolling on short viewports (e.g. DevTools open).
 .psets-editor {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  min-height: 480px;
+  min-height: 0;
 }
 
+// The read-only notice now renders inside each scrollable tab (Data Visibility / Actions /
+// Settings) as the first item in the scroller, so it scrolls with the content instead of staying
+// pinned above it. Those scrollers already pad themselves (--spacing-xl), so the notice only needs
+// space below it.
 .psets-editor__notice {
-  margin: var(--spacing-lg) var(--spacing-xl) 0;
-  // ds-alert sets overflow:hidden, which makes its flex auto-min-height resolve to 0 — so in
-  // this flex column, next to the tall matrix/DV pane, it gets crushed to a sliver and clips
-  // its own content. Pin it so it always keeps its natural height; the tab body absorbs the
-  // squeeze and scrolls instead.
-  flex-shrink: 0;
+  margin-bottom: var(--spacing-lg);
 }
 
 .psets-editor__body {
@@ -132,12 +132,6 @@
   &::-webkit-scrollbar-thumb {
     background-color: var(--color-surface-scroll);
     border-radius: var(--radius-full);
-  }
-
-  // Read-only: dim and make the whole pane inert. Save is hidden in the template.
-  &.is-readonly {
-    opacity: 0.6;
-    pointer-events: none;
   }
 }
 
@@ -442,6 +436,15 @@
   display: flex;
   flex: 1 1 auto;
   min-height: 0;
+}
+
+// Read-only dim for the matrix content. It sits on this inner pane — NOT on the scroll container
+// (.psets-editor__content) — so the scroller stays interactive and the read-only notice above it
+// stays crisp. The pane's controls are each individually [disabled], so dimming is enough to
+// signal "view only"; we deliberately avoid pointer-events:none here because it also kills
+// wheel/scrollbar scrolling.
+.psets-editor__matrix-pane.is-readonly {
+  opacity: 0.6;
 }
 
 // Details + Data Visibility tabs: one scrollable padded column.

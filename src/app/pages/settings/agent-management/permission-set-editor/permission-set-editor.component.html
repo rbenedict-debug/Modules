@@ -2,23 +2,13 @@
      set. Header + 4-tab bar + read-only banner; tabs read/write PermissionEditorStateService. -->
 <div class="psets-editor">
   <!-- The header (back + set name + actions) lives in the page heading now
-       (agent-management.component) — this card is just the read-only notice + the 4-tab editor. -->
+       (agent-management.component) — this card is just the 4-tab editor.
 
-  <!-- Banner is hidden on Details — that tab lets you assign users/teams, so a "cannot be
-       edited" notice would contradict it. It stays on the read-only Data Visibility / Actions /
-       Settings tabs. -->
-  @if (state.readOnly() && activeTab() !== 'details') {
-    <div class="ds-alert ds-alert--warning psets-editor__notice" role="status">
-      <div class="ds-alert__header">
-        <span class="ds-icon ds-alert__icon" aria-hidden="true">lock</span>
-        <div class="ds-alert__content">
-          <div class="ds-alert__text">
-            <p class="ds-alert__message">This is a system permission set and cannot be edited.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  }
+       The read-only notice ("system set, cannot be edited") is NOT rendered here: a banner
+       at the shell level sits outside each tab's scroll region, so it stays pinned while the
+       content scrolls. Instead each scrollable tab (Data Visibility / Actions / Settings)
+       renders the banner as the first item INSIDE its own scroller, so it scrolls with the
+       content. Details intentionally has no banner — that tab lets you assign users/teams. -->
 
   <div class="psets-editor__tab-body">
     @switch (activeTab()) {
