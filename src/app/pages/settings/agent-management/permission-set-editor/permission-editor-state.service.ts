@@ -260,15 +260,6 @@ export class PermissionEditorStateService {
     });
   }
 
-  presetColor(section: PermissionSection): string {
-    switch (this.currentPreset(section)) {
-      case 'no-access': return 'red';
-      case 'view-only': return 'blue';
-      case 'full-access': return 'green';
-      default: return 'yellow';
-    }
-  }
-
   // ── Data Visibility writes ───────────────────────────────────────────────────────
   setTicketScope(v: 'all' | 'assigned'): void {
     if (!this.readOnly()) this.ticketScope.set(v);

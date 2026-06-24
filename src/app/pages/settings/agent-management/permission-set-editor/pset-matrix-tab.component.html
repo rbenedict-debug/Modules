@@ -26,9 +26,6 @@
         <span class="psets-editor__nav-label">{{ s.section.label }}</span>
         @if (s.matchCount > 0) {
           <span class="psets-editor__nav-count">{{ s.matchCount }}</span>
-        } @else {
-          <span class="psets-editor__nav-dot ds-label__dot psets-editor__nav-dot--{{ state.presetColor(s.section) }}"
-                aria-hidden="true"></span>
         }
       </button>
     } @empty {

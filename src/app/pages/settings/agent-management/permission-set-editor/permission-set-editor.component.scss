@@ -83,17 +83,6 @@
   white-space: nowrap;
 }
 
-// Trailing status dot — colored by the section's current preset. Reuses the ds-label dot
-// sizing; color comes from the accent / status border tokens.
-.psets-editor__nav-dot {
-  flex-shrink: 0;
-
-  &--green { background-color: var(--color-border-success); }
-  &--blue  { background-color: var(--color-icon-brand); }
-  &--red   { background-color: var(--color-border-error); }
-  &--yellow { background-color: var(--color-border-warning); }
-}
-
 // Search match-count pill on a nav item.
 .psets-editor__nav-count {
   @include ds.type-label-small;
@@ -386,29 +375,13 @@
   color: var(--color-text-secondary);
 }
 
-.psets-editor__dv-card {
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface-default);
-  overflow: hidden;
-
+// A Data Visibility section mirrors the Actions/Settings sections: a bare head (icon + title)
+// above a bordered body panel, rather than one card box wrapping both. The head reuses
+// .psets-editor__section-head / __section-title / __section-icon for identical formatting.
+.psets-editor__dv-section {
   & + & {
-    margin-top: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
   }
-}
-
-.psets-editor__dv-card-head {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md) var(--spacing-lg);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.psets-editor__dv-card-title {
-  @include ds.type-body-large;
-  font-weight: var(--ref-typescale-body-large-weight-prominent);
-  color: var(--color-text-primary);
 }
 
 .psets-editor__dv-card-body {
@@ -416,6 +389,10 @@
   flex-direction: column;
   gap: var(--spacing-md);
   padding: var(--spacing-lg);
+  // The body is the bordered panel on the page canvas — same treatment as .psets-editor__perms.
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-page);
 }
 
 .psets-editor__dv-sublabel {
