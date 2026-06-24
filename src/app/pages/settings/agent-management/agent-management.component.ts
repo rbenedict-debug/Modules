@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { ModuleContextService } from '../../../data/module-context.service';
 import { TeamsService } from '../../../data/teams.service';
@@ -55,9 +55,6 @@ export class AgentManagementComponent {
     const s = this.setsSvc.sets().find((x) => x.id === id);
     return s ? { name: s.name, readOnly: s.isLocked || s.type === 'System' } : null;
   });
-
-  /** Reference to the open editor, so the heading's Save Changes can flush its working state. */
-  private readonly editorRef = viewChild(PermissionSetEditorComponent);
 
   /** Active editor tab — the tab bar lives in the page heading now, so the parent owns it. */
   readonly editorTab = signal<EditorTab>('details');
@@ -117,11 +114,5 @@ export class AgentManagementComponent {
   onSetCreated(id: string): void {
     this.creatingSet.set(false);
     this.openEditor(id);
-  }
-
-  /** Heading Save Changes (editable sets) — flush the editor's working state; its save()
-   *  emits (back), which closes the editor. */
-  saveEditor(): void {
-    this.editorRef()?.save();
   }
 }

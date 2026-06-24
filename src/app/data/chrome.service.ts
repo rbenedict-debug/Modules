@@ -1,5 +1,11 @@
 import { Injectable, signal } from '@angular/core';
 
+/** Action handlers for the contextual save bar a takeover view asks the shell to render. */
+export interface SaveBarConfig {
+  onCancel: () => void;
+  onSave: () => void;
+}
+
 /**
  * Shell chrome UI state shared across the router-outlet boundary. The subnav drawer is
  * owned by the root App (it binds `ds-subnav.is-collapsed` and the `ds-nav-expand` toggle),
@@ -30,4 +36,12 @@ export class ChromeService {
       this._restoreTo = null;
     }
   }
+
+  // ── Contextual save bar ──────────────────────────────────────────────────────────
+  // A takeover view (the permission-set editor) asks the shell to dock a save bar at the bottom
+  // of the content area — outside the routed page — and supplies the button handlers. null = hidden.
+  readonly saveBar = signal<SaveBarConfig | null>(null);
+
+  showSaveBar(config: SaveBarConfig): void { this.saveBar.set(config); }
+  hideSaveBar(): void { this.saveBar.set(null); }
 }

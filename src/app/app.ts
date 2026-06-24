@@ -48,6 +48,10 @@ export class App implements AfterViewInit, OnDestroy {
   // ds-nav-expand toggle keep working unchanged while the editor can drive it too.
   get subNavOpen(): boolean { return this.chrome.subNavOpen(); }
   set subNavOpen(value: boolean) { this.chrome.subNavOpen.set(value); }
+
+  /** Contextual save bar config from the shared chrome service (null = hidden). The shell renders
+   *  it at the bottom of the content area, outside the routed page. */
+  get saveBar() { return this.chrome.saveBar(); }
   activeNav: NavSection = 'tickets';
 
   private _scrollCleanup: (() => void) | null = null;

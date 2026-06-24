@@ -2,7 +2,7 @@
   @if (editingSet(); as es) {
     <!-- Full-area permission-set editor: the set name becomes the page title (with a System
          badge for read-only sets), and a breadcrumb is the way back — the editor's own header
-         bar was removed. Editable sets get Save / Cancel as heading actions. -->
+         bar was removed. Save / Cancel now live in the save bar at the bottom of the editor. -->
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <ol class="breadcrumb__list">
         <li class="breadcrumb__item">
@@ -22,12 +22,6 @@
         <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline">System</span>
       }
     </h1>
-    @if (!es.readOnly) {
-      <div class="am-editor-actions">
-        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="editingSetId.set(null)">Cancel</button>
-        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="saveEditor()">Save Changes</button>
-      </div>
-    }
 
     <!-- Editor sections as page tabs (ds-tabs), right under the title — the canonical
          page-with-tabs pattern. The parent owns the active tab; the editor renders the body. -->
@@ -75,7 +69,7 @@
      tab's Onflo table renders. Rendering one table at a time keeps table-init.js's global
      ids from colliding. -->
 @if (editingSetId(); as setId) {
-  <app-permission-set-editor [setId]="setId" [activeTab]="editorTab()" (back)="editingSetId.set(null)" (openSet)="openEditor($event)" />
+  <app-permission-set-editor [setId]="setId" [activeTab]="editorTab()" (openSet)="openEditor($event)" />
 } @else {
   @switch (activeTab()) {
     @case ('agents') {

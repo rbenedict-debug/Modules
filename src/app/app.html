@@ -523,6 +523,23 @@
       <!-- Routed page content -->
       <router-outlet />
     </div>
+
+    <!-- Contextual save bar for full-area takeover views (the permission-set editor). It docks here
+         at the bottom of the content column — OUTSIDE the routed page — so it spans the editor width
+         and sits at the bottom edge instead of floating inside the page card. Driven by
+         ChromeService; the editor supplies the handlers. -->
+    @if (saveBar; as sb) {
+      <div class="ds-save-bar app-save-bar" role="status" aria-live="polite">
+        <div class="ds-save-bar__message">
+          <span class="ds-save-bar__dot" aria-hidden="true"></span>
+          <span class="ds-save-bar__text">You have unsaved changes</span>
+        </div>
+        <div class="ds-save-bar__actions">
+          <button class="ds-button ds-button--text ds-button--md" type="button" (click)="sb.onCancel()">Cancel</button>
+          <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="sb.onSave()">Save</button>
+        </div>
+      </div>
+    }
   </div>
 
   <button class="ds-nav-expand"

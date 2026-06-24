@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { PermissionSet } from '../../../../data/models';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import {
@@ -59,6 +59,26 @@ export class PermissionEditorStateService {
   readonly assignedUserIds = signal<string[]>([]);
   readonly assignedTeamIds = signal<string[]>([]);
 
+  // ── Dirty tracking ───────────────────────────────────────────────────────────────
+  // JSON snapshot of the working state, captured on load and reset after each save. `dirty`
+  // compares the live state against it, so the save bar shows only while there are unsaved
+  // changes — and never for read-only sets (their fields can't be edited here).
+  private readonly _baseline = signal('');
+  private snapshot(): string {
+    return JSON.stringify({
+      name: this.name(),
+      description: this.description(),
+      caps: this.caps(),
+      manageSubs: this.manageSubs(),
+      ticketScope: this.ticketScope(),
+      assetScope: this.assetScope(),
+      filters: this.filters(),
+      users: this.assignedUserIds(),
+      teams: this.assignedTeamIds(),
+    });
+  }
+  readonly dirty = computed(() => !this.readOnly() && this.snapshot() !== this._baseline());
+
   // ── Load ─────────────────────────────────────────────────────────────────────────
   init(set: PermissionSet): void {
     this.setId = set.id;
@@ -87,6 +107,7 @@ export class PermissionEditorStateService {
     }
     this.readOnly.set(set.isLocked || set.type === 'System');
     this.seedManageSubs();
+    this._baseline.set(this.snapshot());
   }
 
   /** The source uses 'all' | 'assigned' | 'department'; the UI offers all / assigned only. */
@@ -305,5 +326,14 @@ export class PermissionEditorStateService {
       assignedTeamIds: this.assignedTeamIds(),
       capabilities,
     });
+    // Working state is now the saved state — re-baseline so `dirty` clears (you stay on the page).
+    this._baseline.set(this.snapshot());
+  }
+
+  /** Discard unsaved changes: reload the working state from the last-saved set. Re-baselines, so
+   *  `dirty` goes false and the save bar clears — you stay on the page either way. */
+  discard(): void {
+    const set = this.setsSvc.sets().find(s => s.id === this.setId);
+    if (set) this.init(set);
   }
 }

@@ -105,3 +105,11 @@
 .ds-subnav-subheader__row {
   font-weight: var(--ref-typescale-label-medium-weight);
 }
+
+// Contextual save bar docked at the bottom of the content column (outside the routed page).
+// ds-page-layout__content is a flex column (top-nav + body), so flex-shrink:0 pins this to the
+// bottom edge and the body flexes above it. The ds-save-bar brings its own border/radius/elevation.
+.app-save-bar {
+  flex-shrink: 0;
+  margin: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+}

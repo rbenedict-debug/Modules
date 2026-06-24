@@ -7,6 +7,7 @@ import {
   OnInit,
   Output,
   ViewEncapsulation,
+  effect,
   inject,
   input,
 } from '@angular/core';
@@ -49,8 +50,6 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   }
   private _setId = '';
 
-  /** Emitted on Back / Cancel / Save — the parent closes the editor. */
-  @Output() back = new EventEmitter<void>();
   /** Emitted with a set id to open (Duplicate hands the parent the new set). */
   @Output() openSet = new EventEmitter<string>();
 
@@ -64,26 +63,32 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   /** Active tab — owned by the parent now (the tab bar moved to the page heading). */
   readonly activeTab = input<EditorTab>('details');
 
+  constructor() {
+    // Dock the shell's bottom save bar only while there are unsaved changes (state.dirty() is
+    // false for read-only sets and after save/discard). The shell renders it outside the page;
+    // Save persists and stays here, Cancel reverts the edits — neither leaves the editor.
+    effect(() => {
+      this.chrome.saveBar.set(
+        this.state.dirty()
+          ? { onCancel: () => this.state.discard(), onSave: () => this.state.save() }
+          : null,
+      );
+    });
+  }
+
   ngOnInit(): void {
     // Collapse the section subnav while this full-area editor is on screen.
     this.chrome.setEditorOpen(true);
   }
   ngOnDestroy(): void {
     this.chrome.setEditorOpen(false);
+    this.chrome.hideSaveBar();
   }
 
   private reload(): void {
     const set = this.setsSvc.sets().find(s => s.id === this._setId);
     if (!set) return;
     this.state.init(set);
-  }
-
-  save(): void {
-    this.state.save();
-    this.back.emit();
-  }
-  closeEditor(): void {
-    this.back.emit();
   }
 
   /** Duplicate a (system) set into an editable Custom copy, then open it. */

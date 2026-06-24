@@ -55,23 +55,9 @@
   &__current { color: var(--color-text-primary); }
 }
 
-// The heading is the positioning context for the editable Save / Cancel cluster.
-.ds-page-content__heading { position: relative; }
-
 // Set name is the page title; the System badge sits inline beside it. The h1 keeps its
 // native DS spacing, so the page tabs below sit exactly where the DS places them.
 .am-editor-title .ds-label {
   vertical-align: middle;
   margin-left: var(--spacing-sm);
-}
-
-// Editable sets only: Save / Cancel pinned top-right, out of flow so the title→tabs
-// spacing is left exactly as the DS lays it out.
-.am-editor-actions {
-  position: absolute;
-  top: var(--spacing-sm);
-  right: var(--spacing-lg);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-sm);
 }
