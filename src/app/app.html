@@ -289,29 +289,51 @@
                     @if (!filter || filter.has('keyword-alerts')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'">Keyword Alerts</button>
                     }
+                    @if (!filter || filter.has('labels')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'labels'">Labels</button>
+                    }
                     @if (!filter || filter.has('languages')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'languages'">Languages</button>
                     }
                     @if (!filter || filter.has('live-agent')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'live-agent'">Live Agent</button>
                     }
-                    @if (!filter || filter.has('locations')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations'">Locations</button>
-                    }
-                    @if (!filter || filter.has('tags-tickets') || filter.has('tags-assets')) {
-                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['tags'] || !!filter">
-                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('tags')">
-                          <span class="ds-subnav-subheader__label">Tags</span>
-                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['tags'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                    @if (!filter || filter.has('locations-physical') || filter.has('locations-containers') || filter.has('locations-configurations')) {
+                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['locations'] || !!filter">
+                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('locations')">
+                          <span class="ds-subnav-subheader__label">Locations</span>
+                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['locations'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                         </button>
                         <div class="ds-subnav-subheader__children">
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
-                            @if (!filter || filter.has('tags-tickets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-tickets'">Tickets</button>
+                            @if (!filter || filter.has('locations-physical')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations-physical'">Physical Locations</button>
                             }
-                            @if (!filter || filter.has('tags-assets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'tags-assets'">Assets</button>
+                            @if (!filter || filter.has('locations-containers')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations-containers'">Containers</button>
+                            }
+                            @if (!filter || filter.has('locations-configurations')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'locations-configurations'">Configurations</button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                    @if (!filter || filter.has('portal-branding-tickets') || filter.has('portal-branding-assets')) {
+                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['portal-branding'] || !!filter">
+                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('portal-branding')">
+                          <span class="ds-subnav-subheader__label">Portal Branding</span>
+                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['portal-branding'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                        </button>
+                        <div class="ds-subnav-subheader__children">
+                          <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
+                          <div class="ds-subnav-subheader__slot">
+                            @if (!filter || filter.has('portal-branding-tickets')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portal-branding-tickets'">Tickets</button>
+                            }
+                            @if (!filter || filter.has('portal-branding-assets')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portal-branding-assets'">Assets</button>
                             }
                           </div>
                         </div>
@@ -381,20 +403,20 @@
                     <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ (settingsExpanded['tickets-settings'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                   </button>
                   <div class="ds-subnav-header__children">
-                    @if (!filter || filter.has('portals-it-service') || filter.has('portals-landing-page')) {
-                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['portals'] || !!filter">
-                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('portals')">
-                          <span class="ds-subnav-subheader__label">Portals</span>
-                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['portals'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                    @if (!filter || filter.has('service-portals-landing-page') || filter.has('service-portals-systems')) {
+                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['service-portals'] || !!filter">
+                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('service-portals')">
+                          <span class="ds-subnav-subheader__label">Service Portals</span>
+                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['service-portals'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                         </button>
                         <div class="ds-subnav-subheader__children">
                           <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
                           <div class="ds-subnav-subheader__slot">
-                            @if (!filter || filter.has('portals-it-service')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-it-service'">IT Service</button>
+                            @if (!filter || filter.has('service-portals-landing-page')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'service-portals-landing-page'">Landing Page / Tab</button>
                             }
-                            @if (!filter || filter.has('portals-landing-page')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portals-landing-page'">Landing Page / Tab</button>
+                            @if (!filter || filter.has('service-portals-systems')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'service-portals-systems'">Systems</button>
                             }
                           </div>
                         </div>
@@ -410,7 +432,7 @@
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'slas'">SLAs</button>
                     }
                     @if (!filter || filter.has('ticket-schedules')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ticket-schedules'">Ticket Schedules</button>
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ticket-schedules'">Tickets Schedule</button>
                     }
                     @if (!filter || filter.has('topics') || filter.has('success-messages')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['topics-manager'] || !!filter">
