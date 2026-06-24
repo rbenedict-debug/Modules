@@ -10,7 +10,6 @@ import {
   signal,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ModulesService } from '../../../../data/modules.service';
 import { ModuleContextService } from '../../../../data/module-context.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { FormSelectComponent } from '../form-select.component';
@@ -34,7 +33,6 @@ export class CreatePermissionSetModalComponent {
   /** Emits the new set's id so the parent opens its editor. */
   @Output() created = new EventEmitter<string>();
 
-  private readonly modulesSvc = inject(ModulesService);
   private readonly moduleCtx = inject(ModuleContextService);
   private readonly setsSvc = inject(PermissionSetsService);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -42,12 +40,6 @@ export class CreatePermissionSetModalComponent {
   readonly name = signal('');
   readonly description = signal('');
 
-  // Department is locked to the current switcher context (Global → "Global"), like the team form.
-  readonly departmentName = computed(() => {
-    const id = this.moduleCtx.currentModuleId();
-    return id === null ? 'Global' : this.modulesSvc.modules().find(m => m.id === id)?.name ?? id;
-  });
-  readonly departmentOptions = computed(() => this.modulesSvc.modules().filter(m => m.active).map(m => m.name));
   readonly copyFromOptions = computed(() => this.setsSvc.sets().map(s => s.name));
   readonly canCreate = computed(() => this.name().trim() !== '');
 

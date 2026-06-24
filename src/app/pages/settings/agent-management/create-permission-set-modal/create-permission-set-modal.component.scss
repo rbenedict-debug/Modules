@@ -10,14 +10,28 @@
   padding: var(--spacing-xl);
   background-color: var(--color-surface-scrim);
 }
+// The DS .ds-modal is a flex column whose .ds-modal__body is flex:1 0 0 (basis 0) — an
+// always-scrollable region that needs the modal to own a height, or it collapses to 0px.
+// We don't render inside the editor's global stylesheet (which sizes .assign-modal), so set
+// the column + a height cap here ourselves.
 .cps-modal {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 480px;
+  max-height: 80vh;
 }
+// Override the DS body's basis-0 grow so this short form sizes to its content (basis auto);
+// shrink + overflow keep it scrollable if it ever exceeds the 80vh cap. The DS .ds-modal__body
+// ships with no padding (the header/footer are inset --spacing-lg), so add matching padding here
+// to align the fields with the title + actions.
 .cps-modal__body {
+  flex: 0 1 auto;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  overflow-y: auto;
 }
 .cps-modal__divider {
   height: 1px;
