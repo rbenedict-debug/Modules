@@ -98,8 +98,23 @@ export interface Team { id: string; name: string; module: string | null; memberI
 export type PermissionSetType = 'System' | 'Custom';
 /** `isGlobalOnly` marks the global-tier admin set (Global Admin): it shows ONLY in the Global
  *  switcher context and is hidden from every department. All other system-wide sets (moduleId:
- *  null) are department-tier — shown in every department context but not in Global. */
-export interface PermissionSet { id: string; name: string; moduleId: string | null; type: PermissionSetType; isLocked: boolean; isGlobalOnly?: boolean; capabilities: Record<string, boolean | string>; }
+ *  null) are department-tier — shown in every department context but not in Global.
+ *  `description` / `departments` / `allDepartments` / `assignedUserIds` / `assignedTeamIds` back
+ *  the editor's Details tab (description + assigned users/teams) — all design-mode mock data. */
+export interface PermissionSet {
+  id: string;
+  name: string;
+  moduleId: string | null;
+  type: PermissionSetType;
+  isLocked: boolean;
+  isGlobalOnly?: boolean;
+  description?: string;
+  departments?: string[];
+  allDepartments?: boolean;
+  assignedUserIds?: string[];
+  assignedTeamIds?: string[];
+  capabilities: Record<string, boolean | string>;
+}
 
 /** A Marketplace integration (owned by the Integrations team). Integration Hub is district-level
  *  (global-admins-only), but a global admin can grant department modules manager access to specific

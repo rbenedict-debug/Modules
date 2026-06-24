@@ -1,0 +1,107 @@
+<!-- General information -->
+<div class="psets-editor__details-section">
+  <div class="psets-editor__details-head">
+    <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">edit_note</span>
+    <h3 class="psets-editor__section-title">General Information</h3>
+  </div>
+
+  <div class="ds-input psets-editor__details-name" [class.is-disabled]="state.readOnly()">
+    <label class="ds-input__label" for="pset-name">Permission Set Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+    <div class="ds-input__field">
+      <input id="pset-name" class="ds-input__control" type="text" placeholder="Enter permission set name…"
+             [ngModel]="state.name()" (ngModelChange)="state.name.set($event)" [disabled]="state.readOnly()" />
+    </div>
+  </div>
+
+  <div class="ds-textarea psets-editor__details-desc" [class.is-disabled]="state.readOnly()">
+    <label class="ds-textarea__label" for="pset-desc">Description</label>
+    <div class="ds-textarea__field">
+      <textarea id="pset-desc" class="ds-textarea__control" rows="3"
+                placeholder="Describe the purpose and scope of this permission set…"
+                [ngModel]="state.description()" (ngModelChange)="state.description.set($event)"
+                [disabled]="state.readOnly()"></textarea>
+    </div>
+    <span class="ds-textarea__helper">Optional — a brief summary to help admins understand this permission set at a glance</span>
+  </div>
+</div>
+
+<!-- Assigned users & teams -->
+<div class="psets-editor__details-section">
+  <div class="psets-editor__assign-head">
+    <h3 class="psets-editor__section-title">Assigned Users &amp; Teams</h3>
+    <span class="psets-editor__assign-counts">
+      <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedUsers().length }} {{ assignedUsers().length === 1 ? 'user' : 'users' }}</span>
+      <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedTeams().length }} {{ assignedTeams().length === 1 ? 'team' : 'teams' }}</span>
+    </span>
+    @if (!state.readOnly()) {
+      <button class="ds-button ds-button--filled ds-button--sm psets-editor__assign-add" type="button" (click)="showAssign.set(true)">
+        <span class="ds-icon ds-icon--sm" aria-hidden="true">person_add</span>Add Assignment
+      </button>
+    }
+  </div>
+
+  @if (assignedUsers().length === 0 && assignedTeams().length === 0) {
+    <div class="psets-editor__assign-empty">
+      <span class="ds-icon ds-icon--lg psets-editor__assign-empty-icon" aria-hidden="true">group</span>
+      <p class="psets-editor__assign-empty-title">No users or teams are assigned yet.</p>
+      <p class="psets-editor__assign-empty-help">Click “Add Assignment” to add users or teams to this permission set.</p>
+    </div>
+  } @else {
+    <div class="psets-editor__assign-list">
+      @if (assignedTeams().length) {
+        <p class="psets-editor__assign-divider">Teams</p>
+        @for (t of assignedTeams(); track t.id) {
+          <div class="psets-editor__assign-row">
+            <span class="psets-editor__assign-avatar psets-editor__assign-avatar--team">
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">groups</span>
+            </span>
+            <div class="psets-editor__assign-text">
+              <span class="psets-editor__assign-name">{{ t.name }}</span>
+              <span class="psets-editor__assign-meta">{{ teamMeta(t) }}</span>
+            </div>
+            @if (!state.readOnly()) {
+              <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
+                      (click)="askRemove('team', t.id, t.name)">Remove</button>
+            }
+          </div>
+        }
+      }
+      @if (assignedUsers().length) {
+        <p class="psets-editor__assign-divider">Users</p>
+        @for (u of assignedUsers(); track u.id) {
+          <div class="psets-editor__assign-row">
+            <span class="psets-editor__assign-avatar">{{ initials(u) }}</span>
+            <div class="psets-editor__assign-text">
+              <span class="psets-editor__assign-name">{{ fullName(u) }}</span>
+              <span class="psets-editor__assign-meta">{{ userMeta(u) }}</span>
+            </div>
+            @if (!state.readOnly()) {
+              <button class="ds-button ds-button--outlined ds-button--sm psets-editor__assign-remove" type="button"
+                      (click)="askRemove('user', u.id, fullName(u))">Remove</button>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>
+
+@if (showAssign()) {
+  <app-assign-members-modal
+    [assignedUserIds]="state.assignedUserIds()" [assignedTeamIds]="state.assignedTeamIds()"
+    (assign)="onAssign($event)" (close)="showAssign.set(false)" />
+}
+
+@if (removeTarget(); as rt) {
+  <div class="psets-editor__confirm-backdrop" (click)="removeTarget.set(null)">
+    <div class="ds-modal psets-editor__confirm" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+      <div class="psets-editor__confirm-icon" aria-hidden="true"><span class="ds-icon">person_remove</span></div>
+      <h2 class="ds-modal__title">Remove {{ rt.type === 'team' ? 'Team' : 'User' }}</h2>
+      <p class="psets-editor__confirm-msg">Are you sure you want to remove “<strong>{{ rt.name }}</strong>” from this permission set?</p>
+      <div class="ds-modal__actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="removeTarget.set(null)">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md psets-editor__confirm-danger" type="button" (click)="confirmRemove()">Remove</button>
+      </div>
+    </div>
+  </div>
+}

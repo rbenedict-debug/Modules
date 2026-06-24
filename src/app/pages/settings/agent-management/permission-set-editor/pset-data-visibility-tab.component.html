@@ -1,0 +1,112 @@
+<p class="psets-editor__dv-lead">Control which records this set can see, beyond what the action permissions allow.</p>
+
+<!-- Tickets scope -->
+<div class="psets-editor__dv-card">
+  <div class="psets-editor__dv-card-head">
+    <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">confirmation_number</span>
+    <span class="psets-editor__dv-card-title">Tickets</span>
+  </div>
+  <div class="psets-editor__dv-card-body">
+    <p class="psets-editor__dv-sublabel">Scope</p>
+    <div class="ds-radio-group">
+      <label class="ds-radio">
+        <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="all"
+               [checked]="state.ticketScope() === 'all'" [disabled]="state.readOnly()"
+               (change)="state.setTicketScope('all')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">All Tickets
+          <span class="psets-editor__radio-desc">Access to all tickets</span>
+        </span>
+      </label>
+      <label class="ds-radio">
+        <input type="radio" class="ds-radio__control" name="dv-ticket-scope" value="assigned"
+               [checked]="state.ticketScope() === 'assigned'" [disabled]="state.readOnly()"
+               (change)="state.setTicketScope('assigned')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">Only assigned tickets
+          <span class="psets-editor__radio-desc">Only tickets where the user is the owner, or a member of a team assigned to the ticket</span>
+        </span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- Assets scope + filter builder -->
+<div class="psets-editor__dv-card">
+  <div class="psets-editor__dv-card-head">
+    <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">devices</span>
+    <span class="psets-editor__dv-card-title">Assets</span>
+  </div>
+  <div class="psets-editor__dv-card-body">
+    <p class="psets-editor__dv-sublabel">Scope</p>
+    <div class="ds-radio-group">
+      <label class="ds-radio">
+        <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="all"
+               [checked]="state.assetScope() === 'all'" [disabled]="state.readOnly()"
+               (change)="state.setAssetScope('all')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">All Assets
+          <span class="psets-editor__radio-desc">Access to all assets</span>
+        </span>
+      </label>
+      <label class="ds-radio">
+        <input type="radio" class="ds-radio__control" name="dv-asset-scope" value="assigned"
+               [checked]="state.assetScope() === 'assigned'" [disabled]="state.readOnly()"
+               (change)="state.setAssetScope('assigned')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">Only assets in assigned locations
+          <span class="psets-editor__radio-desc">Only assets belonging to the locations assigned to this agent</span>
+        </span>
+      </label>
+    </div>
+
+    <div class="psets-editor__dv-divider" aria-hidden="true"></div>
+    <p class="psets-editor__dv-sublabel">Filters</p>
+    <p class="psets-editor__dv-filters-help">Apply filters to narrow or exclude items from the base scope</p>
+
+    <div class="psets-editor__dv-filters">
+      @for (cfg of filterConfigs; track cfg.key) {
+        <div class="psets-editor__filter">
+          <div class="psets-editor__filter-head">
+            <span class="psets-editor__filter-label">{{ cfg.label }}</span>
+            <label class="ds-toggle psets-editor__filter-exclude" [class.is-disabled]="state.readOnly()">
+              <span class="psets-editor__filter-exclude-label">Exclude</span>
+              <input type="checkbox" role="switch" class="ds-toggle__control"
+                     [checked]="isExclude(cfg.key)" [disabled]="state.readOnly()"
+                     (change)="state.setFilterExclude(cfg.key, $any($event.target).checked)" />
+              <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+            </label>
+          </div>
+
+          <div class="psets-editor__filter-field" [class.is-disabled]="state.readOnly()">
+            <button type="button" class="psets-editor__filter-control" [disabled]="state.readOnly()"
+                    [attr.aria-expanded]="openFilter() === cfg.key" (click)="toggleOpen(cfg.key)">
+              <span class="psets-editor__filter-value" [class.is-placeholder]="selected(cfg.key).length === 0">
+                {{ fieldText(cfg.key, cfg.placeholder) }}
+              </span>
+              <span class="ds-icon ds-icon--sm" aria-hidden="true">arrow_drop_down</span>
+            </button>
+            @if (openFilter() === cfg.key) {
+              <div class="psets-editor__filter-menu ds-menu" role="listbox"
+                   [attr.aria-label]="cfg.label" aria-multiselectable="true">
+                @for (opt of cfg.options; track opt) {
+                  <button type="button" class="ds-menu__item" role="option"
+                          [class.ds-menu__item--selected]="selected(cfg.key).includes(opt)"
+                          [attr.aria-selected]="selected(cfg.key).includes(opt)"
+                          (click)="state.toggleFilterValue(cfg.key, opt)">
+                    @if (selected(cfg.key).includes(opt)) {
+                      <span class="ds-menu__item-check"><span class="ds-icon ds-icon--filled" aria-hidden="true">check</span></span>
+                    }
+                    {{ opt }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <p class="psets-editor__filter-helper psets-editor__filter-helper--{{ helperClass(cfg.key) }}">{{ helper(cfg) }}</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -10,6 +10,7 @@ import { PermissionSetsTabComponent } from './permission-sets-tab/permission-set
 import { PermissionSetEditorComponent } from './permission-set-editor/permission-set-editor.component';
 import { AgentFormComponent } from './agent-form/agent-form.component';
 import { TeamFormComponent } from './team-form/team-form.component';
+import { CreatePermissionSetModalComponent } from './create-permission-set-modal/create-permission-set-modal.component';
 
 type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 
@@ -24,6 +25,7 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
     PermissionSetEditorComponent,
     AgentFormComponent,
     TeamFormComponent,
+    CreatePermissionSetModalComponent,
   ],
   templateUrl: './agent-management.component.html',
   styleUrl: './agent-management.component.scss',
@@ -42,6 +44,9 @@ export class AgentManagementComponent {
 
   /** Permission set being edited (null = list/tabs view). Drives the full-area editor. */
   readonly editingSetId = signal<string | null>(null);
+
+  /** True while the New Permission Set modal is open (hosted here — the Permission Sets tab is detached). */
+  readonly creatingSet = signal(false);
 
   /** True while the Create Agent form is open. Hosted here (not in the Agents tab) because
    *  that tab detaches change detection for table-init.js and can't drive a modal. */
@@ -73,5 +78,11 @@ export class AgentManagementComponent {
   closeTeamForm(): void {
     this.creatingTeam.set(false);
     this.editingTeam.set(null);
+  }
+
+  /** The New Permission Set modal created a set — close it and open its editor. */
+  onSetCreated(id: string): void {
+    this.creatingSet.set(false);
+    this.editingSetId.set(id);
   }
 }

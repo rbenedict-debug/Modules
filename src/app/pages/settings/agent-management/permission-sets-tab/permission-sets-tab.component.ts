@@ -40,6 +40,8 @@ interface SetRow {
 export class PermissionSetsTabComponent implements AfterViewInit {
   /** Emits the id of the permission set whose editor should open. The parent shows it. */
   @Output() editSet = new EventEmitter<string>();
+  /** Emits when "Create permission set" is clicked — the parent opens the New Permission Set modal. */
+  @Output() create = new EventEmitter<void>();
 
   private readonly setsSvc = inject(PermissionSetsService);
   private readonly modulesSvc = inject(ModulesService);
@@ -119,30 +121,10 @@ export class PermissionSetsTabComponent implements AfterViewInit {
     this.editSet.emit(id);
   }
 
-  // Create a new Custom set (system-wide, unlocked), then open its editor. The click
-  // handler is bound at the initial render, so it still fires after cdr.detach(); the
-  // table itself is a static snapshot and won't show the new row until re-rendered, but
-  // emitting editSet hands the user straight into the editor for the new set.
+  // "Create permission set" opens the New Permission Set modal (hosted on the parent, which
+  // isn't detached). The modal collects name/description/department/copy-from, adds the set,
+  // and the parent opens its editor.
   createSet(): void {
-    const name = this.nextCustomName();
-    this.setsSvc.add({
-      name,
-      moduleId: null,
-      type: 'Custom',
-      isLocked: false,
-      capabilities: {},
-    });
-    // add() appends, so the new set is last.
-    const created = this.setsSvc.sets()[this.setsSvc.sets().length - 1];
-    if (created) this.editSet.emit(created.id);
-  }
-
-  private nextCustomName(): string {
-    const base = 'New permission set';
-    const existing = new Set(this.setsSvc.sets().map(s => s.name));
-    if (!existing.has(base)) return base;
-    let n = 2;
-    while (existing.has(`${base} ${n}`)) n++;
-    return `${base} ${n}`;
+    this.create.emit();
   }
 }

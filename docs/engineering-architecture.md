@@ -432,6 +432,8 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 { id; name; moduleId: string | null;                 // null = system-wide, else a module id
   type: 'System' | 'Custom'; isLocked: boolean;
   isGlobalOnly?: boolean;                             // true only for Global Admin (global-tier)
+  description?; departments?; allDepartments?;        // editor Details tab (description + scope)
+  assignedUserIds?; assignedTeamIds?;                 // editor Details tab (assigned users/teams)
   capabilities: Record<string, boolean | string> }   // perm id → toggle bool or segment value
 ```
 
@@ -450,7 +452,7 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 
 - A set is **read-only when `isLocked || type === 'System'`** — so *all six* System sets open read-only, even the three with `isLocked: false`.
 - **`Global Admin`** (renamed from *System Administrator*; id `ps-sysadmin` unchanged so `permissionSetByModule` refs don't break) carries **`isGlobalOnly: true`** — the global-tier admin set, shown only in the Global context. **`Department Admin`** (`ps-dept-admin`) is the department-tier admin set. The department switcher resolves a module role to one of these via `MODULE_ROLE_PERMISSION_SET_ID` (`Admin → ps-dept-admin`, `Agent → ps-team-member`).
-- The service also holds the **`catalog`** — the section/permission definitions the editor renders (code-only, separate from any set's stored `capabilities`).
+- The **full permission catalog** lives in **`permission-catalog.ts`**: two `PermissionSection[]` arrays — **`ACTIONS_SECTIONS`** (Tickets, Assets, Analytics, Campaigns) and **`SETTINGS_SECTIONS`** (Global, Tickets, Assets, Workflows, Integrations), **105 perms total**, ported faithfully from the Figma Make source. Tickets & Assets appear in BOTH (action toggles vs admin segments). **`ROLE_PRESET_STATES`** (keyed by role name; mapped from a set id via `SET_ROLE_PRESET`) is the read-only configuration each system set renders with. `PermissionSetsService` exposes `actionsSections` / `settingsSections`.
 - Methods: `add`, `update`, `remove`. ⚠️ **`remove()` has no caller — there is no delete UI.**
 
 ### 3.3 Permission Sets tab
@@ -459,23 +461,24 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 
 Engine-driven table.
 
-- **CTA:** `Create permission set` → `createSet()` adds an auto-named in-memory set (`New permission set`, `New permission set 2`, …) and opens its editor. 🟡
+- **CTA:** `Create permission set` → opens the **New Permission Set modal** (`create-permission-set-modal/`): name, description, a context-locked **Department** (Global → "Global"), and an optional **Copy From** (seeds capabilities from an existing set). On Create it adds the set (scoped to the switcher context) and opens its editor. 🟡
 - **Search:** `Search permission sets…`. **Columns:** `Name`, `Type` (`System` blue / `Custom` grey badge), `Scope` (the module name, or `System-wide`), `Status` (`Locked` grey / `Editable` green badge).
 - **Scoped to the switcher context** ✅ (like Teams): the **Global context** shows only the **global-tier** set (`Global Admin`, `isGlobalOnly`); a **department** shows the department-tier system-wide sets + only that department's own custom sets, and **hides `Global Admin`**. Re-mounts on context change.
 - **Whole row → editor** ✅ (`aria-label="Open {name}"`). No kebab menu.
 
 ### 3.4 Permission Set editor
 
-✅ built / 🟡 save in-memory · **Files:** `permission-set-editor/`
+✅ built / 🟡 save in-memory · **Files:** `permission-set-editor/` (shell + state service + four tab components)
 
-Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`; the parent stays attached — reactive). Collapses the subnav via `chrome.setEditorOpen`.
+Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`; the parent stays attached — reactive). Collapses the subnav via `chrome.setEditorOpen`. **A faithful port of the Figma Make config flow.**
 
-- **Header** — `Back` (`arrow_back`) + the set name + a `Read only` pill when locked + `Cancel`/`Back` + `Save`. Locked sets show `This is a system permission set and can't be edited. Duplicate it to make changes.`
-- **Left nav** — seven catalog sections (`Tickets`, `Assets`, `Analytics`, `Campaigns`, `Global`, `Workflows`, `Integrations`) plus a synthetic `Data Visibility`. A search (`Search permissions`) and per-section status dots (colored by preset).
-- **Right pane** — per-section permission rows, each a **`toggle`** or a **`segment`** control (`Hide` / `View` / `Manage`; reaching `Manage` reveals `Create` / `Edit` / `Delete` sub-checkboxes — ⚠️ local UI only, **not persisted into `capabilities`**). Each section has bulk **presets**: `No Access` / `View Only` / `Full Access` / `Custom` (Custom is display-only).
-- **Data Visibility** is a bespoke pane: a `Tickets` card (radios `All tickets` / `Assigned only` + toggle `Exclude confidential topics`) and an `Assets` card (radios `All assets` / `Assigned locations only` + toggle `Exclude assets from other locations`). ⛔ `<!-- TODO eng: wire the full data-visibility filter builder -->`.
-- **Save** 🟡 — `setsSvc.update(id, { capabilities })`; in-memory only.
-- ⚠️ **Capability vocabulary mismatch (important).** The seed sets store a *legacy* capability vocabulary (`manageUsers`, `ticketAccess`, …) whose keys don't match the catalog's perm ids (`tk-*`, `as-*`, …). On load, the editor seeds its working copy from a **derived whole-set preset** (`presetForSet`) — so **opening a seeded set and saving it rewrites its `capabilities` into the new catalog vocabulary**. The catalog is a **representative subset (~6–10 perms/section), not the exhaustive production model.**
+- **Shell** (`permission-set-editor.component`, `ViewEncapsulation.None` so its stylesheet styles the tab sub-components) — header (`Back` + set name + a `System` badge when read-only + `Cancel`/`Save Changes`, or `Back`/`Duplicate` when read-only), an amber read-only banner for system sets, and a **4-tab bar** (`ds-inner-page-tabs`): **Details · Data Visibility · Actions · Settings**. Reloads when `[setId]` changes (so Duplicate → open works). Provides the per-editor **`PermissionEditorStateService`** every tab reads/writes.
+- **State service** — working name/description/capabilities/data-visibility/assignments + all mutators (`setToggle`, `setSegment`, `applyPreset`, scope/filter setters, assignment add/remove). System sets seed read-only from `ROLE_PRESET_STATES`; catalog-keyed custom sets clone verbatim; brand-new sets default. `save()` flushes name/description/assignments/capabilities to `PermissionSetsService`.
+- **Details tab** (`pset-details-tab`) — name + description, and **Assigned Users & Teams** (lists with counts + remove-confirm; an **Add Assignment** modal `assign-members-modal` with a searchable team/user list reading `UsersService` / `TeamsService`).
+- **Data Visibility tab** (`pset-data-visibility-tab`) — Tickets + Assets record scopes (All / Assigned), plus the Assets **filter builder**: three reactive multiselects (Asset Type / Assigned User Type / Grade), each with an **Exclude** toggle + live helper text ("User can only see / cannot see assets …").
+- **Actions & Settings tabs** — both render the shared **`pset-matrix-tab`** (left section nav + search, right perm grid), fed `ACTIONS_SECTIONS` / `SETTINGS_SECTIONS`. Each row is a **toggle** or **segment** (`Hide`/`View`/`Manage`, or `…/Edit`); a `Manage` segment reveals sub-checkboxes (`Create`/`Edit`/`Delete`, or custom — Archived Assets → `Recover`/`Permanently Delete`). Per-section bulk **presets** (`No Access` / `View Only` / `Full Access` / `Custom`; Actions Tickets/Assets omit View Only). A child perm gates on a parent via `disabledByKey`; sub-groups collapse.
+- **Save** 🟡 — in-memory (`setsSvc.update`). **Duplicate** (system sets) → a `{name} (copy)` Custom set, opened editable.
+- ⚠️ **Capability vocabulary.** Seed sets store a *legacy* vocabulary (`manageUsers`, `ticketAccess`, …); the editor seeds system sets from `ROLE_PRESET_STATES` and rewrites `capabilities` into catalog ids (`tk-*`, `as-*`, `gl-*`, …) on save.
 
 ### 3.5 The single source of truth
 

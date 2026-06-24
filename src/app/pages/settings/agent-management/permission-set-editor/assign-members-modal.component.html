@@ -1,0 +1,75 @@
+<div class="assign-modal__backdrop" (click)="cancel()">
+  <div class="ds-modal assign-modal" role="dialog" aria-modal="true" aria-labelledby="assign-modal-title"
+       (click)="$event.stopPropagation()">
+    <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="cancel()">
+      <span class="ds-icon" aria-hidden="true">close</span>
+    </button>
+
+    <header class="ds-modal__header">
+      <h2 class="ds-modal__title" id="assign-modal-title">Add Assignment</h2>
+    </header>
+
+    <div class="assign-modal__search ds-input ds-search" role="search">
+      <div class="ds-input__field">
+        <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+        <input class="ds-input__control" type="search" placeholder="Search teams and users…"
+               aria-label="Search teams and users" [ngModel]="searchText" (ngModelChange)="onSearch($event)" />
+      </div>
+    </div>
+
+    <div class="ds-modal__body assign-modal__body">
+      @if (availableTeams().length === 0 && availableUsers().length === 0) {
+        <div class="assign-modal__empty">
+          <span class="ds-icon ds-icon--lg" aria-hidden="true">search_off</span>
+          <p>No results match your search</p>
+        </div>
+      } @else {
+        @if (availableTeams().length) {
+          <p class="assign-modal__divider">Teams</p>
+          @for (t of availableTeams(); track t.id) {
+            <button type="button" class="assign-modal__row" [class.is-picked]="isTeamPicked(t.id)" (click)="toggleTeam(t.id)">
+              <span class="ds-checkbox assign-modal__check">
+                <input type="checkbox" class="ds-checkbox__control" [checked]="isTeamPicked(t.id)" tabindex="-1" aria-hidden="true" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+              </span>
+              <span class="psets-editor__assign-avatar psets-editor__assign-avatar--team">
+                <span class="ds-icon ds-icon--sm" aria-hidden="true">groups</span>
+              </span>
+              <span class="assign-modal__text">
+                <span class="assign-modal__name">{{ t.name }}</span>
+                <span class="assign-modal__meta">{{ teamMeta(t) }}</span>
+              </span>
+            </button>
+          }
+        }
+        @if (availableUsers().length) {
+          <p class="assign-modal__divider">Users</p>
+          @for (u of availableUsers(); track u.id) {
+            <button type="button" class="assign-modal__row" [class.is-picked]="isUserPicked(u.id)" (click)="toggleUser(u.id)">
+              <span class="ds-checkbox assign-modal__check">
+                <input type="checkbox" class="ds-checkbox__control" [checked]="isUserPicked(u.id)" tabindex="-1" aria-hidden="true" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+              </span>
+              <span class="psets-editor__assign-avatar">{{ initials(u) }}</span>
+              <span class="assign-modal__text">
+                <span class="assign-modal__name">{{ fullName(u) }}</span>
+                <span class="assign-modal__meta">{{ userMeta(u) }}</span>
+              </span>
+            </button>
+          }
+        }
+      }
+    </div>
+
+    <footer class="ds-modal__actions assign-modal__footer">
+      <span class="assign-modal__count">{{ totalSelected() > 0 ? totalSelected() + ' selected' : 'No items selected' }}</span>
+      <span class="assign-modal__footer-actions">
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button"
+                [disabled]="totalSelected() === 0" (click)="doAssign()">
+          {{ totalSelected() > 0 ? 'Assign (' + totalSelected() + ')' : 'Assign' }}
+        </button>
+      </span>
+    </footer>
+  </div>
+</div>

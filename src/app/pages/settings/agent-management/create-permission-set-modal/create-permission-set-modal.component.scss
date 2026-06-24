@@ -1,0 +1,26 @@
+// The create modal is hosted outside the editor (from the Permission Sets tab), so it carries
+// its own scrim + sizing rather than relying on the editor's global stylesheet.
+.cps-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface-scrim);
+}
+.cps-modal {
+  width: 100%;
+  max-width: 480px;
+}
+.cps-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+.cps-modal__divider {
+  height: 1px;
+  background-color: var(--color-border-subtle);
+  margin: var(--spacing-xs) 0;
+}

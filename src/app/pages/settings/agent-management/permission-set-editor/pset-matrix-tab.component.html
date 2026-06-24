@@ -1,0 +1,137 @@
+<!-- Two-column permission matrix (Actions / Settings). Left = section nav + search; right = the
+     active section's perm rows with bulk presets. Reads/writes via PermissionEditorStateService. -->
+<nav class="psets-editor__nav" aria-label="Permission sections">
+  <div class="ds-input ds-search psets-editor__search" role="search">
+    <div class="ds-input__field">
+      <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+      <input class="ds-input__control" type="search" placeholder="Search permissions"
+             aria-label="Search permissions" [ngModel]="searchText" (ngModelChange)="onSearch($event)" />
+      @if (searchText) {
+        <button class="ds-input__action" type="button" aria-label="Clear search" (click)="clearSearch()">
+          <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="psets-editor__nav-list">
+    @for (s of filteredSections(); track s.section.id) {
+      <button class="ds-subnav-button psets-editor__nav-item" type="button"
+              [class.is-selected]="visibleId() === s.section.id"
+              [attr.aria-pressed]="visibleId() === s.section.id"
+              (click)="select(s.section.id)">
+        <span class="ds-icon ds-icon--sm psets-editor__nav-icon" aria-hidden="true">{{ s.section.icon }}</span>
+        <span class="psets-editor__nav-label">{{ s.section.label }}</span>
+        @if (s.matchCount > 0) {
+          <span class="psets-editor__nav-count">{{ s.matchCount }}</span>
+        } @else {
+          <span class="psets-editor__nav-dot ds-label__dot psets-editor__nav-dot--{{ state.presetColor(s.section) }}"
+                aria-hidden="true"></span>
+        }
+      </button>
+    } @empty {
+      <p class="psets-editor__nav-empty">No permissions match.</p>
+    }
+  </div>
+</nav>
+
+<div class="psets-editor__content" id="pset-matrix-content"
+     [class.is-readonly]="state.readOnly()" [attr.aria-disabled]="state.readOnly() ? 'true' : null">
+  @if (visible(); as v) {
+    <div class="psets-editor__section-head">
+      <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">{{ v.section.icon }}</span>
+      <h3 class="psets-editor__section-title">{{ v.section.label }}</h3>
+      <div class="psets-editor__presets" role="group" aria-label="Section access preset">
+        @for (p of state.presetsFor(v.section); track p) {
+          <button class="psets-editor__preset" type="button"
+                  [class.is-active]="state.currentPreset(v.section) === p"
+                  [class.is-disabled]="state.readOnly()" [disabled]="state.readOnly()"
+                  [attr.aria-pressed]="state.currentPreset(v.section) === p"
+                  (click)="state.applyPreset(v.section, p)">{{ presetLabels[p] }}</button>
+        }
+      </div>
+    </div>
+
+    <div class="psets-editor__perms">
+      @for (run of groupPerms(v.perms); track $index) {
+        @if (run.kind === 'item') {
+          <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
+        } @else {
+          <div class="psets-editor__group">
+            <button class="psets-editor__group-head" type="button"
+                    [attr.aria-expanded]="!isCollapsed(v.section.id, run.label)"
+                    (click)="toggleGroup(v.section.id, run.label)">
+              <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
+                    [class.is-collapsed]="isCollapsed(v.section.id, run.label)" aria-hidden="true">expand_more</span>
+              <span class="psets-editor__group-label">{{ run.label }}</span>
+              <span class="psets-editor__group-rule" aria-hidden="true"></span>
+            </button>
+            @if (!isCollapsed(v.section.id, run.label)) {
+              <div class="psets-editor__group-body">
+                @for (perm of run.perms; track perm.id) {
+                  <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
+                }
+              </div>
+            }
+          </div>
+        }
+      }
+    </div>
+  }
+</div>
+
+<!-- Reusable permission row (toggle or segmented control + Manage sub-checkboxes). -->
+<ng-template #permRow let-perm="perm">
+  <div class="psets-editor__row" [class.is-disabled-parent]="state.isDisabledByParent(perm)">
+    <div class="psets-editor__row-text">
+      <p class="psets-editor__row-label">{{ perm.label }}</p>
+      @if (perm.description) {
+        <p class="psets-editor__row-desc">{{ perm.description }}</p>
+      }
+      @if (perm.notes) {
+        @for (note of perm.notes; track $index) {
+          <p class="psets-editor__note psets-editor__note--{{ note.type }}">
+            <span class="ds-icon ds-icon--xs psets-editor__note-icon" aria-hidden="true">{{ noteIcon(note.type) }}</span>
+            {{ note.text }}
+          </p>
+        }
+      }
+    </div>
+
+    <div class="psets-editor__row-control">
+      @if (perm.controlType === 'toggle') {
+        <label class="ds-toggle" [class.is-disabled]="state.readOnly() || state.isDisabledByParent(perm)"
+               [attr.aria-label]="perm.label">
+          <input type="checkbox" role="switch" class="ds-toggle__control"
+                 [checked]="state.toggleValue(perm)"
+                 [disabled]="state.readOnly() || state.isDisabledByParent(perm)"
+                 (change)="state.setToggle(perm, $any($event.target).checked)" />
+          <span class="ds-toggle__track"><span class="ds-toggle__thumb"></span></span>
+        </label>
+      } @else {
+        <div class="psets-editor__segment" role="group" [attr.aria-label]="perm.label">
+          @for (opt of state.segOptions(perm); track opt) {
+            <button class="psets-editor__segment-btn" type="button"
+                    [class.is-active]="state.segValue(perm) === opt"
+                    [class.is-disabled]="state.readOnly()" [disabled]="state.readOnly()"
+                    [attr.aria-pressed]="state.segValue(perm) === opt"
+                    (click)="state.setSegment(perm, opt)">{{ opt }}</button>
+          }
+        </div>
+        @if (state.showManageSubs(perm)) {
+          <div class="psets-editor__manage-subs">
+            @for (sub of state.manageSubOptions(perm); track sub) {
+              <label class="ds-checkbox ds-checkbox--sm" [class.is-disabled]="state.readOnly()">
+                <input type="checkbox" class="ds-checkbox__control"
+                       [checked]="state.manageSub(perm, sub)" [disabled]="state.readOnly()"
+                       (change)="state.setManageSub(perm, sub, $any($event.target).checked)" />
+                <span class="ds-checkbox__touch"><span class="ds-checkbox__box"></span></span>
+                <span class="ds-checkbox__label">{{ sub }}</span>
+              </label>
+            }
+          </div>
+        }
+      }
+    </div>
+  </div>
+</ng-template>

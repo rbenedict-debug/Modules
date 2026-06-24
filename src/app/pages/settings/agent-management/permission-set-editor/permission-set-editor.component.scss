@@ -451,3 +451,269 @@
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--color-border-subtle);
 }
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Rebuilt 4-tab editor shell (Details / Data Visibility / Actions / Settings).
+// ViewEncapsulation.None on the shell makes every rule below global, so the tab
+// sub-components (matrix / data-visibility / details / assign modal) are styled too.
+// ════════════════════════════════════════════════════════════════════════════════
+
+.psets-editor__tabs {
+  margin: var(--spacing-md) var(--spacing-xl) 0;
+  flex-shrink: 0;
+}
+.psets-editor__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+.psets-editor__tab-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: var(--spacing-md);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+// Matrix tab = the two-column nav + content row, filling the body.
+.psets-editor__matrix {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+// Details + Data Visibility tabs: one scrollable padded column.
+.psets-editor__details,
+.psets-editor__dv {
+  display: block;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface-page);
+}
+
+// ── Details tab ──
+.psets-editor__details-section + .psets-editor__details-section {
+  margin-top: var(--spacing-xl);
+}
+.psets-editor__details-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.psets-editor__details-name { max-width: 440px; }
+.psets-editor__details-desc { max-width: 600px; margin-top: var(--spacing-md); }
+
+.psets-editor__assign-head {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+.psets-editor__assign-counts { display: inline-flex; gap: var(--spacing-xs); }
+.psets-editor__assign-add { margin-left: auto; }
+
+.psets-editor__assign-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xl);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-default);
+  text-align: center;
+}
+.psets-editor__assign-empty-icon { color: var(--color-icon-subtle); }
+.psets-editor__assign-empty-title { @include ds.type-body-medium; margin: var(--spacing-xs) 0 0; color: var(--color-text-secondary); }
+.psets-editor__assign-empty-help { @include ds.type-body-small; margin: 0; color: var(--color-text-secondary); }
+
+.psets-editor__assign-list {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--color-surface-default);
+  padding: 0 var(--spacing-lg);
+}
+.psets-editor__assign-divider {
+  @include ds.type-label-small;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding: var(--spacing-md) 0 var(--spacing-xs);
+}
+.psets-editor__assign-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  & + & { border-top: 1px solid var(--color-border-subtle); }
+}
+.psets-editor__assign-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+  @include ds.type-label-small;
+}
+.psets-editor__assign-avatar--team {
+  background-color: var(--color-surface-accent-purple, var(--color-surface-subtle));
+  color: var(--color-text-primary);
+}
+.psets-editor__assign-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.psets-editor__assign-name { @include ds.type-body-medium; color: var(--color-text-primary); }
+.psets-editor__assign-meta { @include ds.type-body-small; color: var(--color-text-secondary); }
+.psets-editor__assign-remove { margin-left: auto; }
+
+// A child perm whose parent (disabledByKey) is off is dimmed + inert (the control is also disabled).
+.psets-editor__row.is-disabled-parent { opacity: 0.5; }
+
+// ── Data Visibility filter builder ──
+.psets-editor__dv-divider {
+  height: 1px;
+  background-color: var(--color-border-subtle);
+  margin: var(--spacing-sm) 0;
+}
+.psets-editor__dv-filters-help { @include ds.type-body-small; margin: 0; color: var(--color-text-secondary); }
+.psets-editor__dv-filters {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--spacing-lg);
+  margin-top: var(--spacing-xs);
+}
+.psets-editor__filter { position: relative; display: flex; flex-direction: column; gap: var(--spacing-xs); }
+.psets-editor__filter-head { display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-sm); }
+.psets-editor__filter-label { @include ds.type-label-medium; color: var(--color-text-primary); }
+.psets-editor__filter-exclude { display: inline-flex; align-items: center; gap: var(--spacing-xs); }
+.psets-editor__filter-exclude-label { @include ds.type-label-small; color: var(--color-text-secondary); }
+.psets-editor__filter-field { position: relative; }
+.psets-editor__filter-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-sm);
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border: 1px solid var(--color-border-default, var(--color-border-subtle));
+  border-radius: var(--radius-md);
+  background-color: var(--color-surface-input);
+  color: var(--color-text-primary);
+  cursor: pointer;
+  &:focus { outline: none; }
+  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
+}
+.psets-editor__filter-value { @include ds.type-body-small; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.psets-editor__filter-value.is-placeholder { color: var(--color-text-secondary); }
+.psets-editor__filter-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: var(--shadow-elevation-2);
+}
+.psets-editor__filter-helper { @include ds.type-body-small; margin: 0; }
+.psets-editor__filter-helper--include { color: var(--color-text-success, var(--color-border-success)); }
+.psets-editor__filter-helper--exclude { color: var(--color-text-warning); }
+.psets-editor__filter-helper--none { color: var(--color-text-secondary); }
+
+// ── Remove-confirm modal (Details tab) ──
+.psets-editor__confirm-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface-scrim);
+}
+.psets-editor__confirm {
+  width: 100%;
+  max-width: 420px;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface-overlay);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevation-3);
+}
+.psets-editor__confirm-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-surface-error);
+  color: var(--color-text-error, var(--color-border-error));
+  margin-bottom: var(--spacing-md);
+}
+.psets-editor__confirm-msg { @include ds.type-body-medium; margin: var(--spacing-xs) 0 var(--spacing-lg); color: var(--color-text-secondary); }
+.psets-editor__confirm-danger { background-color: var(--color-border-error); }
+
+// ── Add Assignment modal (rendered within the editor) ──
+.assign-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-xl);
+  background-color: var(--color-surface-scrim);
+}
+.assign-modal {
+  width: 100%;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+.assign-modal__search { width: auto; margin: 0 var(--spacing-xl) var(--spacing-md); }
+.assign-modal__body { overflow-y: auto; }
+.assign-modal__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xl);
+  color: var(--color-text-secondary);
+}
+.assign-modal__divider {
+  @include ds.type-label-small;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-secondary);
+  margin: var(--spacing-sm) 0 var(--spacing-xs);
+}
+.assign-modal__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  width: 100%;
+  padding: var(--spacing-sm);
+  border: none;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  cursor: pointer;
+  text-align: left;
+  &:hover { background-color: var(--color-surface-subtle); }
+  &.is-picked { background-color: var(--color-surface-accent-blue); }
+  &:focus { outline: none; }
+  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
+}
+.assign-modal__check { flex-shrink: 0; pointer-events: none; }
+.assign-modal__text { display: flex; flex-direction: column; min-width: 0; }
+.assign-modal__name { @include ds.type-body-medium; color: var(--color-text-primary); }
+.assign-modal__meta { @include ds.type-body-small; color: var(--color-text-secondary); }
+.assign-modal__footer { display: flex; align-items: center; justify-content: space-between; }
+.assign-modal__count { @include ds.type-body-small; color: var(--color-text-secondary); }
+.assign-modal__footer-actions { display: inline-flex; gap: var(--spacing-sm); }

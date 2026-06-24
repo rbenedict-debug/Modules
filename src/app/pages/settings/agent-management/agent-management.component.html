@@ -35,7 +35,7 @@
      tab's Onflo table renders. Rendering one table at a time keeps table-init.js's global
      ids from colliding. -->
 @if (editingSetId(); as setId) {
-  <app-permission-set-editor [setId]="setId" (back)="editingSetId.set(null)" />
+  <app-permission-set-editor [setId]="setId" (back)="editingSetId.set(null)" (openSet)="editingSetId.set($event)" />
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
@@ -60,7 +60,7 @@
            context-filtered rows. The tab detaches change detection after its first render, so
            a keyed re-create (not a signal update) is what swaps the rows for the new context. -->
       @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
-        <app-permission-sets-tab (editSet)="editingSetId.set($event)" />
+        <app-permission-sets-tab (editSet)="editingSetId.set($event)" (create)="creatingSet.set(true)" />
       }
     }
   }
@@ -76,4 +76,10 @@
      everything. `team` null = create; a synced team renders read-only (the form decides). -->
 @if (creatingTeam() || editingTeam()) {
   <app-team-form [team]="editingTeam()" (close)="closeTeamForm()" (saved)="closeTeamForm()" />
+}
+
+<!-- New Permission Set modal. Hosted at the page root; on Create it adds the set and opens its
+     editor (the Permission Sets tab is detached, so it can't drive the modal itself). -->
+@if (creatingSet()) {
+  <app-create-permission-set-modal (close)="creatingSet.set(false)" (created)="onSetCreated($event)" />
 }

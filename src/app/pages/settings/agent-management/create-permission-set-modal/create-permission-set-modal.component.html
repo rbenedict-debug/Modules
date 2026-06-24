@@ -1,0 +1,47 @@
+<div class="cps-modal__backdrop" (click)="cancel()">
+  <div class="ds-modal cps-modal" role="dialog" aria-modal="true" aria-labelledby="cps-title"
+       (click)="$event.stopPropagation()">
+    <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="cancel()">
+      <span class="ds-icon" aria-hidden="true">close</span>
+    </button>
+
+    <header class="ds-modal__header">
+      <h2 class="ds-modal__title" id="cps-title">New Permission Set</h2>
+      <p class="ds-modal__subtitle">Define a new permission set for your organization</p>
+    </header>
+
+    <div class="ds-modal__body cps-modal__body">
+      <div class="ds-input">
+        <label class="ds-input__label" for="cps-name">Name<span class="ds-input__required" aria-hidden="true">*</span></label>
+        <div class="ds-input__field">
+          <input id="cps-name" class="ds-input__control" type="text" placeholder="Enter permission set name"
+                 [ngModel]="name()" (ngModelChange)="name.set($event)" />
+        </div>
+      </div>
+
+      <div class="ds-textarea">
+        <label class="ds-textarea__label" for="cps-desc">Description</label>
+        <div class="ds-textarea__field">
+          <textarea id="cps-desc" class="ds-textarea__control" rows="3"
+                    placeholder="Enter a brief description (optional)"
+                    [ngModel]="description()" (ngModelChange)="description.set($event)"></textarea>
+        </div>
+      </div>
+
+      <app-form-select label="Department" [options]="departmentOptions()" [selected]="departmentName()"
+        [disabled]="true" [helper]="'New permission sets belong to your current context: ' + departmentName() + '.'" />
+
+      <div class="cps-modal__divider" aria-hidden="true"></div>
+
+      <div id="cps-copy-from">
+        <app-form-select label="Copy From" [options]="copyFromOptions()" placeholder="Select a permission set to copy…"
+          helper="The selected set's configuration is used as the starting point. You can modify it after creation." />
+      </div>
+    </div>
+
+    <footer class="ds-modal__actions">
+      <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
+      <button class="ds-button ds-button--filled ds-button--md" type="button" [disabled]="!canCreate()" (click)="create()">Create</button>
+    </footer>
+  </div>
+</div>
