@@ -2,14 +2,12 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { SOURCE_LOCKED_FIELDS, Ticket, User, UserStatus, fullName } from '../../../../data/models';
+import { SOURCE_LOCKED_FIELDS, User, UserStatus, fullName } from '../../../../data/models';
 import { UsersService } from '../../../../data/users.service';
 import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
-import { TicketsService } from '../../../../data/tickets.service';
 import { ChromeService } from '../../../../data/chrome.service';
-import { AgentTicketsTableComponent, AgentTicketRow } from './agent-tickets-table/agent-tickets-table.component';
 import { AgentActivityTabComponent } from './agent-activity-tab/agent-activity-tab.component';
 import { AgentFormComponent } from '../agent-form/agent-form.component';
 
@@ -25,7 +23,7 @@ interface InfoField {
   managedBy?: string;
 }
 
-// One module the agent belongs to, with its permission set + the teams and topics scoped to it.
+// One module the agent belongs to, with its permission set + the teams scoped to it.
 interface ModulePermissionCard {
   id: string;
   name: string;
@@ -33,11 +31,10 @@ interface ModulePermissionCard {
   accent: string;
   permissionSetName: string;
   teams: string[];
-  topics: string[];
 }
 
 // Which information panel shows below the hero.
-type TabId = 'details' | 'permissions' | 'tickets' | 'activity';
+type TabId = 'details' | 'permissions' | 'activity';
 interface ProfileTab { id: TabId; label: string; }
 
 // Hero provenance chip: at-a-glance "where did this agent come from". Synced agents
@@ -77,7 +74,7 @@ const STATUS_ICON: Record<UserStatus, string> = {
 @Component({
   selector: 'app-agent-profile',
   standalone: true,
-  imports: [RouterLink, AgentTicketsTableComponent, AgentActivityTabComponent, AgentFormComponent],
+  imports: [RouterLink, AgentActivityTabComponent, AgentFormComponent],
   templateUrl: './agent-profile.component.html',
   styleUrl: './agent-profile.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -89,7 +86,6 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);
-  private readonly ticketsSvc = inject(TicketsService);
   // Collapses the section subnav while this full-area profile is on screen and restores it
   // on leave — the same shell mechanism the permission-set editor uses for its takeover view.
   private readonly chrome = inject(ChromeService);
@@ -104,21 +100,20 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     this.usersSvc.users().find((u) => u.id === this.agentId()),
   );
 
-  // ── Tabs (Details / Tickets / Activity) ───────────────────────────────────────
+  // ── Tabs (Details / Permissions / Activity) ───────────────────────────────────
   readonly tabs: ProfileTab[] = [
     { id: 'details', label: 'Details' },
     { id: 'permissions', label: 'Permissions' },
-    { id: 'tickets', label: 'Tickets' },
     { id: 'activity', label: 'Activity' },
   ];
   readonly activeTab = signal<TabId>('details');
 
   /** True while the Edit Agent form is open (this page is not detached, so a signal drives it). */
   readonly editOpen = signal(false);
-  // The Tickets and Activity tabs each host the canonical table-init.js engine, which takes
-  // over the DOM, detaches change detection, and binds every element by GLOBAL id. Two such
-  // tables can't coexist in the DOM, so both tabs render only while active (mutually
-  // exclusive, inside the @switch) — see AgentTicketsTableComponent / AgentActivityTabComponent.
+  // The Activity tab hosts the canonical table-init.js engine, which takes over the DOM,
+  // detaches change detection, and binds every element by GLOBAL id. It renders only while
+  // active (inside the @switch) so the engine mounts lazily and never shares the DOM with
+  // the shell's other engine tables — see AgentActivityTabComponent.
 
   ngOnInit(): void {
     // Full-area takeover view: collapse the subnav on open, restore it on leave.
@@ -221,31 +216,13 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     const sets = this.permissionSetsSvc.sets();
     const teams = this.teamsSvc.teams();
 
-    // Topics are module-scoped: a topic belongs to the module(s) whose teams define it
-    // (Team.topics + Team.modules are the source of truth). Build that map once, then
-    // surface each of the agent's topics under its module — claiming it as we go so a
-    // topic is never shown under two of this agent's modules (topics never cross modules).
-    const topicModules = new Map<string, Set<string>>();
-    for (const t of teams) {
-      for (const topic of t.topics) {
-        const mods = topicModules.get(topic) ?? new Set<string>();
-        t.modules.forEach((m) => mods.add(m));
-        topicModules.set(topic, mods);
-      }
-    }
-    const claimedTopics = new Set<string>();
-
     return u.modules.map((moduleId) => {
       const mod = modules.find((m) => m.id === moduleId);
       const setId = u.permissionSetByModule[moduleId];
       const set = sets.find((s) => s.id === setId);
       const moduleTeams = teams
-        .filter((t) => u.teams.includes(t.id) && t.modules.includes(moduleId))
+        .filter((t) => u.teams.includes(t.id) && t.module === moduleId)
         .map((t) => t.name);
-      const moduleTopics = u.topics.filter(
-        (topic) => !claimedTopics.has(topic) && topicModules.get(topic)?.has(moduleId),
-      );
-      moduleTopics.forEach((topic) => claimedTopics.add(topic));
 
       return {
         id: moduleId,
@@ -254,134 +231,9 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
         accent: mod?.accent ?? 'grey',
         permissionSetName: set?.name ?? 'Not assigned',
         teams: moduleTeams,
-        topics: moduleTopics,
       };
     });
   });
-
-  // ── Topic list display (per module card) ──────────────────────────────────────
-  // A module can carry 20–50+ topics; rendering them all by default buries the rest of the
-  // card and wrecks module-to-module scanning. So each card shows the first TOPIC_CAP topics
-  // with a "+N more" toggle that reveals the rest inline, plus a filter field once an expanded
-  // list is long enough to warrant one. State is keyed by moduleId so each card is independent.
-  /** Topics shown before the "+N more" cap kicks in (≈ two rows of chips). */
-  readonly TOPIC_CAP = 12;
-  /** Above this many topics, an expanded card also gets a filter field. */
-  private readonly TOPIC_SEARCH_THRESHOLD = 15;
-
-  /** Module ids whose full topic list is currently expanded. */
-  private readonly expandedTopics = signal<ReadonlySet<string>>(new Set<string>());
-  /** Per-module topic filter query (only meaningful while that module is expanded). */
-  private readonly topicQuery = signal<Record<string, string>>({});
-
-  isTopicsExpanded(moduleId: string): boolean {
-    return this.expandedTopics().has(moduleId);
-  }
-
-  toggleTopics(moduleId: string): void {
-    const willExpand = !this.expandedTopics().has(moduleId);
-    this.expandedTopics.update((set) => {
-      const next = new Set(set);
-      if (willExpand) next.add(moduleId);
-      else next.delete(moduleId);
-      return next;
-    });
-    // Reset the filter when collapsing so a reopened card starts from the full list.
-    if (!willExpand) this.setTopicQuery(moduleId, '');
-  }
-
-  topicQueryFor(moduleId: string): string {
-    return this.topicQuery()[moduleId] ?? '';
-  }
-
-  setTopicQuery(moduleId: string, value: string): void {
-    this.topicQuery.update((m) => ({ ...m, [moduleId]: value }));
-  }
-
-  /** The topics to render for a card: collapsed → the first TOPIC_CAP; expanded → the full
-   *  list filtered by its query. */
-  visibleTopics(card: ModulePermissionCard): string[] {
-    if (!this.isTopicsExpanded(card.id)) return card.topics.slice(0, this.TOPIC_CAP);
-    const q = this.topicQueryFor(card.id).trim().toLowerCase();
-    return q ? card.topics.filter((t) => t.toLowerCase().includes(q)) : card.topics;
-  }
-
-  /** Topics hidden behind the "+N more" control (collapsed only; 0 once expanded). */
-  hiddenTopicCount(card: ModulePermissionCard): number {
-    if (this.isTopicsExpanded(card.id)) return 0;
-    return Math.max(0, card.topics.length - this.TOPIC_CAP);
-  }
-
-  /** Show the filter field only when expanded and the list is long enough to need it. */
-  showTopicSearch(card: ModulePermissionCard): boolean {
-    return this.isTopicsExpanded(card.id) && card.topics.length > this.TOPIC_SEARCH_THRESHOLD;
-  }
-
-  // ── Tickets owned by this agent (real data) ───────────────────────────────────
-  // Match on full name, falling back to first+last (seed ticket ownerName values omit
-  // the middle names that fullName() includes).
-  // Every ticket this agent is on, newest first — the Tickets tab's full history.
-  readonly ownedTickets = computed<Ticket[]>(() => {
-    const u = this.user();
-    if (!u) return [];
-    const full = fullName(u).toLowerCase();
-    const firstLast = `${u.firstName} ${u.lastName}`.toLowerCase();
-    return this.ticketsSvc.tickets()
-      .filter((t) => {
-        const owner = t.ownerName.toLowerCase();
-        return owner === full || owner === firstLast;
-      })
-      .sort((a, b) => (a.receivedAt < b.receivedAt ? 1 : -1));
-  });
-
-  // Shape the owned tickets for the table-init.js host (label colors + formatted date
-  // resolved here, so the table component stays a dumb view).
-  readonly ticketRows = computed<AgentTicketRow[]>(() =>
-    this.ownedTickets().map((t) => ({
-      id: t.id,
-      number: t.number,
-      subject: t.subject,
-      status: t.status,
-      statusColor: this.ticketStatusColor(t.status),
-      priority: t.priority,
-      priorityColor: this.ticketPriorityColor(t.priority),
-      moduleName: this.moduleName(t.moduleId),
-      received: this.formatDate(t.receivedAt),
-    })),
-  );
-
-  // Status → DS label color. Mirrors the inbox: Unopened grey, In Progress blue,
-  // Waiting yellow, Closed green.
-  ticketStatusColor(status: Ticket['status']): 'green' | 'grey' | 'yellow' | 'blue' {
-    switch (status) {
-      case 'In Progress':
-        return 'blue';
-      case 'Waiting':
-        return 'yellow';
-      case 'Closed':
-        return 'green';
-      case 'Unopened':
-      default:
-        return 'grey';
-    }
-  }
-
-  // Priority → DS label color (P1 most urgent).
-  ticketPriorityColor(priority: Ticket['priority']): 'red' | 'orange' | 'grey' {
-    switch (priority) {
-      case 'P1':
-        return 'red';
-      case 'P2':
-        return 'orange';
-      default:
-        return 'grey';
-    }
-  }
-
-  /** Module display name for a ticket's moduleId (falls back to the id). */
-  moduleName(moduleId: string): string {
-    return this.modulesSvc.modules().find((m) => m.id === moduleId)?.name ?? moduleId;
-  }
 
   // ── Formatting ─────────────────────────────────────────────────────────────────
   /** Display id like "USR-00002" from the internal id (e.g. "u2"). */

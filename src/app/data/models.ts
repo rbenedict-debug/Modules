@@ -5,7 +5,7 @@ export type UserRole = 'Agent' | 'District Admin' | 'School Admin' | 'Staff' | '
 export interface User {
   id: string; firstName: string; middleName?: string; lastName: string; email: string; phone?: string;
   status: UserStatus; source: UserSource; roles: UserRole[];
-  modules: string[]; teams: string[]; locations: string[]; topics: string[];
+  modules: string[]; teams: string[]; locations: string[];
   grade?: number; jobTitle?: string;
   employeeId?: string; pronouns?: string; emergencyContact?: string;
   permissionSetByModule: Record<string, string>;
@@ -13,6 +13,13 @@ export interface User {
 }
 
 export type ModuleRole = 'Admin' | 'Agent';
+/** Each module role maps to the Agent Management permission set it represents. The department
+ *  switcher shows the set's NAME (resolved live from PermissionSetsService — the single source)
+ *  instead of a bare 'Admin'/'Agent', since the role is really a permission set. */
+export const MODULE_ROLE_PERMISSION_SET_ID: Record<ModuleRole, string> = {
+  Admin: 'ps-dept-admin',
+  Agent: 'ps-team-member',
+};
 export type ModuleAccent = 'blue'|'green'|'grey'|'navy'|'orange'|'pink'|'purple'|'red'|'teal'|'yellow';
 /** The custom-module color palette: the 9 design-system colored accents (reused via their existing
  *  --color-*-accent tokens) plus 11 K12-tailored colors defined locally (styles.scss + the icon-box /
@@ -83,10 +90,16 @@ export interface Persona {
 }
 
 export type TeamSource = 'Manual' | 'Active Directory' | 'Azure' | 'Google';
-export interface Team { id: string; name: string; modules: string[]; topics: string[]; memberIds: string[]; permissionSetId?: string; source: TeamSource; }
+// `module` is the single department a team belongs to, or null for a district-wide (global) team
+// created in the Global context. The Teams tab filters by the switcher context: a department sees
+// its own teams; Global sees the null-module (global) teams.
+export interface Team { id: string; name: string; module: string | null; memberIds: string[]; permissionSetId?: string; source: TeamSource; }
 
 export type PermissionSetType = 'System' | 'Custom';
-export interface PermissionSet { id: string; name: string; moduleId: string | null; type: PermissionSetType; isLocked: boolean; capabilities: Record<string, boolean | string>; }
+/** `isGlobalOnly` marks the global-tier admin set (Global Admin): it shows ONLY in the Global
+ *  switcher context and is hidden from every department. All other system-wide sets (moduleId:
+ *  null) are department-tier — shown in every department context but not in Global. */
+export interface PermissionSet { id: string; name: string; moduleId: string | null; type: PermissionSetType; isLocked: boolean; isGlobalOnly?: boolean; capabilities: Record<string, boolean | string>; }
 
 /** A Marketplace integration (owned by the Integrations team). Integration Hub is district-level
  *  (global-admins-only), but a global admin can grant department modules manager access to specific

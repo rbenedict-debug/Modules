@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ModuleContextService } from '../../../data/module-context.service';
+import { TeamsService } from '../../../data/teams.service';
+import { Team } from '../../../data/models';
 import { AgentsTabComponent } from './agents-tab/agents-tab.component';
 import { AuthenticationTabComponent } from './authentication-tab/authentication-tab.component';
 import { TeamsTabComponent } from './teams-tab/teams-tab.component';
@@ -29,6 +32,11 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 })
 export class AgentManagementComponent {
   private readonly router = inject(Router);
+  private readonly teamsSvc = inject(TeamsService);
+
+  /** Exposed to the template so the Permission Sets tab can be re-mounted when the module
+   *  switcher changes (see the @for key in the template). */
+  readonly moduleCtx = inject(ModuleContextService);
 
   readonly activeTab = signal<AgentMgmtTab>('agents');
 
@@ -43,6 +51,10 @@ export class AgentManagementComponent {
    *  form — the Teams tab detaches change detection for table-init.js. */
   readonly creatingTeam = signal(false);
 
+  /** The team opened from a Teams-table row click (null = no edit form open). Manual teams
+   *  open editable; synced teams open read-only — the Team form decides from `source`. */
+  readonly editingTeam = signal<Team | null>(null);
+
   setTab(tab: AgentMgmtTab): void {
     this.activeTab.set(tab);
   }
@@ -50,5 +62,16 @@ export class AgentManagementComponent {
   /** A row click in the (detached) Agents table opens the full agent profile page. */
   openProfile(id: string): void {
     this.router.navigate(['/settings/agent-management', id]);
+  }
+
+  /** A row click in the (detached) Teams table opens the Team form for that team. */
+  openTeam(id: string): void {
+    this.editingTeam.set(this.teamsSvc.teams().find((t) => t.id === id) ?? null);
+  }
+
+  /** Close the Team form (covers both create and edit). */
+  closeTeamForm(): void {
+    this.creatingTeam.set(false);
+    this.editingTeam.set(null);
   }
 }

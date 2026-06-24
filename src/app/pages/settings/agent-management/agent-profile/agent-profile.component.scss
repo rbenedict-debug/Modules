@@ -231,35 +231,12 @@
   min-width: 0;
 }
 
-/* Chip stacks (roles / locations / topics / teams). Outline pills + a roomier gap so each one
+/* Chip stacks (roles / locations / teams). Outline pills + a roomier gap so each one
    reads as a distinct, legible token rather than a run-together grey block. */
 .agent-detail__chips {
   display: flex;
   flex-wrap: wrap;
   gap: var(--spacing-sm);
-}
-
-/* Long, filterable topic lists render in a fixed-height scroll panel: typing in the filter
-   changes only what's *inside* the panel, so its height never changes and the card (and the
-   rest of the page) stays put while you type — no per-keystroke reflow. */
-.agent-detail__chips--scroll {
-  height: 13rem;              /* fixed (not max) so filtering down to a few chips never shrinks it */
-  align-content: flex-start;  /* pack rows to the top; spare space sits below */
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: var(--spacing-sm);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-
-  /* DS scrollbar treatment (mirrors .agent-detail). */
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-surface-scroll) transparent;
-  &::-webkit-scrollbar { width: 8px; }
-  &::-webkit-scrollbar-thumb {
-    background-color: var(--color-surface-scroll);
-    border-radius: var(--radius-full);
-  }
-  &::-webkit-scrollbar-track { background: transparent; }
 }
 
 /* ── Permissions: one bordered sub-card per module ─────────────────────────── */
@@ -306,7 +283,7 @@
   gap: var(--spacing-xs);
 }
 
-/* Assignments (teams + topics), separated from the identity block by a hairline so the two
+/* Assignments (teams), separated from the identity block by a hairline so the two
    halves of the card read distinctly. */
 .agent-detail__perm-assignments {
   display: flex;
@@ -325,41 +302,10 @@
 .agent-detail__perm-field {
   display: flex;
   flex-direction: column;
-  /* The topics field stacks count label → filter → chips → toggle, so it needs a touch more
-     air than the 4px label-to-chips gap; teams uses the same field and reads fine with it. */
+  /* The teams field stacks a count label over its chips, so it needs a touch more
+     air than the 4px label-to-chips gap. */
   gap: var(--spacing-sm);
   min-width: 0;
-}
-
-/* Topic filter — constrained so it doesn't span the whole card; shown only when an expanded
-   list is long enough to need it. ds-input + ds-search supply the field styling. */
-.agent-detail__topic-search {
-  width: 100%;
-  max-width: 320px;
-}
-
-/* "+N more" / "Show less" — a compact text affordance under the chips, sized as a label so it
-   sits quietly beneath the topic list. Negative inline margin pulls its padding box flush with
-   the chips' left edge. */
-.agent-detail__topic-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  align-self: flex-start;
-  margin-left: calc(-1 * var(--spacing-sm));
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--color-text-brand);
-  cursor: pointer;
-  @include ds.type-label-medium;
-
-  &:hover { background-color: var(--color-surface-subtle); }
-  &:focus { outline: none; }
-  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
-
-  .ds-icon { color: inherit; }
 }
 
 /* Accent icon tile keyed off the module's accent (mirrors the Department Modules

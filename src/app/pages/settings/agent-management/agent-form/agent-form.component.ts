@@ -134,7 +134,7 @@ export class AgentFormComponent implements OnInit {
         moduleName: modules.find((m) => m.id === moduleId)?.name ?? '',
         permissionSetName: set?.name ?? '',
         teamNames: teams
-          .filter((t) => u.teams.includes(t.id) && t.modules.includes(moduleId))
+          .filter((t) => u.teams.includes(t.id) && t.module === moduleId)
           .map((t) => t.name),
       };
     });

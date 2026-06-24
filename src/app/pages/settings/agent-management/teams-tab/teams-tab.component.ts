@@ -12,19 +12,19 @@ import {
 import { ModulesService } from '../../../../data/modules.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { TeamsService } from '../../../../data/teams.service';
+import { ModuleContextService } from '../../../../data/module-context.service';
 import { TeamSource } from '../../../../data/models';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
 declare const OnfloTableInit: { initTable: (config: unknown) => void };
 
-// A team row pre-resolved for the table: module names and the permission-set name are
+// A team row pre-resolved for the table: the module name and the permission-set name are
 // resolved once during the initial render, before the view is detached. The table is a
 // static design-mode visual driven by table-init.js after that.
 interface TeamRow {
   id: string;
   name: string;
-  moduleNames: string[];
-  topics: string[];
+  moduleName: string;
   memberCount: number;
   permissionSetName: string; // resolved name, or 'None'
   source: TeamSource;
@@ -46,9 +46,15 @@ export class TeamsTabComponent implements AfterViewInit {
    *  since this component detaches change detection for table-init.js. */
   @Output() createTeam = new EventEmitter<void>();
 
+  /** Emits the id of the clicked team row. The parent opens the Team form — editable for
+   *  manual teams, read-only for integration-synced ones. Bound during the initial render so
+   *  it survives cdr.detach() + table-init's row reordering (same pattern as the Agents tab). */
+  @Output() editTeam = new EventEmitter<string>();
+
   private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);
+  private readonly moduleCtx = inject(ModuleContextService);
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -66,30 +72,34 @@ export class TeamsTabComponent implements AfterViewInit {
   }
 
   // ── Grid rows ─────────────────────────────────────────────────────────────────
-  // The FULL teams dataset, module-agnostic — every team regardless of module context.
-  // Resolved to display shape once; the table is detached and static after ngAfterViewInit.
+  // Teams scoped to the switcher context (like the Permission Sets tab): a department sees its own
+  // teams (`module === currentModuleId`); the Global context sees the global teams (`module ===
+  // null`) — one equality covers both. Resolved to display shape once; the table is detached and
+  // static after ngAfterViewInit, so the tab is re-mounted on context change (see
+  // agent-management.component.html) to re-resolve for the new context.
   readonly rows = signal<TeamRow[]>(this.resolveRows());
 
   private resolveRows(): TeamRow[] {
     const moduleNames = this.moduleNameById();
     const permSetNames = this.permSetNameById();
+    const moduleId = this.moduleCtx.currentModuleId();
 
-    return this.teamsSvc.teams().map(t => ({
-      id: t.id,
-      name: t.name,
-      moduleNames: t.modules.map(id => moduleNames.get(id) ?? id),
-      topics: t.topics,
-      memberCount: t.memberIds.length,
-      permissionSetName: t.permissionSetId ? (permSetNames.get(t.permissionSetId) ?? 'None') : 'None',
-      source: t.source,
-    }));
+    return this.teamsSvc.teams()
+      .filter(t => t.module === moduleId)
+      .map(t => ({
+        id: t.id,
+        name: t.name,
+        moduleName: t.module === null ? 'Global' : (moduleNames.get(t.module) ?? t.module),
+        memberCount: t.memberIds.length,
+        permissionSetName: t.permissionSetId ? (permSetNames.get(t.permissionSetId) ?? 'None') : 'None',
+        source: t.source,
+      }));
   }
 
   // Column config for table-init.js. `name` MUST match the <th> header labels exactly.
   readonly columns = [
     { name: 'Team Name',      width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
-    { name: 'Module(s)',      width: 200, type: 'text',   _categorical: false, _badgeOptions: null },
-    { name: 'Topics',         width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
+    { name: 'Module',         width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
     { name: 'Agents',         width: 110, type: 'number', _categorical: false, _badgeOptions: null },
     { name: 'Permission Set', width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
     { name: 'Source',         width: 160, type: 'text',   _categorical: true,  _badgeOptions: null },
@@ -113,5 +123,12 @@ export class TeamsTabComponent implements AfterViewInit {
     });
     // Hand full DOM control to table-init.js after Angular's initial render.
     this.cdr.detach();
+  }
+
+  // ── Row click → open the team (edit, or read-only if synced) ─────────────────────
+  // Bound during the initial render, so it survives cdr.detach() + table-init's row
+  // reordering. The parent listens on (editTeam) and hosts the form.
+  openTeam(id: string): void {
+    this.editTeam.emit(id);
   }
 }

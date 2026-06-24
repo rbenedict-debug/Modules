@@ -82,7 +82,7 @@ The spine both teams need. Projects 1 and 2 reference these instead of re-explai
 | `persona.service.ts` | Demo personas + the active one (the ⌘K signed-in-user stand-in) |
 | `module-context.service.ts` | Derives the view (module access, switcher, nav/Settings gating) from the active persona |
 | `users.service.ts` | **SSOT** for users/agents (32 seed records) |
-| `teams.service.ts` | **SSOT** for teams (6 seed) |
+| `teams.service.ts` | **SSOT** for teams (9 seed) |
 | `tickets.service.ts` | **SSOT** for tickets (40 seed; read-only) |
 | `permission-sets.service.ts` | **SSOT** for permission sets (7 seed) + the permission **catalog** |
 | `integrations.service.ts` | Mocked integration grants (`managerModuleIds`) |
@@ -122,7 +122,7 @@ What a user is assigned — which modules, what role per module, which permissio
 
 - **Side nav** — **Assets** shows only in a module that has Asset management (hidden in Classic, appears in IT); **Analytics** shows only in a module with Dashboard analytics and is hidden for agents; **Settings** is hidden for agents.
 - **Inside Settings** — each area is gated by context + capability:
-  - **Global** is the district-wide admin area — visible only in the **Global context** (the Global switcher selected). A global admin loses it when they scope into a module; department admins (who can never enter Global context) never see it.
+  - **Global** is the district-wide admin section. Its district-only items (District Profile, Activity Log, Department Modules, Tags, …) show **only in the Global context**, but the **section header itself shows for any admin** (`isGlobal || canAdminActions`) because **Agent Management lives in it and is reachable by department admins** (gated on `canAdminActions`, ungated within the section) — a department admin sees the Global section containing just Agent Management, and a global admin scoping into a module sees that same slice. Future default-access items for department admins sit beside Agent Management. (`department-modules` stays Global-only and redirects away outside Global; `agent-management` no longer does.)
   - **Workflows** needs the module's workflow capability (so custom modules, which omit it, hide Workflows); **Assets** needs Asset management.
   - **Integration Hub** — district-level like Global, with a per-department grant exception — see [Integration Hub access](#integration-hub-access).
   - **Tickets** and **Call Center** stay on for every admin for now.
@@ -251,7 +251,7 @@ Prototype rule, against the active persona: `showSwitcher = isGlobalAdmin || ava
 #### What it shows ✅
 
 - **Trigger** — the current context: the module's **icon + name** in its color (matching the Department Modules page exactly — same `ModulesService` entry), or a globe + "Global". A **custom module** shows its **chosen icon + color** (effective color = `color ?? accent`), just like a prebuilt one.
-- **Menu** — a **Global** row (global admins only); one row per assigned module with the user's **role** (`Admin` / `Agent`) under the name (roles can differ — Admin in one module, Agent in another); a check on the current one.
+- **Menu** — a **Global** row (global admins only); one row per assigned module showing, under the name, the **Agent Management permission set the role maps to** — **Admin → "Department Admin"**, **Agent → "Team Member"** — resolved live from `PermissionSetsService` (the single source) via `MODULE_ROLE_PERMISSION_SET_ID`, not the bare role word (roles can still differ per module — Admin in one, Agent in another); a check on the current one.
 
 #### The Global option (global admins only) ✅
 
@@ -283,16 +283,17 @@ Agent Management is the settings area for managing the people in an account. The
 - **Tab state** is an in-memory signal (`activeTab`, default `agents`); there is **no per-tab URL**, so a refresh returns to **Agents**.
 - **The agent profile is a separate routed page**, not a tab: `/settings/agent-management/:id` → `AgentProfileComponent` ([§2.2](#22-agent-profile)). An Agents-table row click navigates there; the shared `/settings/agent-management` route prefix keeps the Settings subnav item selected.
 - **An "agent" is a `User`** — there is no separate Agent type. The Agents tab is a view over `User` records ([§2.7](#27-data-sources)).
+- **Who sees it & context scoping** ✅ — Agent Management is reachable by **any admin**: a global admin (in the Global context) and a **department admin** in their own department (`canAdminActions`); agents never see Settings. Its tables are **scoped to the switcher context** (per tab below — a global admin in Global sees everything; a department sees only its own). The shell **re-mounts the active table tab on context change** — `@for (ctx of [moduleCtx.currentModuleId()]; track ctx)` keyed on the module id — so the detached engine re-reads the context-scoped rows.
 
-**Component files:** `agent-management.component.*` (shell) · `agents-tab/` · `agent-profile/` (+ `agent-tickets-table/`, `agent-activity-tab/`) · `agent-form/` · `teams-tab/` · `team-form/` · `authentication-tab/` · `permission-sets-tab/` + `permission-set-editor/` (Project 3) · `form-select.component.ts` (shared control).
+**Component files:** `agent-management.component.*` (shell) · `agents-tab/` · `agent-profile/` (+ `agent-activity-tab/`) · `agent-form/` · `teams-tab/` · `team-form/` · `authentication-tab/` · `permission-sets-tab/` + `permission-set-editor/` (Project 3) · `form-select.component.ts` (shared control).
 
 #### Tables in this prototype — the `table-init.js` pattern (read once, applies to every table here)
 
-Agent Management is table-heavy (Agents, Teams, Permission Sets, plus the profile's Tickets & Activity). **Every one of these is the canonical Onflo design-system table driven by the global `runtime/table-init.js` engine** (wired in `angular.json`), not a bespoke table. Consequences engineering must know:
+Agent Management is table-heavy (Agents, Teams, Permission Sets, plus the profile's Activity tab). **Every one of these is the canonical Onflo design-system table driven by the global `runtime/table-init.js` engine** (wired in `angular.json`), not a bespoke table. Consequences engineering must know:
 
 - After the table renders, the component calls **`cdr.detach()`** — it hands the DOM to the engine and stops Angular change detection for that component. The rendered rows are a **static snapshot** (refresh re-seeds from the service).
-- Because a detached component **can't reactively drive a modal**, the **Create Agent form, Create Team form, and Permission Set editor are hosted on the *parent shell* (which stays attached)**, opened via signals (`creatingAgent`, `creatingTeam`, `editingSetId`) that the tabs emit into.
-- The engine **binds elements by hard-coded global ids** (`#main-table`, `#btn-filter`, …), so **only one engine table can be mounted at a time** — hence the shell renders one tab at a time, and the profile's Tickets/Activity tabs are mutually exclusive ([§2.2](#22-agent-profile)).
+- Because a detached component **can't reactively drive a modal**, the **Create Agent form, Create Team form, and Permission Set editor are hosted on the *parent shell* (which stays attached)**, opened via signals (`creatingAgent`, `creatingTeam` / `editingTeam`, `editingSetId`) that the tabs emit into.
+- The engine **binds elements by hard-coded global ids** (`#main-table`, `#btn-filter`, …), so **only one engine table can be mounted at a time** — hence the shell renders one tab at a time, and the profile mounts its Activity table only while that tab is active ([§2.2](#22-agent-profile)).
 - Search, sort, filter, column resize/reorder/pin, density, pivot, row groups, context-menu copy, and CSV/Excel export are all the engine's **design-mode DOM simulation** (🟡), not real queries. Every such table carries `<!-- TODO eng: replace with AG Grid + onfloTheme -->`. The shared filter-overlay / column-panel / context-menu **string set is identical across all tables** (boilerplate from the table starter — `Filters`, `Selected Filters`, `Apply Filters`, `Comfort`/`Compact`, `Pin Column`, `CSV Export`, …) and is **not** repeated per table below.
 
 > This is the team's standing rule on embedding `table-init.js` in a tab: **one engine table per rendered view**; multiple per page must be mutually exclusive and re-init on open.
@@ -309,29 +310,28 @@ A full-width table of the user directory, rendered with the engine above.
 - **Permission Sets column** (3rd) — resolves each agent's `permissionSetByModule` values to set **names** via `PermissionSetsService`, de-duplicated, in module order (joined by `, `, or `—` if none). This **replaced the old "Roles" column** and reads the *same* `PermissionSetsService` the profile and the Permission Sets table use — the single-source-of-truth seam ([§3.5](#35-the-single-source-of-truth)).
 - **Status cell** — `ds-label` pill with a dot: `Active`→green, `Pending`→purple, `Unverified`→yellow, `Inactive`→grey.
 - **Row click → profile** ✅ — the whole row navigates to `/settings/agent-management/:id`. No per-row kebab / edit / delete menu.
-- **Data:** `UsersService.users()` (32 seed users).
+- **Data:** `UsersService.byModule(currentModuleId)` — **scoped to the switcher context**: a global admin in **Global** sees **all** 32 users; scoped into a department (and every department admin) sees only that department's agents (users whose `modules` include it). Re-resolved on context change via the shell re-mount.
 - ⛔ Toolbar **Download** button is unwired (`<!-- TODO eng: wire download / export -->`). No paginator (`paginator: false`).
 - ⚠️ **ADA:** the clickable `<tr>` is click-only — not keyboard-focusable / `role="button"`. Flag for eng.
 
 ### 2.2 Agent profile
 
-✅ built / 🟡 data (Activity tab ⛔) · **Route:** `/settings/agent-management/:id` · **Files:** `agent-profile/` (+ `agent-tickets-table/`, `agent-activity-tab/`)
+✅ built / 🟡 data (Activity tab ⛔) · **Route:** `/settings/agent-management/:id` · **Files:** `agent-profile/` (+ `agent-activity-tab/`)
 
 A full-page profile (it replaced an earlier slide-out drawer). Reads `:id` reactively, so navigating between agents updates in place. On open it collapses the Settings subnav via `chrome.setEditorOpen(true)` (full-area takeover).
 
 - **Heading** — a component-local breadcrumb `Agent Management` › `{name}` (⚠️ DS gap — `<!-- TODO eng: promote to a real ds-breadcrumb -->`, no DS breadcrumb exists yet) + an `ds-sr-only` `<h1>` carrying the name (every page keeps an H1).
 - **Hero card** — XL avatar/initials, name, status pill, a source chip (`Manual entry` or `Synced from {source}`), a `{roles} · {location}` subtitle, and an `Edit` button (opens the [Edit Agent form](#23-create-and-edit-agent-form)).
-- **Four tabs** (`ds-tabs`, default `Details`):
+- **Three tabs** (`ds-tabs`, default `Details`):
 
 | Tab | Shows | Status |
 |---|---|---|
 | **Details** | A `Basic Information` card: `User ID` (e.g. `USR-00002`), `First/Middle/Last Name`, `Email`, `Phone`, `Account Status`, `Locations`, `Source`, `Job Title`, `Last Login`, `Date Added`. Synced-locked fields show a `Managed by {source}` note. | ✅ render / 🟡 data; ⛔ `<!-- TODO eng: render the agent's real field set (standard + custom) -->` |
-| **Permissions** | One card per module the agent belongs to: that module's `Permission set` (blue pill, `Not assigned` fallback), a `Teams · {n}` chip group (`Not assigned to any team` empty), and a `Topics · {n}` chip group (caps at 12 with `+{n} more` / `Show less`; an inline topic filter appears past 15). Non-agent users get `Non-agent users are not assigned module-level permissions.` | ✅ / 🟡; ⛔ `<!-- TODO eng: link permission sets to the editor -->` (the pill isn't a link) |
-| **Tickets** | `<app-agent-tickets-table>` — the agent's **owned** tickets (columns `Ticket`, `Subject`, `Status`, `Priority`, `Module`, `Received`). Empty: `No tickets` / `This agent is not on any tickets yet.` | ✅ table / 🟡 data; ⛔ full history vs. owned-only |
+| **Permissions** | One card per module the agent belongs to: that module's `Permission set` (blue pill, `Not assigned` fallback) and a `Teams · {n}` chip group (`Not assigned to any team` empty). Non-agent users get `Non-agent users are not assigned module-level permissions.` | ✅ / 🟡; ⛔ `<!-- TODO eng: link permission sets to the editor -->` (the pill isn't a link) |
 | **Activity** | `<app-agent-activity-tab>` — an audit trail (columns `Date`, `Activity`, `Type`, `Details`, `Performed by`). | ⛔ **hard-coded 18-row mock array, not from any service** — `<!-- TODO eng: source from the real audit log -->` |
 
-- **Tickets ⟷ Activity are mutually exclusive in the DOM** (both host the engine, which binds global ids — see the table note). Each re-inits on open; each first clears an orphan `#cp-picker-overlay` the engine leaves on `<body>`. ⛔ `<!-- TODO eng: wire engine teardown -->`.
-- **CSV download** 🟡 — both tables scrape the visible DOM into a client-side blob (`agent-tickets.csv` / `agent-activity.csv`); `<!-- TODO eng: wire to the real export endpoint -->`.
+- **The Activity table hosts the engine** (which binds global ids — see the table note), so it mounts only while its tab is active. It re-inits on open and first clears an orphan `#cp-picker-overlay` the engine leaves on `<body>`. ⛔ `<!-- TODO eng: wire engine teardown -->`.
+- **CSV download** 🟡 — the Activity table scrapes the visible DOM into a client-side blob (`agent-activity.csv`); `<!-- TODO eng: wire to the real export endpoint -->`.
 - **Full-screen Expand** ✅ — promotes the *same* wrapper to a viewport modal via an `.is-fullscreen` class (never a second table — would collide on global ids); Esc to exit.
 - **Unknown id** → `Agent not found` / `This agent may have been removed. Use the breadcrumb above to return to Agent Management.`
 
@@ -356,22 +356,32 @@ One `ds-modal` component, two modes by the optional `[agent]` input. **Create** 
 
 ✅ built / 🟡 data · **Files:** `teams-tab/`
 
-A table of every team (engine-driven, same pattern).
+A table of teams (engine-driven, same pattern). **A team belongs to one module, or is district-wide**
+(`Team.module: string | null`; `null` = a **global team**). The table is **scoped to the switcher
+context** like Permission Sets: a department shows its own teams (`module === currentModuleId`); the
+**Global context shows the global teams** (`module === null`). A team synced from an integration
+mapped to several modules still appears **once per module** — same name + members, one row each —
+differentiated by the Module + Source columns.
 
-- **CTA:** `Create Team` → emits `createTeam`; the shell opens the [Team form](#25-create-team-form). **Search:** `Search teams…`.
-- **Columns:** `Team Name`, `Module(s)`, `Topics`, `Agents` (this is `memberIds.length` — labeled Agents), `Permission Set` (resolved name or `None`), `Source` (`Manual` / `Active Directory` / `Azure` / `Google`).
-- **No per-row actions** (unlike Agents — no row → detail navigation). ⛔ Download unwired.
-- **Data:** `TeamsService.teams()` (6 seed teams).
+- **CTA:** `Create Team` → emits `createTeam`; the shell opens the [Team form](#25-create-and-edit-team-form). **Search:** `Search teams…`.
+- **Columns:** `Team Name`, `Module` (single; **`Global`** for a null-module team; filterable), `Agents` (this is `memberIds.length` — labeled Agents), `Permission Set` (resolved name or `None`), `Source` (`Manual` / `Active Directory` / `Azure` / `Google`).
+- **Per-row action:** a row click emits `editTeam` (bound at initial render so it survives the engine's `cdr.detach()`); the shell opens the [Team form](#25-create-and-edit-team-form) — editable for `Manual` teams, **read-only** for synced ones. ⛔ Download unwired.
+- **Data:** `TeamsService.teams()` (11 seed rows: 5 single-module teams + 2 synced teams that each span two modules as a pair of module-specific rows — `District Service Desk` via Google, `Support` via Azure — + 2 **global** teams (`module: null`): `District Leadership`, `Emergency Response Team`).
 
-### 2.5 Create Team form
+### 2.5 Create and Edit Team form
 
 ✅ built / 🟡 submit mocked · **Files:** `team-form/`
 
-A `Create New Team` modal — **create-only** (no edit mode), hosted on the shell.
+A `ds-modal` hosted on the shell with **three modes**, driven by the optional `[team]` input
+(mirrors the Agent form):
 
-- **Fields:** `Team Name`* (text), `Department`* (multi), `Topic` (multi), `Permission Set` (single), and a `Members` field that is a **non-functional `ds-search` stand-in** (⛔ `<!-- TODO eng: wire user search + selected-member chips -->`).
-- **Footer:** `Cancel` + `Add Team`. (Note the three verbs for one flow: title "Create New Team", button "Add Team", toast `Team created.`)
-- **Submit** 🟡 — toast `Team created.` + close; does **not** validate, and does **not** call `TeamsService.add()` (no team is actually created). ⛔ `<!-- TODO eng: validate + persist -->`.
+- **Create** (no `team`) — title `Create New Team`; fields editable **except Department, which is locked to the current switcher context** (Global → `Global`) — teams are created for the context you're in.
+- **Edit, manual** (`team.source === 'Manual'`) — title `Edit Team`; pre-filled and editable.
+- **Edit, synced** (`team.source !== 'Manual'`) — title `Team Details`; **fully read-only**: a `ds-alert--info` "synced from {source}" banner, disabled fields, members as static `ds-tag` chips, and a single `Close` button (no Save). Synced teams are owned by their integration and edited in Integration Hub, not here.
+
+- **Fields:** `Team Name`* (text), `Department`* (**single** — **locked to the current context when creating** (Global → `Global`), since teams are created in-context; editable only when editing a manual team), `Permission Set` (single), and a `Members` field — a **non-functional `ds-search` stand-in** when editable (⛔ `<!-- TODO eng: wire user search + selected-member chips -->`), read-only chips when synced.
+- **Footer:** synced → `Close`; otherwise `Cancel` + `Add Team` (create) / `Save Changes` (edit).
+- **Submit** 🟡 — toast (`Team created.` / `Team updated.`) + close; does **not** validate or call `TeamsService.add()` / `.update()`. ⛔ `<!-- TODO eng: validate + persist; link the synced banner to Integration Hub -->`.
 
 ### 2.6 Authentication tab
 
@@ -389,14 +399,14 @@ Agent Management reads four singleton, signal-backed services (all 🟡 in-memor
 | Service | Provides | Mutators | Notes |
 |---|---|---|---|
 | `UsersService` | `users()` — 32 seed users across all modules | `add`, `update`, `remove`, `byModule` | **SSOT for `User`**. The Create/Edit Agent form *would* call `add`/`update` on handoff (today it's mocked). |
-| `TeamsService` | `teams()` — 6 seed teams | `add`, `update`, `remove`, `byModule` | **SSOT for `Team`**. User↔team links are **bidirectional** in seed data (`User.teams` ⟷ `Team.memberIds`). |
-| `TicketsService` | `tickets()` — 40 seed tickets | `byModule` only | **SSOT for `Ticket`**; **read-only** (no add/update/remove). ⚠️ Tickets link to agents by **`ownerName` string, not id** — the profile's Tickets tab matches `ownerName === fullName(user)`. Flag for eng. |
+| `TeamsService` | `teams()` — 11 seed teams | `add`, `update`, `remove`, `byModule` | **SSOT for `Team`**. User↔team links are **bidirectional** in seed data (`User.teams` ⟷ `Team.memberIds`). A team has one `module`, **or `null` for a global (district-wide) team**; integration-synced teams spanning modules are one record per module. |
+| `TicketsService` | `tickets()` — 40 seed tickets | `byModule` only | **SSOT for `Ticket`**; **read-only** (no add/update/remove). ⚠️ Tickets key their owner by **`ownerName` string, not id**. Flag for eng. |
 | `PermissionSetsService` | see [Project 3](#project-3--permission-sets-handed-off-separately) | `add`, `update`, `remove` | The permission-set SSOT. |
 
 **Key model shapes** (`models.ts`):
 
-- **`User`** — `id`, `firstName`, `middleName?`, `lastName`, `email`, `phone?`, `status` (`UserStatus`), `source` (`UserSource`), `roles` (`UserRole[]`), `modules` (module ids), `teams` (team ids), `locations`, `topics`, `grade?`, `jobTitle?`, `employeeId?`, `pronouns?`, `emergencyContact?`, **`permissionSetByModule: Record<moduleId, permissionSetId>`**, `lastLogin?`, `dateAdded`. Helper `fullName(u)`; `SOURCE_LOCKED_FIELDS` lists which fields a synced source locks (`SIS` / `Active Directory` / `Google` / `Azure` lock `firstName, lastName, email, status`; `Manual` locks none).
-- **`Team`** — `id`, `name`, `modules` (ids), `topics`, `memberIds` (user ids), `permissionSetId?`, `source` (`TeamSource`).
+- **`User`** — `id`, `firstName`, `middleName?`, `lastName`, `email`, `phone?`, `status` (`UserStatus`), `source` (`UserSource`), `roles` (`UserRole[]`), `modules` (module ids), `teams` (team ids), `locations`, `grade?`, `jobTitle?`, `employeeId?`, `pronouns?`, `emergencyContact?`, **`permissionSetByModule: Record<moduleId, permissionSetId>`**, `lastLogin?`, `dateAdded`. Helper `fullName(u)`; `SOURCE_LOCKED_FIELDS` lists which fields a synced source locks (`SIS` / `Active Directory` / `Google` / `Azure` lock `firstName, lastName, email, status`; `Manual` locks none).
+- **`Team`** — `id`, `name`, `module` (one module id, **or `null` for a global team**), `memberIds` (user ids), `permissionSetId?`, `source` (`TeamSource`).
 - **`Ticket`** — `id`, `number`, `subject`, `description`, `customerName`, `customerRole`, `priority` (`P1`–`P3`), `status` (`Unopened` / `In Progress` / `Waiting` / `Closed`), `ownerName`, `moduleId`, `receivedAt`, `isMyTicket`, `isMyTeam`.
 
 **Shared form control** — `form-select.component.ts` (`app-form-select`) is a presentational wrapper that emits canonical `ds-select` markup so the global `runtime/select.js` drives it (single / multi / select-all). It owns no state; the host reads the DOM at submit. Used by both forms. ⛔ `<!-- TODO eng: replace with a reactive ds-select bound to the form model -->`.
@@ -421,14 +431,16 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 ```
 { id; name; moduleId: string | null;                 // null = system-wide, else a module id
   type: 'System' | 'Custom'; isLocked: boolean;
+  isGlobalOnly?: boolean;                             // true only for Global Admin (global-tier)
   capabilities: Record<string, boolean | string> }   // perm id → toggle bool or segment value
 ```
 
-**7 seed sets** in `PermissionSetsService`:
+**8 seed sets** in `PermissionSetsService`:
 
 | id | name | type | module | locked |
 |---|---|---|---|:--:|
-| `ps-sysadmin` | System Administrator | System | — | ✓ |
+| `ps-sysadmin` | Global Admin | System | — | ✓ |
+| `ps-dept-admin` | Department Admin | System | — | ✓ |
 | `ps-global-user` | Global User | System | — | ✓ |
 | `ps-team-member` | Team Member | System | — | |
 | `ps-recorder` | Recorder | System | — | |
@@ -436,7 +448,8 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 | `ps-it-desk-lead` | IT Desk Lead | Custom | `it` | |
 | `ps-classic-triage` | Classic Triage | Custom | `classic` | |
 
-- A set is **read-only when `isLocked || type === 'System'`** — so *all five* System sets open read-only, even the three with `isLocked: false`.
+- A set is **read-only when `isLocked || type === 'System'`** — so *all six* System sets open read-only, even the three with `isLocked: false`.
+- **`Global Admin`** (renamed from *System Administrator*; id `ps-sysadmin` unchanged so `permissionSetByModule` refs don't break) carries **`isGlobalOnly: true`** — the global-tier admin set, shown only in the Global context. **`Department Admin`** (`ps-dept-admin`) is the department-tier admin set. The department switcher resolves a module role to one of these via `MODULE_ROLE_PERMISSION_SET_ID` (`Admin → ps-dept-admin`, `Agent → ps-team-member`).
 - The service also holds the **`catalog`** — the section/permission definitions the editor renders (code-only, separate from any set's stored `capabilities`).
 - Methods: `add`, `update`, `remove`. ⚠️ **`remove()` has no caller — there is no delete UI.**
 
@@ -448,6 +461,7 @@ Engine-driven table.
 
 - **CTA:** `Create permission set` → `createSet()` adds an auto-named in-memory set (`New permission set`, `New permission set 2`, …) and opens its editor. 🟡
 - **Search:** `Search permission sets…`. **Columns:** `Name`, `Type` (`System` blue / `Custom` grey badge), `Scope` (the module name, or `System-wide`), `Status` (`Locked` grey / `Editable` green badge).
+- **Scoped to the switcher context** ✅ (like Teams): the **Global context** shows only the **global-tier** set (`Global Admin`, `isGlobalOnly`); a **department** shows the department-tier system-wide sets + only that department's own custom sets, and **hides `Global Admin`**. Re-mounts on context change.
 - **Whole row → editor** ✅ (`aria-label="Open {name}"`). No kebab menu.
 
 ### 3.4 Permission Set editor
@@ -465,7 +479,7 @@ Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`
 
 ### 3.5 The single source of truth
 
-`PermissionSetsService.sets()` is the one dataset. Sets are referenced **by id** everywhere — agents via `User.permissionSetByModule` (module → set id), teams via `Team.permissionSetId` — and resolved back to **names** by six surfaces:
+`PermissionSetsService.sets()` is the one dataset. Sets are referenced **by id** everywhere — agents via `User.permissionSetByModule` (module → set id), teams via `Team.permissionSetId` — and resolved back to **names** by seven surfaces:
 
 | Surface | Reads | Resolves to |
 |---|---|---|
@@ -473,10 +487,11 @@ Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`
 | Agent profile **Permissions** tab ([§2.2](#22-agent-profile)) | `user.permissionSetByModule[moduleId]` | set name per module (`Not assigned` fallback) |
 | Create/Edit **Agent form** ([§2.3](#23-create-and-edit-agent-form)) | `sets()` | per-row dropdown options |
 | Teams table **Permission Set** column ([§2.4](#24-teams-tab)) | `team.permissionSetId` | set name (`None` fallback) |
-| Create **Team form** ([§2.5](#25-create-team-form)) | `sets()` | dropdown options |
+| Create **Team form** ([§2.5](#25-create-and-edit-team-form)) | `sets()` | dropdown options |
 | **Permission Set editor** ([§3.4](#34-permission-set-editor)) | `sets()` | the **one writer** (`add` / `update`) |
+| Department **switcher** role label ([§1.2](#12-department-switcher-top-nav)) | `sets()` via `MODULE_ROLE_PERMISSION_SET_ID` | role → set name (`Department Admin` / `Team Member`) |
 
-So all six stay wired to one dataset; the editor is the only writer; there is no delete. (Structural aside: `ChromeService.setEditorOpen` is the shared mechanism the editor and the agent profile both use to collapse the subnav during a full-area takeover.)
+So all seven stay wired to one dataset; the editor is the only writer; there is no delete. (Structural aside: `ChromeService.setEditorOpen` is the shared mechanism the editor and the agent profile both use to collapse the subnav during a full-area takeover.)
 
 ---
 
@@ -513,12 +528,11 @@ So all six stay wired to one dataset; the editor is the only writer; there is no
 |---|---|---|
 | Agents / Teams tables (render, search, sort, filter via engine) | ✅ / 🟡 | `table-init.js` DOM simulation; replace with AG Grid |
 | Agents table Permission Sets column | ✅ | Resolves the shared `PermissionSetsService` |
-| Agent profile (Details / Permissions / Tickets) | ✅ / 🟡 | Live off in-memory services |
+| Agent profile (Details / Permissions) | ✅ / 🟡 | Live off in-memory services |
 | Agent profile **Activity** tab | ⛔ | Hard-coded 18-row mock — needs a real audit log |
-| Create/Edit Agent + Create Team forms | ✅ / 🟡 | Open/close/pre-fill built; **submit is a toast** — no validation, no persistence |
+| Create/Edit Agent + Create/Edit Team forms | ✅ / 🟡 | Open/close/pre-fill built; **submit is a toast** — no validation, no persistence |
 | Authentication (2FA) | 🟡 | Toggle not persisted; no SSO |
-| Agent ↔ ticket link | ⚠️ | Matched by `ownerName` string, not id |
-| CSV export (profile tables) | 🟡 | Client-side DOM scrape; wire to real endpoint |
+| CSV export (profile Activity table) | 🟡 | Client-side DOM scrape; wire to real endpoint |
 | Form focus trap / return-focus | ⛔ | Not built |
 | Custom fields from a real schema | ⛔ | Hard-coded today |
 
@@ -541,6 +555,5 @@ So all six stay wired to one dataset; the editor is the only writer; there is no
 2. **Module lifecycle** (in design — being reviewed with product/manager): Is **"off"** a distinct paused state, or just **remove**? When a **trial ends** un-kept, does its data **come back** if the module is re-added later, or is it **cleared**? Which modules use which **activation method** (request / self-serve / trial)?
 3. **Custom-module request cap.** Uncapped today; a cap is planned — the rule is TBD.
 4. **Permission model & capability schema** (Project 3). The real permission catalog is owned by the Permission Sets handoff; the prototype ships a representative subset with a **legacy ↔ catalog vocabulary mismatch** (sets are rewritten on save). Eng needs to define the production capability schema and a migration for existing sets. The exact nav/Settings gating (Assets-by-module, per-area Settings, Global = global-admins-only) and per-module roles map onto this model.
-5. **Agent ↔ ticket link.** Tickets reference their owner by **display-name string**, not a foreign-key id. Confirm the production keying (id) so the profile's Tickets tab and any routing stay stable.
-6. **Agent activity / audit log.** The profile's Activity tab is a hard-coded mock — it needs a real per-agent audit-log source and schema.
-7. **Custom fields.** The agent form's custom fields are hard-coded; production needs the district custom-field schema (and the integration-driven on/off toggling of fields).
+5. **Agent activity / audit log.** The profile's Activity tab is a hard-coded mock — it needs a real per-agent audit-log source and schema.
+6. **Custom fields.** The agent form's custom fields are hard-coded; production needs the district custom-field schema (and the integration-driven on/off toggling of fields).

@@ -1,7 +1,7 @@
 <div class="ds-page-content__main auth-tab">
   <h2 class="ds-form-section-title">Two Factor Authentication (2FA)</h2>
   <p class="auth-tab__intro">
-    Significantly improve the security of your district account and keep the information safe by enabling 2FA.
+    Strengthen the security of your district account and keep your information safe by enabling 2FA.
   </p>
 
   <!-- TODO eng: wire 2FA enable/disable -->
@@ -12,13 +12,43 @@
     <span class="ds-toggle__label">{{ enabled() ? '2FA Enabled' : '2FA Disabled' }}</span>
   </label>
 
+  <!-- TODO eng: wire 2FA verification-channel selection -->
+  @if (enabled()) {
+    <section class="auth-tab__method">
+      <h3 id="auth-method-title" class="auth-tab__heading">Verification method</h3>
+      <p id="auth-method-hint" class="auth-tab__text auth-tab__method-hint">
+        Choose where agents receive their login verification code.
+      </p>
+      <div class="ds-radio-group" role="radiogroup"
+           aria-labelledby="auth-method-title" aria-describedby="auth-method-hint">
+        <label class="ds-radio">
+          <input type="radio" class="ds-radio__control" name="auth-method" value="email"
+                 [checked]="method() === 'email'" (change)="setMethod('email')" />
+          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+          <span class="ds-radio__label">Email</span>
+        </label>
+        <label class="ds-radio">
+          <input type="radio" class="ds-radio__control" name="auth-method" value="sms"
+                 [checked]="method() === 'sms'" (change)="setMethod('sms')" />
+          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+          <span class="ds-radio__label">SMS</span>
+        </label>
+        <label class="ds-radio">
+          <input type="radio" class="ds-radio__control" name="auth-method" value="both"
+                 [checked]="method() === 'both'" (change)="setMethod('both')" />
+          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+          <span class="ds-radio__label">Both</span>
+        </label>
+      </div>
+    </section>
+  }
+
   <section class="auth-tab__section">
     <h3 class="auth-tab__heading">What Is Two Factor Authentication?</h3>
     <p class="auth-tab__text">
-      Two factor authentication (2FA) adds an extra layer of security to your account by requiring not only
-      your username and password but also a unique code sent to your email before you can log in, this means
-      that even if someone knows your password, they cannot access your account without the additional
-      verification code.
+      Two factor authentication (2FA) adds an extra layer of security to your account. Along with your
+      username and password, you'll enter a unique verification code — sent by email, SMS, or both — before
+      you can log in. Even if someone knows your password, they can't access your account without that code.
     </p>
   </section>
 
@@ -26,14 +56,14 @@
     <h3 class="auth-tab__heading">How Is Two Factor Authentication Helpful?</h3>
     <ol class="auth-tab__list">
       <li>
-        <strong>Enhanced Security:</strong> Protects against unauthorized access as users can only login if
-        they have access to their email, where a unique code will be sent.
+        <strong>Enhanced Security:</strong> Protects against unauthorized access, since users can only log in
+        if they can receive the verification code sent to their email or phone.
       </li>
       <li>
         <strong>Peace of Mind:</strong> Ensures only authorized users can access their accounts from both the
         web and the mobile admin app.
       </li>
-      <li><strong>Anti-Phishing:</strong> Reduces the phishing attacks.</li>
+      <li><strong>Anti-Phishing:</strong> Reduces the risk of phishing attacks.</li>
     </ol>
   </section>
 
@@ -41,17 +71,16 @@
     <h3 class="auth-tab__heading">What Happens When Two Factor Authentication Is Turned On?</h3>
     <ol class="auth-tab__list">
       <li>
-        <strong>Login Process:</strong> After entering the username and password, users will receive a unique
-        code on their email.
+        <strong>Login Process:</strong> After entering their username and password, users receive a unique
+        code through their selected method — email, SMS, or both.
       </li>
       <li>
-        <strong>Email Notifications:</strong> Every login attempt will be paired with an email notification
-        containing the code.
+        <strong>Code Delivery:</strong> Every login attempt sends a new verification code to the selected
+        email address, phone number, or both.
       </li>
-      <li><strong>Verification:</strong> Enter the code in provided field to complete the login process.</li>
+      <li><strong>Verification:</strong> Enter the code in the provided field to complete login.</li>
       <li>
-        <strong>For enhanced security,</strong> all mobile app users will have to re-authorize once 2FA is
-        enabled.
+        <strong>For enhanced security,</strong> all mobile app users must re-authorize once 2FA is enabled.
       </li>
     </ol>
   </section>

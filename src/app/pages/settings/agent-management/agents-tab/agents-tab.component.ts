@@ -15,6 +15,7 @@ import { ModulesService } from '../../../../data/modules.service';
 import { UsersService } from '../../../../data/users.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { ModuleContextService } from '../../../../data/module-context.service';
 import { User, UserStatus, fullName } from '../../../../data/models';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
@@ -44,15 +45,18 @@ export class AgentsTabComponent implements AfterViewInit {
   private readonly usersSvc = inject(UsersService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly setsSvc = inject(PermissionSetsService);
+  private readonly moduleCtx = inject(ModuleContextService);
 
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly fullName = fullName;
 
-  // Full, module-agnostic directory — every user, rendered once during the initial
-  // render. After ngAfterViewInit the view is detached and table-init.js owns the DOM,
-  // so this is a static design-mode snapshot of UsersService.
-  readonly items = computed<User[]>(() => this.usersSvc.users());
+  // Directory scoped to the switcher context, resolved once during the initial render: a global
+  // admin in the Global context sees ALL users; scoped into a department, only that department's
+  // agents (users whose `modules` include it — UsersService.byModule). After ngAfterViewInit the
+  // view is detached and table-init.js owns the DOM, so this is a static snapshot — the tab is
+  // re-mounted on context change (see agent-management.component.html) to re-resolve it.
+  readonly items = computed<User[]>(() => this.usersSvc.byModule(this.moduleCtx.currentModuleId()));
 
   // ── Lookups (team id → name, module id → name) for cell rendering ──────────────
   private readonly teamNameById = computed(() => {

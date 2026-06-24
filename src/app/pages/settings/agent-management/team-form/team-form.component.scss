@@ -51,3 +51,14 @@
   height: 1px;
   background: var(--color-border-subtle);
 }
+
+/* Read-only member list for a synced team: a label above a wrapping row of static tags. */
+.team-form__members-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.team-form__empty {
+  color: var(--color-text-secondary);
+}

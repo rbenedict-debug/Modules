@@ -11,6 +11,7 @@ import {
 
 import { ModulesService } from '../../../../data/modules.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { ModuleContextService } from '../../../../data/module-context.service';
 import { PermissionSet } from '../../../../data/models';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
@@ -42,6 +43,7 @@ export class PermissionSetsTabComponent implements AfterViewInit {
 
   private readonly setsSvc = inject(PermissionSetsService);
   private readonly modulesSvc = inject(ModulesService);
+  private readonly moduleCtx = inject(ModuleContextService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   // Module id → display name, for resolving each set's scope cell.
@@ -51,18 +53,29 @@ export class PermissionSetsTabComponent implements AfterViewInit {
     return map;
   });
 
-  // Full permission-sets dataset, resolved once during the initial render. After
-  // ngAfterViewInit the view is detached and table-init.js owns the DOM, so this is a
-  // static design-mode snapshot of PermissionSetsService.
+  // Permission sets visible in the current switcher context, resolved once during the initial
+  // render. After ngAfterViewInit the view is detached and table-init.js owns the DOM, so this
+  // is a static snapshot — the tab is re-mounted when the module context changes (see
+  // agent-management.component.html), which re-runs this against the new context.
+  //  • Global context (currentModuleId === null) → only the global-tier set (Global Admin).
+  //  • A department → hide Global Admin; show the system-wide (department-tier) sets plus only
+  //    the custom sets scoped to the selected department.
   readonly rows = computed<SetRow[]>(() => {
     const names = this.moduleNameById();
-    return this.setsSvc.sets().map(s => ({
-      id: s.id,
-      name: s.name,
-      type: s.type,
-      scope: s.moduleId ? (names.get(s.moduleId) ?? s.moduleId) : 'System-wide',
-      isLocked: s.isLocked,
-    }));
+    const moduleId = this.moduleCtx.currentModuleId();
+    return this.setsSvc.sets()
+      .filter(s =>
+        moduleId === null
+          ? s.isGlobalOnly === true
+          : s.isGlobalOnly !== true && (s.moduleId === null || s.moduleId === moduleId),
+      )
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        scope: s.moduleId ? (names.get(s.moduleId) ?? s.moduleId) : 'System-wide',
+        isLocked: s.isLocked,
+      }));
   });
 
   // Column config for table-init.js. `name` MUST match the <th> header labels exactly.

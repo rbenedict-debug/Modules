@@ -230,6 +230,9 @@
                     <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ (settingsExpanded['global'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                   </button>
                   <div class="ds-subnav-header__children">
+                    <!-- District-wide items: only in the Global context (global admin). Department
+                         admins see the Global section too, but only the item(s) below this block. -->
+                    @if (moduleCtx.isGlobal()) {
                     @if (!filter || filter.has('district-profile')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'district-profile'">District Profile</button>
                     }
@@ -314,6 +317,10 @@
                         </div>
                       </div>
                     }
+                    }
+                    <!-- Agent Management: ungated within the section — shown for any admin (the
+                         global admin in Global, and a department admin in their department). Future
+                         default-access items for department admins go here too, beside it. -->
                     @if (!filter || filter.has('agent-management')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'agent-management'" (click)="goSettings('agent-management')">Agent Management</button>
                     }

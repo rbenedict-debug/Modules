@@ -39,16 +39,29 @@
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
-      <app-agents-tab (viewProfile)="openProfile($event)" (createAgent)="creatingAgent.set(true)" />
+      <!-- Re-mount on context change so table-init.js re-reads the context-scoped rows (the tab
+           detaches change detection; a keyed re-create is what swaps the data for the new context). -->
+      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+        <app-agents-tab (viewProfile)="openProfile($event)" (createAgent)="creatingAgent.set(true)" />
+      }
     }
     @case ('authentication') {
       <app-authentication-tab />
     }
     @case ('teams') {
-      <app-teams-tab (createTeam)="creatingTeam.set(true)" />
+      <!-- Re-mount on context change so the module-scoped team rows re-resolve (same reason as the
+           Agents / Permission Sets tabs). -->
+      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+        <app-teams-tab (createTeam)="creatingTeam.set(true)" (editTeam)="openTeam($event)" />
+      }
     }
     @case ('permission-sets') {
-      <app-permission-sets-tab (editSet)="editingSetId.set($event)" />
+      <!-- Re-mount the tab when the module switcher changes so table-init.js re-reads the
+           context-filtered rows. The tab detaches change detection after its first render, so
+           a keyed re-create (not a signal update) is what swaps the rows for the new context. -->
+      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+        <app-permission-sets-tab (editSet)="editingSetId.set($event)" />
+      }
     }
   }
 }
@@ -59,7 +72,8 @@
   <app-agent-form (close)="creatingAgent.set(false)" />
 }
 
-<!-- Create Team popup. Hosted at the page root so its fixed-position scrim overlays everything. -->
-@if (creatingTeam()) {
-  <app-team-form (close)="creatingTeam.set(false)" />
+<!-- Create / Edit Team popup. Hosted at the page root so its fixed-position scrim overlays
+     everything. `team` null = create; a synced team renders read-only (the form decides). -->
+@if (creatingTeam() || editingTeam()) {
+  <app-team-form [team]="editingTeam()" (close)="closeTeamForm()" (saved)="closeTeamForm()" />
 }

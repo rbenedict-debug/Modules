@@ -27,10 +27,31 @@ export interface PermissionSection {
 @Injectable({ providedIn: 'root' })
 export class PermissionSetsService {
   readonly sets = signal<PermissionSet[]>([
-    // ── System sets (5) — the first two are locked ──────────────────────────
+    // ── System sets (6) — the first three are locked ────────────────────────
+    // Global Admin is the global-tier set: isGlobalOnly means it shows ONLY in the Global
+    // switcher context and is hidden from every department. (id stays 'ps-sysadmin' — users
+    // reference it via permissionSetByModule, so renaming the id would break those links.)
     {
       id: 'ps-sysadmin',
-      name: 'System Administrator',
+      name: 'Global Admin',
+      moduleId: null,
+      type: 'System',
+      isLocked: true,
+      isGlobalOnly: true,
+      capabilities: {
+        manageUsers: true,
+        manageTeams: true,
+        managePermissionSets: true,
+        manageSettings: true,
+        viewAnalytics: true,
+        ticketAccess: 'All',
+      },
+    },
+    // Department Admin — the department-tier admin set. System-wide (moduleId: null) so it
+    // shows in every department context, but never in Global (only Global Admin shows there).
+    {
+      id: 'ps-dept-admin',
+      name: 'Department Admin',
       moduleId: null,
       type: 'System',
       isLocked: true,

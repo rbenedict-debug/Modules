@@ -56,7 +56,7 @@
           </div>
           <div class="ds-list-item__content">
             <span class="ds-list-item__primary">{{ m.name }}</span>
-            <span class="ds-list-item__secondary">{{ m.role }}</span>
+            <span class="ds-list-item__secondary">{{ roleLabel(m.role) }}</span>
           </div>
           @if (moduleCtx.currentModuleId() === m.id) {
             <div class="ds-list-item__trailing">

@@ -27,16 +27,16 @@ interface ActivityRow {
 
 /**
  * The agent profile's Activity tab — the canonical Design System table driven by
- * table-init.js, isolated in its own component (mirrors AgentTicketsTableComponent). The
- * engine takes over the DOM and calls for cdr.detach(); doing that on the parent profile
- * would freeze its other tabs, so the table lives here and detaches only ITS OWN detector.
+ * table-init.js, isolated in its own component. The engine takes over the DOM and calls
+ * for cdr.detach(); doing that on the parent profile would freeze its other tabs, so the
+ * table lives here and detaches only ITS OWN detector.
  *
  * The engine binds every element by GLOBAL id (#main-table, #btn-filter, …) and adds
- * document listeners with no teardown, so two of these tables cannot share the DOM. The
- * parent therefore mounts this tab and the Tickets tab MUTUALLY EXCLUSIVELY — only the
- * active one is in the DOM (see AgentProfileComponent). The trade-off is that each re-open
- * re-inits the engine, leaking a few document listeners. TODO eng: wire engine teardown +
- * a real audit-log source for this agent on handoff.
+ * document listeners with no teardown, so only one such table can be in the DOM at a time.
+ * The parent therefore mounts this tab only while it's active (inside the @switch) — see
+ * AgentProfileComponent. The trade-off is that each re-open re-inits the engine, leaking a
+ * few document listeners. TODO eng: wire engine teardown + a real audit-log source for
+ * this agent on handoff.
  */
 @Component({
   selector: 'app-agent-activity-tab',

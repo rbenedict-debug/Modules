@@ -8,49 +8,90 @@
     </button>
 
     <header class="ds-modal__header">
-      <h2 class="ds-modal__title" id="team-form-title">Create New Team</h2>
-      <p class="ds-modal__subtitle">Add a new team to the system</p>
+      <h2 class="ds-modal__title" id="team-form-title">{{ title() }}</h2>
+      <p class="ds-modal__subtitle">{{ subtitle() }}</p>
     </header>
 
     <div class="ds-modal__body team-form__body">
 
-      <div class="ds-input">
+      <!-- Synced provenance: an integration owns this team, so every field is read-only here. -->
+      @if (isSynced()) {
+        <div class="ds-alert ds-alert--info" role="alert">
+          <div class="ds-alert__header">
+            <span class="ds-icon ds-alert__icon" aria-hidden="true">sync</span>
+            <div class="ds-alert__content">
+              <div class="ds-alert__text">
+                <p class="ds-alert__message">
+                  This team is synced from {{ source() }}. To change its department, members, or
+                  permission set, edit it in {{ source() }} (Integration Hub).
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="ds-input" [class.is-disabled]="isSynced()">
         <label class="ds-input__label" for="tf-name">Team Name<span class="ds-input__required" aria-hidden="true">*</span></label>
         <div class="ds-input__field">
-          <input id="tf-name" class="ds-input__control" type="text" placeholder="Enter team name" />
+          <input id="tf-name" class="ds-input__control" type="text" placeholder="Enter team name"
+                 [value]="editing()?.name ?? ''" [disabled]="isSynced()" />
         </div>
       </div>
 
-      <app-form-select label="Department" [options]="departments()" [multiple]="true"
-        placeholder="Select department(s)…" [required]="true" />
-
-      <app-form-select label="Topic" [options]="topicOptions()" [multiple]="true"
-        placeholder="Select topic(s) (optional)…" />
+      <!-- One department only: manual teams map to a single module; multi-department teams come
+           from an integration sync (one synced team per module). -->
+      <app-form-select label="Department" [options]="departments()"
+        [selected]="moduleName()" placeholder="Select department…" [required]="true"
+        [disabled]="isSynced() || !isEdit()"
+        [helper]="isSynced() ? undefined : (isEdit() ? 'A team belongs to one department.' : 'New teams are created for your current context: ' + moduleName() + '.')" />
 
       <app-form-select label="Permission Set" [options]="permissionSetNames()"
-        placeholder="Select permission set (optional)…" />
+        [selected]="permissionSetName()" placeholder="Select permission set (optional)…"
+        [disabled]="isSynced()" />
 
       <div class="team-form__divider" aria-hidden="true"></div>
 
-      <!-- Members: search-to-add stand-in. TODO eng: wire user search + selected-member chips. -->
-      <div class="ds-input ds-search team-form__members" role="search">
-        <label class="ds-input__label" for="tf-members">Members</label>
-        <div class="ds-input__field">
-          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-          <input id="tf-members" class="ds-input__control" type="search"
-                 placeholder="Search users to add…" aria-label="Search users to add" />
+      @if (isSynced()) {
+        <!-- Read-only members: static chips resolved from the synced team. -->
+        <div class="team-form__members-readonly">
+          <span class="ds-input__label">Members</span>
+          <div class="ds-tag-list" role="list" aria-label="Team members">
+            @for (name of memberNames(); track name) {
+              <div class="ds-tag is-disabled" role="listitem">
+                <span class="ds-tag__label">{{ name }}</span>
+              </div>
+            } @empty {
+              <span class="team-form__empty">No members.</span>
+            }
+          </div>
         </div>
-      </div>
+      } @else {
+        <!-- Members: search-to-add stand-in. TODO eng: wire user search + selected-member chips. -->
+        <div class="ds-input ds-search team-form__members" role="search">
+          <label class="ds-input__label" for="tf-members">Members</label>
+          <div class="ds-input__field">
+            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+            <input id="tf-members" class="ds-input__control" type="search"
+                   placeholder="Search users to add…" aria-label="Search users to add" />
+          </div>
+        </div>
+      }
 
     </div>
 
     <footer class="ds-modal__actions">
-      <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
-      <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="submit()">
-        Add Team
-      </button>
+      @if (isSynced()) {
+        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="cancel()">Close</button>
+      } @else {
+        <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
+        <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="submit()">
+          {{ isEdit() ? 'Save Changes' : 'Add Team' }}
+        </button>
+      }
     </footer>
 
   </div>
 </div>
-<!-- TODO eng: wire real submit (validation + persistence) and member search. -->
+<!-- TODO eng: wire real submit (validation + persistence), member search, and an Integration Hub
+     link for synced teams (the banner currently names the source as text only). -->

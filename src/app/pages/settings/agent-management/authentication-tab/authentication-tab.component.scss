@@ -17,6 +17,16 @@
   margin-bottom: var(--spacing-xl);
 }
 
+// Verification-method picker — shown only when 2FA is enabled, between the toggle and
+// the explanatory sections (which own the gap below via their own margin-top).
+.auth-tab__method {
+  margin-bottom: var(--spacing-xl);
+}
+
+.auth-tab__method-hint {
+  margin-bottom: var(--spacing-md);
+}
+
 .auth-tab__section {
   margin-top: var(--spacing-xl);
 }

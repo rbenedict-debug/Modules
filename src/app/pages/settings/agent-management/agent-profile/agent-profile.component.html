@@ -19,7 +19,7 @@
 </div>
 
 @if (user(); as u) {
-  <!-- Top-level hero + a tab system (Details / Tickets / Activity) below it.
+  <!-- Top-level hero + a tab system (Details / Permissions / Activity) below it.
        .agent-detail is the page scroll boundary (the heading stays fixed). -->
   <div class="agent-detail">
 
@@ -147,7 +147,7 @@
                           </span>
                         </div>
 
-                        <!-- Assignments: teams + topics. Grey chips stay quiet so the blue permission set
+                        <!-- Assignments: teams. Grey chips stay quiet so the blue permission set
                              above remains the eye's anchor when scanning module to module. -->
                         <div class="agent-detail__perm-assignments">
                           <div class="agent-detail__perm-field">
@@ -159,54 +159,6 @@
                                 <span class="agent-detail__muted">Not assigned to any team</span>
                               }
                             </div>
-                          </div>
-
-                          <div class="agent-detail__perm-field">
-                            <span class="agent-detail__info-label">Topics · {{ card.topics.length }}</span>
-
-                            @if (card.topics.length) {
-                              <!-- Filter — appears only once the list is expanded and long enough to need it.
-                                   TODO eng: wire to real topic filtering on handoff. -->
-                              @if (showTopicSearch(card)) {
-                                <div class="ds-input ds-search agent-detail__topic-search" role="search">
-                                  <div class="ds-input__field">
-                                    <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-                                    <input class="ds-input__control" type="search"
-                                           [value]="topicQueryFor(card.id)"
-                                           (input)="setTopicQuery(card.id, $any($event.target).value)"
-                                           [attr.placeholder]="'Filter ' + card.topics.length + ' topics…'"
-                                           [attr.aria-label]="'Filter topics in ' + card.name" />
-                                    @if (topicQueryFor(card.id)) {
-                                      <button class="ds-input__action" type="button" aria-label="Clear filter"
-                                              (click)="setTopicQuery(card.id, '')">
-                                        <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
-                                      </button>
-                                    }
-                                  </div>
-                                </div>
-                              }
-
-                              <div class="agent-detail__chips" [class.agent-detail__chips--scroll]="showTopicSearch(card)" [id]="'ap-topics-' + card.id">
-                                @for (topic of visibleTopics(card); track topic) {
-                                  <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--grey">{{ topic }}</span>
-                                } @empty {
-                                  <span class="agent-detail__muted">No topics match “{{ topicQueryFor(card.id) }}”</span>
-                                }
-                              </div>
-
-                              <!-- Cap toggle: collapsed shows the first TOPIC_CAP chips; expand reveals the rest. -->
-                              @if (card.topics.length > TOPIC_CAP) {
-                                <button type="button" class="agent-detail__topic-toggle"
-                                        (click)="toggleTopics(card.id)"
-                                        [attr.aria-expanded]="isTopicsExpanded(card.id)"
-                                        [attr.aria-controls]="'ap-topics-' + card.id">
-                                  <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ isTopicsExpanded(card.id) ? 'expand_less' : 'expand_more' }}</span>
-                                  {{ isTopicsExpanded(card.id) ? 'Show less' : '+' + hiddenTopicCount(card) + ' more' }}
-                                </button>
-                              }
-                            } @else {
-                              <span class="agent-detail__muted">No topics</span>
-                            }
                           </div>
                         </div>
 
@@ -241,30 +193,8 @@
         </div>
       }
 
-      <!-- Tickets: the canonical Design System table (table-init.js), in its own component.
-           Mounted only while active so its engine never shares the DOM with the Activity
-           table's — both bind every element by global id, so two can't coexist. -->
-      @case ('tickets') {
-        <div class="agent-detail__panel agent-detail__panel--tickets" role="tabpanel"
-             id="ap-panel-tickets" aria-labelledby="ap-tab-tickets">
-          @if (ticketRows().length) {
-            <app-agent-tickets-table [rows]="ticketRows()" />
-          } @else {
-            <div class="ds-empty-state">
-              <div class="ds-empty-state__graphic agent-detail__empty-graphic" aria-hidden="true">
-                <span class="ds-icon ds-icon--lg">confirmation_number</span>
-              </div>
-              <div class="ds-empty-state__body">
-                <p class="ds-empty-state__heading">No tickets</p>
-                <p class="ds-empty-state__description">This agent is not on any tickets yet.</p>
-              </div>
-            </div>
-          }
-        </div>
-      }
-
       <!-- Activity: the agent's audit history as the canonical Design System table
-           (table-init.js) — search, filter, sort, download. Same mount rule as Tickets. -->
+           (table-init.js) — search, filter, sort, download. Mounted only while its tab is active. -->
       @case ('activity') {
         <div class="agent-detail__panel agent-detail__panel--activity" role="tabpanel"
              id="ap-panel-activity" aria-labelledby="ap-tab-activity">

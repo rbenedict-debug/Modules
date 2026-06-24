@@ -19,8 +19,9 @@ interface SettingsItem {
   subheaderParent?: string;
 }
 
-/** Routed Settings pages that live in the Global section — reachable only in the Global context. */
-const GLOBAL_ONLY_SETTINGS_PAGES = new Set(['department-modules', 'agent-management']);
+/** Routed Settings pages reachable only in the Global context. (Agent Management also lives in the
+ *  Global section, but it's reachable by any admin — global or department — so it's NOT listed.) */
+const GLOBAL_ONLY_SETTINGS_PAGES = new Set(['department-modules']);
 
 @Component({
   selector: 'app-root',
@@ -436,7 +437,10 @@ export class App implements AfterViewInit, OnDestroy {
     // needs Asset management. Tickets and Call Center stay on for every admin for now. Composed with the
     // search filter below so you can never surface a section the context hides by searching for it.
     const ctx = {
-      global:          this.moduleCtx.isGlobal(),
+      // The Global (district admin) section shows in the Global context AND for department admins
+      // (canAdminActions) — they get a slice of it (today: Agent Management; the rest is gated to
+      // the Global context inside the template).
+      global:          this.moduleCtx.isGlobal() || this.moduleCtx.canAdminActions(),
       integrationHub:  this.moduleCtx.canSeeIntegrations(),
       workflows:       this.moduleCtx.hasWorkflow(),
       ticketsSettings: this.moduleCtx.hasTicketing(),
@@ -446,8 +450,12 @@ export class App implements AfterViewInit, OnDestroy {
     if (!f) return ctx;
     const hasAny = (section: string) =>
       this._settingsItems.some(item => item.section === section && f.has(item.id));
+    // Outside the Global context the only Global-section item shown is Agent Management, so the
+    // header's search visibility keys on just that item — never surface an empty "Global" header
+    // by searching for a district-only item a department admin can't see.
+    const globalFiltered = this.moduleCtx.isGlobal() ? hasAny('global') : f.has('agent-management');
     return {
-      global:          ctx.global && hasAny('global'),
+      global:          ctx.global && globalFiltered,
       integrationHub:  ctx.integrationHub && hasAny('integration-hub'),
       workflows:       ctx.workflows && hasAny('workflows'),
       ticketsSettings: ctx.ticketsSettings && hasAny('tickets-settings'),

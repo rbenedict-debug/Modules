@@ -90,17 +90,8 @@
                 </th>
                 <th style="width:200px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Module(s)</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Module(s)">
-                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
-                    </button>
-                  </div>
-                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
-                </th>
-                <th style="width:220px">
-                  <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Topics</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Topics">
+                    <span class="ds-table__header-label">Module</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Module">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -137,10 +128,9 @@
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
-                <tr>
+                <tr class="teams-row" style="cursor: pointer" (click)="openTeam(row.id)">
                   <td>{{ row.name }}</td>
-                  <td>{{ row.moduleNames.length ? row.moduleNames.join(', ') : '—' }}</td>
-                  <td>{{ row.topics.length ? row.topics.join(', ') : '—' }}</td>
+                  <td>{{ row.moduleName }}</td>
                   <td>{{ row.memberCount }}</td>
                   <td>{{ row.permissionSetName }}</td>
                   <td>{{ row.source }}</td>
