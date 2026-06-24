@@ -62,10 +62,14 @@ export class CreatePermissionSetModalComponent {
       (this.host.nativeElement.querySelector('#cps-copy-from .ds-select__control') as HTMLInputElement | null)?.value?.trim() ??
       '';
     const source = this.setsSvc.sets().find(s => s.name === copyFrom);
+    // A set created in the Global switcher context is a global-tier set (isGlobalOnly): it lists
+    // only in Global, and its editor exposes only global settings — never department-scoped config.
+    const isGlobal = this.moduleCtx.currentModuleId() === null;
     this.setsSvc.add({
       name: this.name().trim(),
       description: this.description().trim() || undefined,
       moduleId: this.moduleCtx.currentModuleId(),
+      isGlobalOnly: isGlobal,
       type: 'Custom',
       isLocked: false,
       capabilities: source ? { ...source.capabilities } : {},

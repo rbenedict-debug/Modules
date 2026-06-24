@@ -53,17 +53,27 @@ export class AgentManagementComponent {
     const id = this.editingSetId();
     if (!id) return null;
     const s = this.setsSvc.sets().find((x) => x.id === id);
-    return s ? { name: s.name, readOnly: s.isLocked || s.type === 'System' } : null;
+    return s
+      ? { name: s.name, readOnly: s.isLocked || s.type === 'System', isGlobalOnly: s.isGlobalOnly === true }
+      : null;
   });
 
   /** Active editor tab — the tab bar lives in the page heading now, so the parent owns it. */
   readonly editorTab = signal<EditorTab>('details');
-  readonly editorTabs: { id: EditorTab; label: string }[] = [
+  private readonly allEditorTabs: { id: EditorTab; label: string }[] = [
     { id: 'details', label: 'Details' },
     { id: 'data-visibility', label: 'Data Visibility' },
     { id: 'actions', label: 'Actions' },
     { id: 'settings', label: 'Settings' },
   ];
+  /** A global set holds no department-scoped config, so its editor drops Data Visibility + Actions —
+   *  only Details (incl. assignments) and Settings (the Global section) apply. `openEditor` always
+   *  resets to Details, so a hidden tab can never be the active one. */
+  readonly editorTabs = computed(() =>
+    this.editingSet()?.isGlobalOnly
+      ? this.allEditorTabs.filter((t) => t.id === 'details' || t.id === 'settings')
+      : this.allEditorTabs,
+  );
 
   /** True while the New Permission Set modal is open (hosted here — the Permission Sets tab is detached). */
   readonly creatingSet = signal(false);

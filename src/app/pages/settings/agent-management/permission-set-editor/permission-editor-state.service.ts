@@ -40,6 +40,10 @@ export class PermissionEditorStateService {
   readonly name = signal('');
   readonly description = signal('');
   readonly readOnly = signal(false);
+  /** Whether the loaded set is a global-tier set (isGlobalOnly). Fixed per set — never edited here,
+   *  so it's not part of the dirty snapshot. Drives the editor's tab/section filtering: global sets
+   *  hide Data Visibility + Actions and show only the Global section in Settings. */
+  readonly isGlobalOnly = signal(false);
 
   // Working capabilities: perm id → toggle bool or segment option string.
   private readonly caps = signal<Record<string, boolean | string>>({});
@@ -106,6 +110,7 @@ export class PermissionEditorStateService {
       }
     }
     this.readOnly.set(set.isLocked || set.type === 'System');
+    this.isGlobalOnly.set(set.isGlobalOnly === true);
     this.seedManageSubs();
     this._baseline.set(this.snapshot());
   }

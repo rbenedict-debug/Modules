@@ -27,6 +27,11 @@ export interface PermissionDef {
   accessTier?: 'view' | 'manage';
   /** Initial value for a brand-new set (toggle bool / segment option). Defaults to off / first option. */
   defaultValue?: boolean | string;
+  /** Permission-set tier this row belongs to. Omitted = inherits the section's tier (default
+   *  'department'). A global permission set shows only 'global'-tier rows — e.g. Department
+   *  Locations is tagged 'department' so it drops out of the otherwise-global Global section.
+   *  Distinct from `accessTier` (view/manage), which is about the View Only preset. */
+  tier?: 'global' | 'department';
   subGroup?: string;
   notes?: { type: 'info' | 'warning' | 'auto'; text: string }[];
 }
@@ -40,6 +45,10 @@ export interface PermissionSection {
   perms: PermissionDef[];
   /** Presets this section offers (Actions Tickets/Assets omit 'view-only'). Defaults to all four. */
   availablePresets?: SectionPreset[];
+  /** Permission-set tier. A 'global' section (Settings → Global) appears in a global permission
+   *  set's editor; omitted = 'department' (every Actions section + the rest of Settings), which a
+   *  global set hides entirely. A perm's own `tier` overrides this. See `globalTierSections`. */
+  tier?: 'global' | 'department';
 }
 
 // ══════════════════════════════════════════════
@@ -156,6 +165,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
     id: 'global',
     label: 'Global',
     icon: 'language',
+    tier: 'global',
     perms: [
       { id: 'gl-activity-log', label: 'Activity Log', description: 'Controls access to view system activity logs (Onflo & ITAM)', controlType: 'segment', segmentOptions: ['Hide', 'View'] },
       { id: 'gl-ai-training-resources', label: 'AI Training Resources', description: 'Controls visibility and management of training resources for the chatbot', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
@@ -170,7 +180,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
       { id: 'gl-live-agents', label: 'Live Agents', description: 'Controls visibility and management of live agent configuration including enabling live chat, assigning agents, and configuring quick replies', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
       { id: 'gl-portal-branding', label: 'Portal Branding', description: 'Controls visibility and management of district portal branding', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
       { id: 'gl-global-locations', label: 'Global Locations', description: 'Controls visibility and management of the district-wide Buildings hierarchy and other shared location records.', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations' },
-      { id: 'gl-department-locations', label: 'Department Locations', description: 'Controls visibility and management of department-scoped Rooms, Containers, and Special Areas.', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations' },
+      { id: 'gl-department-locations', label: 'Department Locations', description: 'Controls visibility and management of department-scoped Rooms, Containers, and Special Areas.', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations', tier: 'department' },
       { id: 'gl-tags-tickets', label: 'Tickets', description: 'Controls visibility and management of ticket tag definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Tags' },
       { id: 'gl-tags-assets', label: 'Assets', description: 'Controls visibility and management of asset tag definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Tags' },
     ],
@@ -226,6 +236,27 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
     ],
   },
 ];
+
+// ══════════════════════════════════════════════
+// Global-tier filtering
+// ══════════════════════════════════════════════
+/**
+ * The sections a GLOBAL permission set's editor shows: keep only 'global'-tier sections, and within
+ * each only its 'global'-tier perms (a perm's own `tier` overrides the section's; omitted inherits
+ * the section, which defaults to 'department'). Department-tier sections — every ACTIONS section,
+ * plus Tickets/Assets/Workflows/Integrations in SETTINGS — have zero global perms and drop out, so
+ * running this over ACTIONS_SECTIONS yields []. Over SETTINGS_SECTIONS it yields just Global, minus
+ * its one department-tier row (Department Locations). Pure; returns shallow-cloned sections.
+ */
+export function globalTierSections(sections: PermissionSection[]): PermissionSection[] {
+  const out: PermissionSection[] = [];
+  for (const section of sections) {
+    const sectionTier = section.tier ?? 'department';
+    const perms = section.perms.filter(p => (p.tier ?? sectionTier) === 'global');
+    if (perms.length > 0) out.push({ ...section, perms });
+  }
+  return out;
+}
 
 // ══════════════════════════════════════════════
 // Data-Visibility option lists (Assets filter builder)
