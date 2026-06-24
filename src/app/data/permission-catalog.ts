@@ -64,7 +64,7 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
     perms: [
       { id: 'tk-create-general', label: 'Create General Ticket', description: 'Controls ability to create new general tickets via the pen icon dropdown in the header.', controlType: 'toggle', accessTier: 'manage' },
       { id: 'tk-create-global', label: 'Create Global Ticket', description: 'Controls ability to create new global tickets', controlType: 'toggle', accessTier: 'manage' },
-      { id: 'tk-schedule', label: 'Schedule a Ticket', description: 'Controls ability to schedule a ticket for repeated tasks', controlType: 'toggle', accessTier: 'manage', disabledByKey: 'tk-create-general' },
+      { id: 'tk-schedule', label: 'Schedule a Ticket', description: 'Controls ability to schedule a ticket for repeated tasks', controlType: 'toggle', accessTier: 'manage' },
       { id: 'tk-add-to-global', label: 'Add to Global Ticket', description: 'Controls ability to link a ticket to a global ticket via the ticket actions dropdown.', controlType: 'toggle', accessTier: 'manage' },
       { id: 'tk-publish-global-portal', label: 'Publish Global Ticket to Customer Portal', description: 'Controls ability to publish a global ticket to the customer portal via the toggle in the global ticket view.', controlType: 'toggle', accessTier: 'manage' },
       { id: 'tk-forward', label: 'Forward Ticket', description: 'Controls ability to forward a ticket to an external email address via the ticket actions dropdown.', controlType: 'toggle', accessTier: 'manage' },
