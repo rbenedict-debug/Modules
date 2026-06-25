@@ -96,13 +96,13 @@ export class AgentsTabComponent implements AfterViewInit {
   readonly columns = [
     { name: 'Name',            width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Email',           width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Permission Sets', width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Permission Sets', width: 240, type: 'text',  _categorical: true,  _badgeOptions: null },
     { name: 'Status',          width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
       { l: 'Active', c: 'green' }, { l: 'Pending', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
     ]},
-    { name: 'Module(s)',       width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Teams',           width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Locations',       width: 170, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Module(s)',       width: 180, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Teams',           width: 180, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Locations',       width: 170, type: 'text',  _categorical: true,  _badgeOptions: null },
     { name: 'Phone',           width: 150, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Source',          width: 150, type: 'text',  _categorical: true,  _badgeOptions: null },
     { name: 'Job Title',       width: 160, type: 'text',  _categorical: false, _badgeOptions: null },
