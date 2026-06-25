@@ -1,5 +1,5 @@
 @if (msg.snackbar(); as snack) {
-  <div class="ds-snackbar ds-snackbar--has-close"
+  <div class="ds-snackbar ds-snackbar--has-close app-snackbar"
        [class.ds-snackbar--text-action]="!!snack.retry"
        [attr.role]="snack.kind === 'error' ? 'alert' : 'status'" aria-live="polite">
     @if (snack.kind === 'error') {

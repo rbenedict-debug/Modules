@@ -11,23 +11,31 @@ html, body {
 // ── App-wide snackbar host ───────────────────────────────────────────────────
 // The design-mode snackbar is plain CSS-class markup (no MatSnackBar overlay), so its
 // top-center placement is owned here. See MessagingService / SnackbarHostComponent.
-.ds-snackbar {
+//
+// The `app-snackbar` class is required, not cosmetic: the DS pins the toast width with a
+// two-class rule, so a bare `.ds-snackbar` override (one class) loses the cascade to it
+// and silently never applies. That left long toasts stuck at the DS's narrow width — worst
+// on error toasts, whose messages are longest (email/module name) and which also carry a
+// leading icon + Retry button, so they wrapped to three lines. The extra class makes this
+// block out-specify the DS rule so `fit-content`/`max-width` actually take effect. Keep
+// `app-snackbar` on the host root (SnackbarHostComponent).
+.ds-snackbar.app-snackbar {
   position: fixed;
   top: calc(var(--spacing-xl) * 2);
   left: 0;
   right: 0;
   margin-inline: auto;
   width: fit-content;
-  // Wider toast so a message fits on one or two lines. The DS caps the message element
-  // narrow, which made fit-content shrink the toast around a prematurely-wrapped message;
-  // we lift that cap below. fit-content keeps short toasts compact, and this max lets long
-  // ones grow to ~736px before wrapping — two lines at most for this app's messages.
-  max-width: min(46rem, 92vw);
+  // fit-content keeps short toasts compact; the cap lets long ones grow wide enough to
+  // wrap to two lines instead of three. 92vw keeps a margin on narrow viewports.
+  max-width: min(50rem, 92vw);
   z-index: 1000;
 
-  // Let the message span the full toast width instead of the DS's narrower default.
+  // Let the message span the full toast width (DS caps it narrow), and break long
+  // unbreakable tokens (e.g. email addresses) instead of overflowing the toast edge.
   .ds-snackbar__message {
     max-width: none;
+    overflow-wrap: anywhere;
   }
 }
 
