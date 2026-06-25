@@ -360,11 +360,12 @@ A table of teams (engine-driven, same pattern). **A team belongs to one module, 
 (`Team.module: string | null`; `null` = a **global team**). The table is **scoped to the switcher
 context** like Permission Sets: a department shows its own teams (`module === currentModuleId`); the
 **Global context shows the global teams** (`module === null`). A team synced from an integration
-mapped to several modules still appears **once per module** — same name + members, one row each —
-differentiated by the Module + Source columns.
+mapped to several modules is stored **once per module** — same name + members, one record each —
+so each surfaces only in its own module's context (the table no longer shows a Module column, since
+every visible row already belongs to the current context).
 
 - **CTA:** `Create Team` → emits `createTeam`; the shell opens the [Team form](#25-create-and-edit-team-form). **Search:** `Search teams…`.
-- **Columns:** `Team Name`, `Module` (single; **`Global`** for a null-module team; filterable), `Agents` (this is `memberIds.length` — labeled Agents), `Permission Set` (resolved name or `None`), `Source` (`Manual` / `Active Directory` / `Azure` / `Google`).
+- **Columns:** `Team Name`, `Agents` (this is `memberIds.length` — labeled Agents), `Permission Set` (resolved name or `None`), `Source` (`Manual` / `Active Directory` / `Azure` / `Google`), `Last Updated` (`Team.updatedAt`, an ISO timestamp rendered via the date pipe — a synced pair shares one timestamp).
 - **Per-row action:** a row click emits `editTeam` (bound at initial render so it survives the engine's `cdr.detach()`); the shell opens the [Team form](#25-create-and-edit-team-form) — editable for `Manual` teams, **read-only** for synced ones. ⛔ Download unwired.
 - **Data:** `TeamsService.teams()` (11 seed rows: 5 single-module teams + 2 synced teams that each span two modules as a pair of module-specific rows — `District Service Desk` via Google, `Support` via Azure — + 2 **global** teams (`module: null`): `District Leadership`, `Emergency Response Team`).
 
@@ -375,11 +376,11 @@ differentiated by the Module + Source columns.
 A `ds-modal` hosted on the shell with **three modes**, driven by the optional `[team]` input
 (mirrors the Agent form):
 
-- **Create** (no `team`) — title `Create New Team`; fields editable **except Department, which is locked to the current switcher context** (Global → `Global`) — teams are created for the context you're in.
+- **Create** (no `team`) — title `Create New Team`; `Team Name`, `Permission Set`, and `Members` are editable. **No Department field** — a new team's module is the current switcher context (Global → a global team, `module: null`), the same context-scoping the Teams table and permission sets use.
 - **Edit, manual** (`team.source === 'Manual'`) — title `Edit Team`; pre-filled and editable.
 - **Edit, synced** (`team.source !== 'Manual'`) — title `Team Details`; **fully read-only**: a `ds-alert--info` "synced from {source}" banner, disabled fields, members as static `ds-tag` chips, and a single `Close` button (no Save). Synced teams are owned by their integration and edited in Integration Hub, not here.
 
-- **Fields:** `Team Name`* (text), `Department`* (**single** — **locked to the current context when creating** (Global → `Global`), since teams are created in-context; editable only when editing a manual team), `Permission Set` (single), and a `Members` field — a **non-functional `ds-search` stand-in** when editable (⛔ `<!-- TODO eng: wire user search + selected-member chips -->`), read-only chips when synced.
+- **Fields:** `Team Name`* (text), `Permission Set` (single), and a `Members` field. **Members render as chips** — the real agents on the team (the same `memberIds` the table's Agents column counts): **read-only** on a synced team, **removable** (× per chip) on a manual/new team, shown below a `Search users to add…` field. 🟡 Remove is a visual stand-in (resets on reopen) and the search is non-functional (⛔ `<!-- TODO eng: wire user search + real add/remove -->`). **No Department field in any mode** — a team's `module` is the current switcher context (Global → a global team), set on create and preserved on edit, never picked in this form.
 - **Footer:** synced → `Close`; otherwise `Cancel` + `Add Team` (create) / `Save Changes` (edit).
 - **Submit** 🟡 — toast (`Team created.` / `Team updated.`) + close; does **not** validate or call `TeamsService.add()` / `.update()`. ⛔ `<!-- TODO eng: validate + persist; link the synced banner to Integration Hub -->`.
 
@@ -434,7 +435,8 @@ A catalog of **permission sets** — named capability bundles assigned to agents
   isGlobalOnly?: boolean;                             // global-tier: Global Admin + any set created in the Global context
   description?; departments?; allDepartments?;        // editor Details tab (description + scope)
   assignedUserIds?; assignedTeamIds?;                 // editor Details tab (assigned users/teams)
-  capabilities: Record<string, boolean | string> }   // perm id → toggle bool or segment value
+  capabilities: Record<string, boolean | string>;    // perm id → toggle bool or segment value
+  updatedAt }                                         // ISO timestamp; stamped on create/update
 ```
 
 **8 seed sets** in `PermissionSetsService`:
@@ -454,7 +456,7 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 - **`Global Admin`** (renamed from *System Administrator*; id `ps-sysadmin` unchanged so `permissionSetByModule` refs don't break) carries **`isGlobalOnly: true`** — the global-tier admin set, shown only in the Global context. **`Department Admin`** (`ps-dept-admin`) is the department-tier admin set. The department switcher resolves a module role to one of these via `MODULE_ROLE_PERMISSION_SET_ID` (`Admin → ps-dept-admin`, `Agent → ps-team-member`).
 - **Global-tier sets** (`isGlobalOnly: true`) list only in the Global switcher context, and their editor exposes only global settings — never department-scoped config. Beyond the seeded `Global Admin`, **any set created while in the Global context** is marked `isGlobalOnly` (the New Permission Set modal sets it; the editor's Duplicate carries it).
 - The **full permission catalog** lives in **`permission-catalog.ts`**: two `PermissionSection[]` arrays — **`ACTIONS_SECTIONS`** (Tickets, Assets, Analytics, Campaigns) and **`SETTINGS_SECTIONS`** (Global, Tickets, Assets, Workflows, Integrations), **105 perms total**, ported faithfully from the Figma Make source. Tickets & Assets appear in BOTH (action toggles vs admin segments). **`ROLE_PRESET_STATES`** (keyed by role name; mapped from a set id via `SET_ROLE_PRESET`) is the read-only configuration each system set renders with. `PermissionSetsService` exposes `actionsSections` / `settingsSections`. Each section/perm may carry a **`tier: 'global' | 'department'`** tag (omitted = `department`); **`globalTierSections()`** narrows a catalog to its global-tier sections/perms — what a global-tier set's editor renders (over `ACTIONS_SECTIONS` → empty, so the Actions tab is hidden; over `SETTINGS_SECTIONS` → Global only, minus the department-scoped **Department Locations** row).
-- Methods: `add`, `update`, `remove`. ⚠️ **`remove()` has no caller — there is no delete UI.**
+- Methods: `add`, `update`, `remove` — `add` and `update` stamp `updatedAt` with the current time (backs the table's Last Updated column). ⚠️ **`remove()` has no caller — there is no delete UI.**
 
 ### 3.3 Permission Sets tab
 
@@ -463,7 +465,7 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 Engine-driven table.
 
 - **CTA:** `Create permission set` → opens the **New Permission Set modal** (`create-permission-set-modal/`): name, description, a context-locked **Department** (Global → "Global"), and an optional **Copy From** (seeds capabilities from an existing set). On Create it adds the set (scoped to the switcher context — **a set created in the Global context is marked `isGlobalOnly`**, making it a global-tier set) and opens its editor. 🟡
-- **Search:** `Search permission sets…`. **Columns:** `Name`, `Type` (`System` blue / `Custom` grey badge), `Scope` (the module name, or `System-wide`), `Status` (`Locked` grey / `Editable` green badge).
+- **Search:** `Search permission sets…`. **Columns:** `Name`, `Type` (`System` blue / `Custom` grey badge), `Agents` (count of agents assigned the set, scoped to the current context — in a department, agents whose set *for that module* is this one; in Global, agents holding the global-only set in any module), `Last Updated` (`PermissionSet.updatedAt`, rendered via the date pipe). *(`Scope` and `Status` columns were removed.)*
 - **Scoped to the switcher context** ✅ (like Teams): the **Global context** shows only the **global-tier** set (`Global Admin`, `isGlobalOnly`); a **department** shows the department-tier system-wide sets + only that department's own custom sets, and **hides `Global Admin`**. Re-mounts on context change.
 - **Whole row → editor** ✅ (`aria-label="Open {name}"`). No kebab menu.
 
@@ -473,17 +475,17 @@ Engine-driven table.
 
 Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`; the parent stays attached — reactive). Collapses the subnav via `chrome.setEditorOpen`. **A faithful port of the Figma Make config flow.**
 
-- **Shell** (`permission-set-editor.component`, `ViewEncapsulation.None` so its stylesheet styles the tab sub-components) — the back-affordance, set name (+ a `System` badge when read-only), and **tab bar all live in the *page heading*** (`agent-management.component`: breadcrumb + `<h1>` + a `ds-tabs` row the parent owns via `editorTab` / `editorTabs`), not in the editor card; Save/Cancel are a **bottom save bar** (`chrome.saveBar`, shown only while `state.dirty()`). Tabs are **Details · Data Visibility · Actions · Settings** — except **global-tier sets (`isGlobalOnly`) show only Details + Settings** (Data Visibility + Actions are dropped from the `editorTabs` computed). The amber read-only banner (system sets) renders inside each scrollable tab. Reloads when `[setId]` changes (so Duplicate → open works). Provides the per-editor **`PermissionEditorStateService`** every tab reads/writes.
-- **State service** — working name/description/capabilities/data-visibility/assignments + all mutators (`setToggle`, `setSegment`, `applyPreset`, scope/filter setters, assignment add/remove). System sets seed read-only from `ROLE_PRESET_STATES`; catalog-keyed custom sets clone verbatim; brand-new sets default. `save()` flushes name/description/assignments/capabilities to `PermissionSetsService`.
-- **Details tab** (`pset-details-tab`) — name + description, and **Assigned Users & Teams** (lists with counts + remove-confirm; an **Add Assignment** modal `assign-members-modal` with a searchable team/user list reading `UsersService` / `TeamsService`).
+- **Shell** (`permission-set-editor.component`, `ViewEncapsulation.None` so its stylesheet styles the tab sub-components) — the back-affordance, set name (+ a `System` badge when read-only), and **tab bar all live in the *page heading*** (`agent-management.component`: breadcrumb + `<h1>` + a `ds-tabs` row the parent owns via `editorTab` / `editorTabs`), not in the editor card; **Save Changes / Discard** are a **bottom save bar** (`chrome.saveBar`, shown while `state.dirty()` — which now includes buffered assignment edits, so it can appear for read-only system sets when their members change). Tabs are **Details · Data Visibility · Actions · Settings** — except **global-tier sets (`isGlobalOnly`) show only Details + Settings** (Data Visibility + Actions are dropped from the `editorTabs` computed). The amber read-only banner (system sets) renders inside each scrollable tab. Reloads when `[setId]` changes (so Duplicate → open works). Provides the per-editor **`PermissionEditorStateService`** every tab reads/writes.
+- **State service** — working name/description/capabilities/data-visibility/assignments + mutators (`setToggle`, `setSegment`, `applyPreset`, scope/filter setters, `applyAssignments`/`removeUser`/`removeTeam`) and a public `setId` signal. On load, **assignments seed from live data** (who holds the set via `permissionSetByModule` + teams via `Team.permissionSetId`, context-scoped), so the editor opens matching the table. System sets seed read-only from `ROLE_PRESET_STATES`; catalog-keyed custom sets clone verbatim; brand-new sets default. `dirty` = working state ≠ load-time baseline (so assignment edits flip it even on read-only sets). `save()` flushes assignments to `PermissionSetsService` **always**, and name/description/capabilities only on editable sets.
+- **Details tab** (`pset-details-tab`) — name + description, and **Assigned Users & Teams**. The list is **derived from live data** so it always matches the table's Agents count: **Users** = agents holding this set via `permissionSetByModule`, scoped to the current switcher context (the same derivation the Permission Sets table's Agents column uses); **Teams** = teams whose `permissionSetId` is this set (context-scoped, like the Teams table). Members render as **removable chips** (`ds-tag`, the same chip style as the team modal) inside a card on `--color-surface-page`; counts + an **Add Assignment** modal (`assign-members-modal`, searchable `UsersService` / `TeamsService` list). **Add/Remove are buffered edits** — the chip × removes immediately (no confirm) and Add appends; both make the editor `dirty` and are committed on **Save Changes** / reverted on **Discard**. 🟡 In design mode they don't truly persist (reopen re-seeds from live data — `⛔ TODO eng: real add/remove`).
 - **Data Visibility tab** (`pset-data-visibility-tab`) — Tickets + Assets record scopes (All / Assigned), plus the Assets **filter builder**: three reactive multiselects (Asset Type / Assigned User Type / Grade), each with an **Exclude** toggle + live helper text ("User can only see / cannot see assets …"). **Hidden for global-tier sets** — a global set has no department tickets/assets to scope.
-- **Actions & Settings tabs** — both render the shared **`pset-matrix-tab`** (left section nav + search, right perm grid), fed `ACTIONS_SECTIONS` / `SETTINGS_SECTIONS`. Each row is a **toggle** or **segment** (`Hide`/`View`/`Manage`, or `…/Edit`); a `Manage` segment reveals sub-checkboxes (`Create`/`Edit`/`Delete`, or custom — Archived Assets → `Recover`/`Permanently Delete`). Per-section bulk **presets** (`No Access` / `View Only` / `Full Access` / `Custom`; Actions Tickets/Assets omit View Only). A child perm gates on a parent via `disabledByKey`; sub-groups collapse. **Global-tier sets:** the **Actions tab is hidden** and **Settings shows only the Global section** — both via `globalTierSections()` (Actions has no global-tier sections; Global drops its department-scoped Department Locations row). The matrix component itself is unchanged; it just receives a smaller `sections` array.
-- **Save** 🟡 — in-memory (`setsSvc.update`). **Duplicate** (system sets) → a `{name} (copy)` Custom set, opened editable.
+- **Actions & Settings tabs** — both render the shared **`pset-matrix-tab`** (left section nav + search, right perm grid), fed `ACTIONS_SECTIONS` / `SETTINGS_SECTIONS`. Each row is a **toggle** or **segment** (`Hide`/`View`/`Manage`, or `…/Edit`); a `Manage` segment reveals sub-checkboxes (`Create`/`Edit`/`Delete`, or custom — Archived Assets → `Recover`/`Permanently Delete`). Per-section bulk **presets** (`No Access` / `View Only` / `Full Access` / `Custom`; Actions Tickets/Assets omit View Only). A child perm gates on a parent via `disabledByKey`; sub-groups collapse. **Global-tier sets:** the **Actions tab is hidden** and **Settings shows only the Global section** — both via `globalTierSections()` (Actions has no global-tier sections; the Settings Global section is now all global-tier, so it shows in full). The matrix component itself is unchanged; it just receives a smaller `sections` array.
+- **Save** 🟡 — in-memory (`setsSvc.update`), with the project's **snackbar pattern** (`MessagingService`): a **success** toast on save (`Permission set saved.`) and an **error** toast when an editable set's name is blank (`Enter a permission set name before saving.`, blocks the save). **Duplicate** (system sets) → a `{name} (copy)` Custom set, opened editable.
 - ⚠️ **Capability vocabulary.** Seed sets store a *legacy* vocabulary (`manageUsers`, `ticketAccess`, …); the editor seeds system sets from `ROLE_PRESET_STATES` and rewrites `capabilities` into catalog ids (`tk-*`, `as-*`, `gl-*`, …) on save.
 
 ### 3.5 The single source of truth
 
-`PermissionSetsService.sets()` is the one dataset. Sets are referenced **by id** everywhere — agents via `User.permissionSetByModule` (module → set id), teams via `Team.permissionSetId` — and resolved back to **names** by seven surfaces:
+`PermissionSetsService.sets()` is the one dataset. Sets are referenced **by id** everywhere — agents via `User.permissionSetByModule` (module → set id), teams via `Team.permissionSetId` — and read by eight surfaces (most resolve a set id back to its **name**; the editor's assigned list reads the reverse — who holds the set):
 
 | Surface | Reads | Resolves to |
 |---|---|---|
@@ -493,9 +495,26 @@ Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`
 | Teams table **Permission Set** column ([§2.4](#24-teams-tab)) | `team.permissionSetId` | set name (`None` fallback) |
 | Create **Team form** ([§2.5](#25-create-and-edit-team-form)) | `sets()` | dropdown options |
 | **Permission Set editor** ([§3.4](#34-permission-set-editor)) | `sets()` | the **one writer** (`add` / `update`) |
+| **Permission Set editor — Assigned Users & Teams** ([§3.4](#34-permission-set-editor)) | `user.permissionSetByModule` + `team.permissionSetId` (reverse — who holds the set) | the agents/teams on the set; matches the table's Agents count |
 | Department **switcher** role label ([§1.2](#12-department-switcher-top-nav)) | `sets()` via `MODULE_ROLE_PERMISSION_SET_ID` | role → set name (`Department Admin` / `Team Member`) |
 
-So all seven stay wired to one dataset; the editor is the only writer; there is no delete. (Structural aside: `ChromeService.setEditorOpen` is the shared mechanism the editor and the agent profile both use to collapse the subnav during a full-area takeover.)
+So all eight stay wired to one dataset; the editor is the only writer; there is no delete. (Structural aside: `ChromeService.setEditorOpen` is the shared mechanism the editor and the agent profile both use to collapse the subnav during a full-area takeover.)
+
+### 3.6 Settings permissions ↔ the product Settings nav
+
+⛔ spec — the contract eng wires; not active in the prototype yet
+
+The **Settings** tab's catalog (`SETTINGS_SECTIONS`, `permission-catalog.ts`) is the permission mirror of the product's **Settings sidebar nav** (`app.ts` `_settingsItems`): the same six sections (Global · Integration Hub · Workflows · Tickets · Assets · Call Center), in the same order, with **one permission per settings item**. The granted level on a permission **gates that item in a holder's Settings nav**:
+
+- **Hide** → the item (and its page) is not rendered in Settings for anyone holding the set.
+- **View** → the item is visible, read-only.
+- **Manage / Edit** → the item is visible and editable.
+
+A sub-group gates as a unit — e.g. setting **Topic Manager** (its `Topics` + `Success Messages` perms) to **Hide** removes the whole *Topic Manager* group from that user's Settings nav.
+
+The two lists must stay in lockstep: **add or rename a settings nav item ⇒ add or rename the matching permission**, and vice versa, so the mapping stays 1:1. In the prototype the Settings sidebar is static (only Department Modules + Agent Management are live pages) and the set is mocked, so nothing hides today — this is the intended engineering contract. `<!-- TODO eng: gate each settings nav item on the active set's SETTINGS_SECTIONS value -->`
+
+**Parity status:** all six sections now mirror the settings nav 1:1. To get there: Custom Fields was **added to the nav** (▸ Field Library / Visibility Rules) to match the catalog; Integration Hub was rebuilt to the nav's **API Tokens / Webhooks / Marketplace / Installed Apps** (the old SchoolCash Fee / Parts Catalogue rows were **dropped**); Workflows split into **Tickets / Assets / Lookup Tables**; and Global gained **District Profile, Department Modules, Agent Management, Labels**, the **Activity Log** Onflo/Assets split, and **Locations** as Physical Locations / Containers / Configurations (replacing Global / Department Locations). The system-set seed presets (`ROLE_PRESET_STATES`) were refreshed in lockstep, so all five prebuilt sets (Global Admin / Global User / Team Member / Recorder / Read Only) carry the renamed and new Settings perms at their intended level — catalog perm ids and preset keys are now a 1:1 match, so no Settings permission silently defaults to `Hide` on a system set.
 
 ---
 

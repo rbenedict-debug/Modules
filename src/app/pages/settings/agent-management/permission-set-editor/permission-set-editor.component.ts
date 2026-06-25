@@ -15,6 +15,7 @@ import {
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { globalTierSections } from '../../../../data/permission-catalog';
 import { ChromeService } from '../../../../data/chrome.service';
+import { MessagingService } from '../../../../data/messaging.service';
 import { PermissionEditorStateService } from './permission-editor-state.service';
 import { PsetMatrixTabComponent } from './pset-matrix-tab.component';
 import { PsetDataVisibilityTabComponent } from './pset-data-visibility-tab.component';
@@ -57,6 +58,7 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
 
   private readonly setsSvc = inject(PermissionSetsService);
   private readonly chrome = inject(ChromeService);
+  private readonly msg = inject(MessagingService);
   readonly state = inject(PermissionEditorStateService);
 
   readonly actionsSections = this.setsSvc.actionsSections;
@@ -73,13 +75,13 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   readonly activeTab = input<EditorTab>('details');
 
   constructor() {
-    // Dock the shell's bottom save bar only while there are unsaved changes (state.dirty() is
-    // false for read-only sets and after save/discard). The shell renders it outside the page;
-    // Save persists and stays here, Cancel reverts the edits — neither leaves the editor.
+    // Dock the shell's bottom save bar only while there are unsaved changes (state.dirty() clears
+    // after save/discard). The shell renders it outside the page; Save Changes persists and stays
+    // here, Discard reverts the edits — neither leaves the editor.
     effect(() => {
       this.chrome.saveBar.set(
         this.state.dirty()
-          ? { onCancel: () => this.state.discard(), onSave: () => this.state.save() }
+          ? { onCancel: () => this.discardChanges(), onSave: () => this.saveChanges() }
           : null,
       );
     });
@@ -92,6 +94,21 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.chrome.setEditorOpen(false);
     this.chrome.hideSaveBar();
+  }
+
+  // ── Save bar actions (the project's success/error snackbar pattern) ──────────────
+  /** Save Changes: validate, persist, toast success. A blank name (editable sets) → error toast. */
+  private saveChanges(): void {
+    if (!this.state.readOnly() && !this.state.name().trim()) {
+      this.msg.error('Enter a permission set name before saving.');
+      return;
+    }
+    this.state.save();
+    this.msg.success('Permission set saved.');
+  }
+  /** Discard: revert the working state to the last-saved set (the save bar clears via `dirty`). */
+  private discardChanges(): void {
+    this.state.discard();
   }
 
   private reload(): void {

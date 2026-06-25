@@ -99,19 +99,19 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:200px">
+                <th style="width:110px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Scope</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Scope">
+                    <span class="ds-table__header-label">Agents</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Agents">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:130px">
+                <th style="width:140px">
                   <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Status</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Status">
+                    <span class="ds-table__header-label">Last Updated</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Last Updated">
                       <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                     </button>
                   </div>
@@ -130,18 +130,8 @@
                       <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--grey">Custom</span>
                     }
                   </td>
-                  <td>{{ set.scope }}</td>
-                  <td>
-                    @if (set.isLocked) {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--grey">
-                        <span class="ds-label__dot" aria-hidden="true"></span>Locked
-                      </span>
-                    } @else {
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--has-dot ds-label--green">
-                        <span class="ds-label__dot" aria-hidden="true"></span>Editable
-                      </span>
-                    }
-                  </td>
+                  <td>{{ set.agentCount }}</td>
+                  <td>{{ set.updatedAt | date: 'mediumDate' }}</td>
                 </tr>
               }
             </tbody>

@@ -111,5 +111,7 @@
 // bottom edge and the body flexes above it. The ds-save-bar brings its own border/radius/elevation.
 .app-save-bar {
   flex-shrink: 0;
-  margin: var(--spacing-md) var(--spacing-lg) var(--spacing-lg);
+  // Tighter top gap (sm) between the page card and the save bar; keeps the larger
+  // side/bottom inset so the bar still reads as floating off the content edge.
+  margin: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
 }

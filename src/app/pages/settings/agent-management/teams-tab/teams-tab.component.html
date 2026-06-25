@@ -88,15 +88,6 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
-                <th style="width:200px">
-                  <div class="ds-table__header-content">
-                    <span class="ds-table__header-label">Module</span>
-                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Module">
-                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
-                    </button>
-                  </div>
-                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
-                </th>
                 <th style="width:110px">
                   <div class="ds-table__header-content">
                     <span class="ds-table__header-label">Agents</span>
@@ -124,16 +115,25 @@
                   </div>
                   <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                 </th>
+                <th style="width:140px">
+                  <div class="ds-table__header-content">
+                    <span class="ds-table__header-label">Last Updated</span>
+                    <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Last Updated">
+                      <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
+                    </button>
+                  </div>
+                  <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
+                </th>
               </tr>
             </thead>
             <tbody>
               @for (row of rows(); track row.id) {
                 <tr class="teams-row" style="cursor: pointer" (click)="openTeam(row.id)">
                   <td>{{ row.name }}</td>
-                  <td>{{ row.moduleName }}</td>
                   <td>{{ row.memberCount }}</td>
                   <td>{{ row.permissionSetName }}</td>
                   <td>{{ row.source }}</td>
+                  <td>{{ row.updatedAt | date: 'mediumDate' }}</td>
                 </tr>
               }
             </tbody>

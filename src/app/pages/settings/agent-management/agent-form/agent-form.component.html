@@ -50,12 +50,13 @@
               @if (locked('firstName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
 
-            <div class="ds-input">
+            <div class="ds-input" [class.is-disabled]="locked('middleName')">
               <label class="ds-input__label" for="af-middle">Middle Name</label>
               <div class="ds-input__field">
                 <input id="af-middle" class="ds-input__control" type="text" placeholder="Middle name"
-                       [value]="editing()?.middleName ?? ''" />
+                       [value]="editing()?.middleName ?? ''" [disabled]="locked('middleName')" />
               </div>
+              @if (locked('middleName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
 
             <div class="ds-input" [class.is-disabled]="locked('lastName')">
@@ -78,30 +79,33 @@
               @if (locked('email')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
 
-            <div class="ds-input">
+            <div class="ds-input" [class.is-disabled]="locked('phone')">
               <label class="ds-input__label" for="af-phone">Phone Number</label>
               <div class="ds-input__field">
                 <input id="af-phone" class="ds-input__control" type="tel" placeholder="(555) 000-0000"
-                       [value]="editing()?.phone ?? ''" />
+                       [value]="editing()?.phone ?? ''" [disabled]="locked('phone')" />
               </div>
+              @if (locked('phone')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
           </div>
 
           <div class="agent-form__grid agent-form__grid--2">
-            <div class="ds-input">
+            <div class="ds-input" [class.is-disabled]="locked('employeeId')">
               <label class="ds-input__label" for="af-emp">Employee ID</label>
               <div class="ds-input__field">
                 <input id="af-emp" class="ds-input__control" type="text" placeholder="Enter employee ID (optional)"
-                       [value]="editing()?.employeeId ?? ''" />
+                       [value]="editing()?.employeeId ?? ''" [disabled]="locked('employeeId')" />
               </div>
+              @if (locked('employeeId')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
 
-            <div class="ds-input">
+            <div class="ds-input" [class.is-disabled]="locked('jobTitle')">
               <label class="ds-input__label" for="af-job">Job Title</label>
               <div class="ds-input__field">
                 <input id="af-job" class="ds-input__control" type="text" placeholder="Enter job title (optional)"
-                       [value]="editing()?.jobTitle ?? ''" />
+                       [value]="editing()?.jobTitle ?? ''" [disabled]="locked('jobTitle')" />
               </div>
+              @if (locked('jobTitle')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
           </div>
 
@@ -118,7 +122,7 @@
         <div class="agent-form__section-head">
           <h3 id="af-access-title" class="ds-form-section-title agent-form__section-title">Modules &amp; Access</h3>
           <p id="af-access-hint" class="agent-form__section-hint">
-            Assign the departments this agent works in, the permission set granting their capabilities,
+            Assign the department modules this agent works in, the permission set granting their capabilities,
             and any teams that route work to them.
           </p>
         </div>
@@ -127,8 +131,8 @@
           @for (row of accessRows(); track row.id) {
             <div class="agent-form__access-row">
               <div class="agent-form__grid agent-form__grid--3 agent-form__access-fields">
-                <app-form-select label="Department" [options]="departments()"
-                  [selected]="row.moduleName" placeholder="Select department…" [required]="true" />
+                <app-form-select label="Department Module" [options]="departments()"
+                  [selected]="row.moduleName" placeholder="Select department module…" [required]="true" />
                 <app-form-select label="Permission Set" [options]="permissionSetNames()"
                   [selected]="row.permissionSetName" placeholder="Select permission set…" [required]="true" />
                 <app-form-select label="Teams" [options]="teamNames()"
@@ -140,7 +144,7 @@
                        lines up with the select controls, not the row top or bottom. -->
                   <span class="ds-select__label agent-form__row-remove-spacer" aria-hidden="true">Remove</span>
                   <button class="ds-icon-button ds-icon-button--icon" type="button"
-                          aria-label="Remove department" (click)="removeRow(row.id)">
+                          aria-label="Remove department module" (click)="removeRow(row.id)">
                     <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
                   </button>
                 </div>
@@ -151,7 +155,7 @@
           <div>
             <button class="ds-button ds-button--text ds-button--leading-icon" type="button" (click)="addRow()">
               <span class="ds-icon ds-icon--sm" aria-hidden="true">add</span>
-              Add another department
+              Add another department module
             </button>
           </div>
         </div>

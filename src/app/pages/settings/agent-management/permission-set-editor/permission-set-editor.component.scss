@@ -43,7 +43,9 @@
 
 .psets-editor__search {
   width: auto;
-  margin: var(--spacing-lg) var(--spacing-lg) var(--spacing-md);
+  // Side margins match the nav-list's side padding (--spacing-md) so the search field's
+  // edges line up with the section buttons below it, left and right.
+  margin: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
 }
 
 .psets-editor__nav-list {
@@ -486,18 +488,19 @@
   padding: var(--spacing-xl);
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
-  background-color: var(--color-surface-default);
+  background-color: var(--color-surface-page);
   text-align: center;
 }
 .psets-editor__assign-empty-icon { color: var(--color-icon-subtle); }
 .psets-editor__assign-empty-title { @include ds.type-body-medium; margin: var(--spacing-xs) 0 0; color: var(--color-text-secondary); }
 .psets-editor__assign-empty-help { @include ds.type-body-small; margin: 0; color: var(--color-text-secondary); }
 
+// Assigned members card: a bordered region on the page surface holding the Teams/Users chip lists.
 .psets-editor__assign-list {
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
-  background-color: var(--color-surface-default);
-  padding: 0 var(--spacing-lg);
+  background-color: var(--color-surface-page);
+  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
 }
 .psets-editor__assign-divider {
   @include ds.type-label-small;
@@ -505,15 +508,11 @@
   letter-spacing: 0.06em;
   color: var(--color-text-secondary);
   margin: 0;
-  padding: var(--spacing-md) 0 var(--spacing-xs);
+  padding: var(--spacing-md) 0 var(--spacing-sm);
 }
-.psets-editor__assign-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  padding: var(--spacing-sm) 0;
-  & + & { border-top: 1px solid var(--color-border-subtle); }
-}
+
+// Round avatar used in the Add Assignment modal rows (assign-members-modal); the Details tab itself
+// now shows assigned members as chips, so these are scoped to that modal's user/team rows.
 .psets-editor__assign-avatar {
   display: inline-flex;
   align-items: center;
@@ -530,10 +529,6 @@
   background-color: var(--color-surface-accent-purple, var(--color-surface-subtle));
   color: var(--color-text-primary);
 }
-.psets-editor__assign-text { display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
-.psets-editor__assign-name { @include ds.type-body-medium; color: var(--color-text-primary); }
-.psets-editor__assign-meta { @include ds.type-body-small; color: var(--color-text-secondary); }
-.psets-editor__assign-remove { margin-left: auto; }
 
 // A child perm whose parent (disabledByKey) is off is dimmed + inert (the control is also disabled).
 .psets-editor__row.is-disabled-parent { opacity: 0.5; }
@@ -588,39 +583,6 @@
 .psets-editor__filter-helper--include { color: var(--color-text-success, var(--color-border-success)); }
 .psets-editor__filter-helper--exclude { color: var(--color-text-warning); }
 .psets-editor__filter-helper--none { color: var(--color-text-secondary); }
-
-// ── Remove-confirm modal (Details tab) ──
-.psets-editor__confirm-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--spacing-xl);
-  background-color: var(--color-surface-scrim);
-}
-.psets-editor__confirm {
-  width: 100%;
-  max-width: 420px;
-  padding: var(--spacing-xl);
-  background-color: var(--color-surface-overlay);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-elevation-3);
-}
-.psets-editor__confirm-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-error);
-  color: var(--color-text-error, var(--color-border-error));
-  margin-bottom: var(--spacing-md);
-}
-.psets-editor__confirm-msg { @include ds.type-body-medium; margin: var(--spacing-xs) 0 var(--spacing-lg); color: var(--color-text-secondary); }
-.psets-editor__confirm-danger { background-color: var(--color-border-error); }
 
 // ── Add Assignment modal (rendered within the editor) ──
 .assign-modal__backdrop {

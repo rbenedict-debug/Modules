@@ -39,12 +39,10 @@
         </div>
       </div>
 
-      <!-- One department only: manual teams map to a single module; multi-department teams come
-           from an integration sync (one synced team per module). -->
-      <app-form-select label="Department" [options]="departments()"
-        [selected]="moduleName()" placeholder="Select department…" [required]="true"
-        [disabled]="isSynced() || !isEdit()"
-        [helper]="isSynced() ? undefined : (isEdit() ? 'A team belongs to one department.' : 'New teams are created for your current context: ' + moduleName() + '.')" />
+      <!-- No Department field: a team belongs to one department, and you only ever see and edit
+           teams in your current switcher context, so the department is implied — a new team takes
+           the current context's module (Global context → a global team) and an existing team keeps
+           the one it has. The synced banner above still points to Integration Hub for changes. -->
 
       <app-form-select label="Permission Set" [options]="permissionSetNames()"
         [selected]="permissionSetName()" placeholder="Select permission set (optional)…"
@@ -57,9 +55,9 @@
         <div class="team-form__members-readonly">
           <span class="ds-input__label">Members</span>
           <div class="ds-tag-list" role="list" aria-label="Team members">
-            @for (name of memberNames(); track name) {
+            @for (m of members(); track m.id) {
               <div class="ds-tag is-disabled" role="listitem">
-                <span class="ds-tag__label">{{ name }}</span>
+                <span class="ds-tag__label">{{ m.name }}</span>
               </div>
             } @empty {
               <span class="team-form__empty">No members.</span>
@@ -67,14 +65,33 @@
           </div>
         </div>
       } @else {
-        <!-- Members: search-to-add stand-in. TODO eng: wire user search + selected-member chips. -->
-        <div class="ds-input ds-search team-form__members" role="search">
+        <!-- Members: current members as removable chips + a search-to-add stand-in. The chips are
+             the real agents on the team (the Agents count in the table). Remove is visual only;
+             TODO eng: wire user search + real add/remove. -->
+        <div class="team-form__members">
           <label class="ds-input__label" for="tf-members">Members</label>
-          <div class="ds-input__field">
-            <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-            <input id="tf-members" class="ds-input__control" type="search"
-                   placeholder="Search users to add…" aria-label="Search users to add" />
+          <div class="ds-input ds-search" role="search">
+            <div class="ds-input__field">
+              <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+              <input id="tf-members" class="ds-input__control" type="search"
+                     placeholder="Search users to add…" aria-label="Search users to add" />
+            </div>
           </div>
+          @if (members().length) {
+            <div class="ds-tag-list" role="listbox" aria-label="Team members">
+              @for (m of members(); track m.id) {
+                <div class="ds-tag" role="option">
+                  <span class="ds-tag__label">{{ m.name }}</span>
+                  <button class="ds-tag__remove" type="button" aria-label="Remove {{ m.name }}"
+                          (click)="removeMember(m.id)">
+                    <span class="ds-icon ds-icon--xs">close</span>
+                  </button>
+                </div>
+              }
+            </div>
+          } @else {
+            <span class="team-form__empty">No members yet — search to add.</span>
+          }
         </div>
       }
 

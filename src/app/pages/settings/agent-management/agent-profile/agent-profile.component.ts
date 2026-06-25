@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
-import { SOURCE_LOCKED_FIELDS, User, UserStatus, fullName } from '../../../../data/models';
+import { User, UserStatus, fullName } from '../../../../data/models';
 import { UsersService } from '../../../../data/users.service';
 import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
@@ -19,8 +19,6 @@ interface InfoField {
   // Leading icon + tint on a single-value field (Account Status, Source).
   icon?: string;
   iconColor?: 'green' | 'yellow' | 'grey' | 'purple' | 'blue';
-  // When set, the field is synced/locked from this integration → "Managed by X" note.
-  managedBy?: string;
 }
 
 // One module the agent belongs to, with its permission set + the teams scoped to it.
@@ -37,31 +35,12 @@ interface ModulePermissionCard {
 type TabId = 'details' | 'permissions' | 'activity';
 interface ProfileTab { id: TabId; label: string; }
 
-// Hero provenance chip: at-a-glance "where did this agent come from". Synced agents
-// carry the integration name + a sync icon (blue); manual entries read "Manual entry"
-// with an edit icon (grey) — mirrors the agents/teams "integration = blue, Manual =
-// grey" convention.
-interface SourceBadge {
-  synced: boolean;
-  icon: string;
-  label: string;
-  title: string;
-}
-
 // Status → DS label colour (matches the agents table + the former drawer).
 const STATUS_COLOR: Record<UserStatus, 'green' | 'yellow' | 'grey' | 'purple'> = {
   Active: 'green',
   Unverified: 'yellow',
   Inactive: 'grey',
   Pending: 'purple',
-};
-
-// Status → leading icon for the Account Status field.
-const STATUS_ICON: Record<UserStatus, string> = {
-  Active: 'check_circle',
-  Unverified: 'help',
-  Inactive: 'cancel',
-  Pending: 'schedule',
 };
 
 /**
@@ -141,64 +120,31 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     return u ? STATUS_COLOR[u.status] : 'grey';
   });
 
-  // Source provenance for the hero chip — manual entry vs. synced from an integration.
-  readonly sourceBadge = computed<SourceBadge | null>(() => {
-    const u = this.user();
-    if (!u) return null;
-    if (u.source === 'Manual') {
-      return {
-        synced: false,
-        icon: 'edit',
-        label: 'Manual entry',
-        title: 'This agent was added manually.',
-      };
-    }
-    return {
-      synced: true,
-      icon: 'sync',
-      label: `Synced from ${u.source}`,
-      title: `This agent is synced from ${u.source}; its core fields are managed by the integration.`,
-    };
-  });
-
   readonly isAgent = computed(() => !!this.user()?.roles.includes('Agent'));
 
-  // Identity line under the name: roles · primary location (the full lists live in
-  // Basic Information below).
-  readonly subtitle = computed(() => {
-    const u = this.user();
-    if (!u) return '';
-    const roles = u.roles.length ? u.roles.join(', ') : 'No role';
-    const location = u.locations[0] ?? '—';
-    return `${roles} · ${location}`;
-  });
-
   // ── Basic Information ─────────────────────────────────────────────────────────
-  // TODO eng: render the agent's real field set (standard + custom).
+  // The 12 standard fields, data-driven from the User model. Integration provenance is shown
+  // once via the Source field; the per-field "Managed by" notes were removed (clutter on the
+  // profile). Locked/managed fields surface in the Edit Agent form instead.
   readonly basicInfo = computed<InfoField[]>(() => {
     const u = this.user();
     if (!u) return [];
 
-    // Synced sources lock a subset of fields (SOURCE_LOCKED_FIELDS); those carry a
-    // "Managed by {integration}" note so admins know the value is owned upstream.
     const synced = u.source !== 'Manual';
-    const locked = SOURCE_LOCKED_FIELDS[u.source];
-    const managedBy = (key: keyof User): string | undefined =>
-      synced && locked.includes(key) ? u.source : undefined;
 
     return [
-      { label: 'User ID', value: this.formatUserId(u.id) },
-      { label: 'First Name', value: u.firstName, managedBy: managedBy('firstName') },
-      { label: 'Last Name', value: u.lastName, managedBy: managedBy('lastName') },
+      { label: 'First Name', value: u.firstName },
+      { label: 'Last Name', value: u.lastName },
       { label: 'Middle Name', value: u.middleName || '—' },
-      { label: 'Email', value: u.email, managedBy: managedBy('email') },
+      { label: 'Email', value: u.email },
       { label: 'Phone', value: u.phone || '—' },
-      { label: 'Account Status', value: u.status, icon: STATUS_ICON[u.status], iconColor: STATUS_COLOR[u.status], managedBy: managedBy('status') },
-      { label: 'Locations', value: u.locations.length ? u.locations : '—' },
-      { label: 'Source', value: u.source, icon: synced ? 'cloud' : undefined, iconColor: synced ? 'blue' : undefined },
       { label: 'Job Title', value: u.jobTitle || '—' },
-      { label: 'Last Login', value: this.formatDate(u.lastLogin) },
+      { label: 'Employee ID', value: u.employeeId || '—' },
+      { label: 'Source', value: u.source, icon: synced ? 'sync' : undefined, iconColor: synced ? 'blue' : undefined },
+      { label: 'Account Status', value: u.status },
+      { label: 'Locations', value: u.locations.length ? u.locations : '—' },
       { label: 'Date Added', value: this.formatDate(u.dateAdded) },
+      { label: 'Last Login', value: this.formatDate(u.lastLogin) },
     ];
   });
 
@@ -206,6 +152,28 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   fieldValues(field: InfoField): string[] {
     return Array.isArray(field.value) ? field.value : [field.value];
   }
+
+  // ── Custom Fields ──────────────────────────────────────────────────────────────
+  // District-defined custom fields, shown in their own section below Basic Information.
+  // Anything beyond the 12 standard fields lives here. Definitions mirror the Create/Edit
+  // Agent form's set; each renders this agent's value (or "—" when unset).
+  // TODO eng: load these definitions from the district's custom-field schema (an integration
+  // can toggle individual fields on/off) and read values from User.customFields — not a static list.
+  private readonly customFieldDefs: { key: string; label: string }[] = [
+    { key: 'room', label: 'Office / Room' },
+    { key: 'shift', label: 'Shift' },
+    { key: 'badge', label: 'Badge ID' },
+  ];
+
+  readonly customFields = computed<InfoField[]>(() => {
+    const u = this.user();
+    if (!u) return [];
+    const values = u.customFields ?? {};
+    return this.customFieldDefs.map((def) => ({
+      label: def.label,
+      value: values[def.key] || '—',
+    }));
+  });
 
   // ── Permissions (per module the agent belongs to) ─────────────────────────────
   readonly modulePermissionCards = computed<ModulePermissionCard[]>(() => {
@@ -236,12 +204,6 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   });
 
   // ── Formatting ─────────────────────────────────────────────────────────────────
-  /** Display id like "USR-00002" from the internal id (e.g. "u2"). */
-  formatUserId(id: string): string {
-    const digits = id.replace(/\D/g, '');
-    return digits ? `USR-${digits.padStart(5, '0')}` : id.toUpperCase();
-  }
-
   formatDate(iso?: string): string {
     if (!iso) return '—';
     const d = new Date(iso);

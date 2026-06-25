@@ -26,6 +26,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'All',
       },
+      updatedAt: '2026-01-15T10:00:00Z',
     },
     // Department Admin — the department-tier admin set. System-wide (moduleId: null) so it
     // shows in every department context, but never in Global (only Global Admin shows there).
@@ -43,6 +44,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'All',
       },
+      updatedAt: '2026-02-03T09:30:00Z',
     },
     {
       id: 'ps-global-user',
@@ -58,6 +60,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'All',
       },
+      updatedAt: '2026-01-20T14:00:00Z',
     },
     {
       id: 'ps-team-member',
@@ -73,6 +76,7 @@ export class PermissionSetsService {
         viewAnalytics: false,
         ticketAccess: 'Team',
       },
+      updatedAt: '2026-05-12T11:20:00Z',
     },
     {
       id: 'ps-recorder',
@@ -88,6 +92,7 @@ export class PermissionSetsService {
         viewAnalytics: false,
         ticketAccess: 'Own',
       },
+      updatedAt: '2026-04-08T16:45:00Z',
     },
     {
       id: 'ps-readonly',
@@ -103,6 +108,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'Read',
       },
+      updatedAt: '2026-03-22T13:10:00Z',
     },
     // ── Custom sets (2) — each scoped to a module ───────────────────────────
     {
@@ -119,6 +125,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'All',
       },
+      updatedAt: '2026-06-11T15:30:00Z',
     },
     {
       id: 'ps-classic-triage',
@@ -134,6 +141,7 @@ export class PermissionSetsService {
         viewAnalytics: true,
         ticketAccess: 'Team',
       },
+      updatedAt: '2026-06-05T10:15:00Z',
     },
   ]);
 
@@ -142,13 +150,15 @@ export class PermissionSetsService {
   readonly actionsSections: PermissionSection[] = ACTIONS_SECTIONS;
   readonly settingsSections: PermissionSection[] = SETTINGS_SECTIONS;
 
-  add(s: Omit<PermissionSet, 'id'>): void {
+  add(s: Omit<PermissionSet, 'id' | 'updatedAt'>): void {
     const id = `ps-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
-    this.sets.update(list => [...list, { ...s, id }]);
+    this.sets.update(list => [...list, { ...s, id, updatedAt: new Date().toISOString() }]);
   }
 
+  // Any edit (re-stamps `updatedAt`, which backs the table's Last Updated column).
   update(id: string, patch: Partial<PermissionSet>): void {
-    this.sets.update(list => list.map(s => (s.id === id ? { ...s, ...patch, id: s.id } : s)));
+    const updatedAt = new Date().toISOString();
+    this.sets.update(list => list.map(s => (s.id === id ? { ...s, ...patch, id: s.id, updatedAt } : s)));
   }
 
   remove(ids: string[]): void {

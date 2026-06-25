@@ -8,6 +8,8 @@ export interface User {
   modules: string[]; teams: string[]; locations: string[];
   grade?: number; jobTitle?: string;
   employeeId?: string; pronouns?: string; emergencyContact?: string;
+  /** District-defined custom field values, keyed by custom-field key. TODO eng: load from the district custom-field schema. */
+  customFields?: Record<string, string>;
   permissionSetByModule: Record<string, string>;
   lastLogin?: string; dateAdded: string;
 }
@@ -93,7 +95,7 @@ export type TeamSource = 'Manual' | 'Active Directory' | 'Azure' | 'Google';
 // `module` is the single department a team belongs to, or null for a district-wide (global) team
 // created in the Global context. The Teams tab filters by the switcher context: a department sees
 // its own teams; Global sees the null-module (global) teams.
-export interface Team { id: string; name: string; module: string | null; memberIds: string[]; permissionSetId?: string; source: TeamSource; }
+export interface Team { id: string; name: string; module: string | null; memberIds: string[]; permissionSetId?: string; source: TeamSource; updatedAt: string; }
 
 export type PermissionSetType = 'System' | 'Custom';
 /** `isGlobalOnly` marks the global-tier admin set (Global Admin): it shows ONLY in the Global
@@ -114,6 +116,7 @@ export interface PermissionSet {
   assignedUserIds?: string[];
   assignedTeamIds?: string[];
   capabilities: Record<string, boolean | string>;
+  updatedAt: string; // ISO timestamp; stamped on create/update by PermissionSetsService
 }
 
 /** A Marketplace integration (owned by the Integrations team). Integration Hub is district-level

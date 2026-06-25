@@ -96,6 +96,12 @@
   flex-shrink: 0;
 }
 
+/* Tab bar sits tight under the hero — pull it up so the hero→tabs gap is ~4px
+   (--spacing-xs) instead of the column's --spacing-lg, leaving the tabs→panel rhythm intact. */
+.agent-detail > .ds-tabs {
+  margin-top: calc(var(--spacing-xs) - var(--spacing-lg));
+}
+
 /* Active tab panel — stacks its section cards with the same rhythm as the page. */
 .agent-detail__panel {
   display: flex;
@@ -147,39 +153,6 @@
   color: var(--color-text-secondary);
 }
 
-/* Source provenance chip — sits beside the status pill so an admin can tell at a
-   glance whether the agent is synced from an integration or was added by hand.
-   Synced = brand blue (the agents/teams "integration = blue" convention); manual =
-   neutral grey. Pill-matched to the adjacent DS status label. */
-.agent-detail__source {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid transparent;
-  border-radius: var(--radius-full);
-  white-space: nowrap;
-  @include ds.type-label-small;
-
-  .ds-icon { flex: none; }
-}
-
-.agent-detail__source--synced {
-  background-color: var(--color-surface-accent-blue);
-  border-color: var(--color-border-accent-blue);
-  color: var(--color-text-brand);
-
-  .ds-icon { color: var(--color-icon-accent-blue); }
-}
-
-.agent-detail__source--manual {
-  background-color: var(--color-surface-subtle);
-  border-color: var(--color-border-primary);
-  color: var(--color-text-secondary);
-
-  .ds-icon { color: var(--color-icon-subtle); }
-}
-
 /* ── Section heads ─────────────────────────────────────────────────────────── */
 .agent-detail__section-head {
   display: flex;
@@ -200,6 +173,13 @@
   margin: 0;
   @include ds.type-title-h3;
   color: var(--color-text-primary);
+}
+
+/* Section divider inside the Details card — separates Basic Information from Custom Fields.
+   Even --spacing-xl gap above and below so the two sections read as distinct areas (wider
+   than the lg head→grid rhythm within a section). Overrides the UA <hr> margin. */
+.agent-detail__section-divider {
+  margin: var(--spacing-xl) 0;
 }
 
 /* ── Basic Information grid ────────────────────────────────────────────────── */
@@ -355,16 +335,6 @@ $accents: 'blue', 'green', 'navy', 'orange', 'pink', 'purple', 'red', 'teal', 'y
 .agent-detail__info-icon--purple { color: var(--color-icon-accent-purple); }
 .agent-detail__info-icon--blue   { color: var(--color-icon-accent-blue); }
 .agent-detail__info-icon--grey   { color: var(--color-icon-subtle); }
-
-/* "Managed by {integration}" — quiet synced-field provenance note under the value. */
-.agent-detail__managed {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-xs);
-  @include ds.type-label-small;
-  color: var(--color-text-secondary);
-}
-.agent-detail__managed-icon { color: var(--color-icon-subtle); }
 
 .agent-detail__info-label {
   @include ds.type-label-small;

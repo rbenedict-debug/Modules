@@ -9,8 +9,10 @@ import {
   inject,
 } from '@angular/core';
 
-import { ModulesService } from '../../../../data/modules.service';
+import { DatePipe } from '@angular/common';
+
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { UsersService } from '../../../../data/users.service';
 import { ModuleContextService } from '../../../../data/module-context.service';
 import { PermissionSet } from '../../../../data/models';
 
@@ -22,14 +24,14 @@ interface SetRow {
   id: string;
   name: string;
   type: PermissionSet['type'];
-  scope: string;       // module name, or 'System-wide'
-  isLocked: boolean;
+  agentCount: number;  // agents assigned this set in the current context
+  updatedAt: string;   // ISO timestamp; rendered via the date pipe
 }
 
 @Component({
   selector: 'app-permission-sets-tab',
   standalone: true,
-  imports: [],
+  imports: [DatePipe],
   templateUrl: './permission-sets-tab.component.html',
   styleUrl: './permission-sets-tab.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,16 +46,9 @@ export class PermissionSetsTabComponent implements AfterViewInit {
   @Output() create = new EventEmitter<void>();
 
   private readonly setsSvc = inject(PermissionSetsService);
-  private readonly modulesSvc = inject(ModulesService);
+  private readonly usersSvc = inject(UsersService);
   private readonly moduleCtx = inject(ModuleContextService);
   private readonly cdr = inject(ChangeDetectorRef);
-
-  // Module id → display name, for resolving each set's scope cell.
-  private readonly moduleNameById = computed(() => {
-    const map = new Map<string, string>();
-    for (const m of this.modulesSvc.modules()) map.set(m.id, m.name);
-    return map;
-  });
 
   // Permission sets visible in the current switcher context, resolved once during the initial
   // render. After ngAfterViewInit the view is detached and table-init.js owns the DOM, so this
@@ -63,8 +58,17 @@ export class PermissionSetsTabComponent implements AfterViewInit {
   //  • A department → hide Global Admin; show the system-wide (department-tier) sets plus only
   //    the custom sets scoped to the selected department.
   readonly rows = computed<SetRow[]>(() => {
-    const names = this.moduleNameById();
     const moduleId = this.moduleCtx.currentModuleId();
+    const agents = this.usersSvc.byModule(moduleId);
+
+    // Agents column: how many agents in this context hold the set. In a department, match the
+    // agent's set FOR THIS module; in Global there's no single module key (the global-only set is
+    // assigned per-module), so count agents holding it in any of their modules.
+    const countAgents = (setId: string): number =>
+      moduleId === null
+        ? agents.filter(u => Object.values(u.permissionSetByModule).includes(setId)).length
+        : agents.filter(u => u.permissionSetByModule[moduleId] === setId).length;
+
     return this.setsSvc.sets()
       .filter(s =>
         moduleId === null
@@ -75,23 +79,21 @@ export class PermissionSetsTabComponent implements AfterViewInit {
         id: s.id,
         name: s.name,
         type: s.type,
-        scope: s.moduleId ? (names.get(s.moduleId) ?? s.moduleId) : 'System-wide',
-        isLocked: s.isLocked,
+        agentCount: countAgents(s.id),
+        updatedAt: s.updatedAt,
       }));
   });
 
   // Column config for table-init.js. `name` MUST match the <th> header labels exactly.
-  // Name is non-categorical (free text); Type / Status are badges; Scope is categorical
-  // (module name or 'System-wide') so it gets a checkbox filter.
+  // Name is non-categorical (free text); Type is a badge; Agents is a numeric count; Last
+  // Updated is a date.
   readonly columns = [
-    { name: 'Name',   width: 260, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Type',   width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
+    { name: 'Name',         width: 260, type: 'text',   _categorical: false, _badgeOptions: null },
+    { name: 'Type',         width: 130, type: 'badge',  _categorical: true,  _badgeOptions: [
       { l: 'System', c: 'blue' }, { l: 'Custom', c: 'grey' },
     ]},
-    { name: 'Scope',  width: 200, type: 'text',  _categorical: true,  _badgeOptions: null },
-    { name: 'Status', width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
-      { l: 'Locked', c: 'grey' }, { l: 'Editable', c: 'green' },
-    ]},
+    { name: 'Agents',       width: 110, type: 'number', _categorical: false, _badgeOptions: null },
+    { name: 'Last Updated', width: 140, type: 'date',   _categorical: false, _badgeOptions: null },
   ];
 
   get totalWidth(): number {

@@ -15,7 +15,7 @@ import { PermissionSetsService } from '../../../../data/permission-sets.service'
 import { TeamsService } from '../../../../data/teams.service';
 import { UsersService } from '../../../../data/users.service';
 import { MessagingService } from '../../../../data/messaging.service';
-import { SOURCE_LOCKED_FIELDS, User, UserSource } from '../../../../data/models';
+import { User, UserSource } from '../../../../data/models';
 import { FormSelectComponent } from '../form-select.component';
 
 // One module-access grant in the form: a department + the permission set that grants
@@ -43,9 +43,9 @@ let rowUid = 0;
 /**
  * Create / Edit Agent popup. Driven by the design-system `ds-modal` over a scrim. Two modes:
  *  - Create (no `agent`): source is Manual, every field editable, activation-type radios.
- *  - Edit (`agent` set): pre-filled. A synced agent locks the integration-managed fields
- *    (SOURCE_LOCKED_FIELDS) as disabled "Managed by {source}" controls behind an info banner;
- *    the rest stay editable. This is the "limited fields on a synced entry" behaviour.
+ *  - Edit (`agent` set): pre-filled. A synced agent locks ALL personal-info fields (name,
+ *    email, phone, employee ID, job title, status) as disabled "Managed by {source}" controls
+ *    behind an info banner; Locations and module/team access stay editable (Onflo-side data).
  *
  * Design-mode contract: text/radio fields are native + uncontrolled, dropdowns are run by
  * `runtime/select.js`, and submit is mocked (success toast + close). Real binding, validation,
@@ -81,11 +81,18 @@ export class AgentFormComponent implements OnInit {
   readonly isEdit = computed(() => !!this.agentSig());
   readonly source = computed<UserSource>(() => this.agentSig()?.source ?? 'Manual');
   readonly isSynced = computed(() => this.source() !== 'Manual');
-  private readonly lockedFields = computed(() => new Set<keyof User>(SOURCE_LOCKED_FIELDS[this.source()]));
 
-  /** A field is locked when the agent is synced and the integration manages that field. */
+  // On a synced agent every personal-info field is owned by the integration, so it's read-only
+  // here — name, email, phone, employee ID, job title, account status. Locations is intentionally
+  // NOT in this set: it's an Onflo-side assignment, editable even when synced.
+  // TODO eng: drive field ownership from the integration's real config.
+  private static readonly INTEGRATION_MANAGED_FIELDS: ReadonlySet<keyof User> = new Set<keyof User>([
+    'firstName', 'middleName', 'lastName', 'email', 'phone', 'employeeId', 'jobTitle', 'status',
+  ]);
+
+  /** A field is locked when the agent is synced and the integration owns that field. */
   locked(field: keyof User): boolean {
-    return this.isSynced() && this.lockedFields().has(field);
+    return this.isSynced() && AgentFormComponent.INTEGRATION_MANAGED_FIELDS.has(field);
   }
 
   readonly title = computed(() => (this.isEdit() ? 'Edit Agent' : 'Create New Agent'));

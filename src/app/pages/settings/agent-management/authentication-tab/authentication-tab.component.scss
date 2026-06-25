@@ -38,20 +38,25 @@
   margin: 0 0 var(--spacing-sm);
 }
 
+// Body copy uses primary (high-contrast) text rather than secondary grey: better legibility,
+// and the bold lead-in labels stand out by weight alone against text of the same colour
+// (no more grey-body / dark-label clash). Width is left unconstrained so the copy fills the
+// card instead of leaving a large empty gutter.
 .auth-tab__text {
   @include ds.type-body-medium;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   margin: 0;
 }
 
 .auth-tab__list {
   @include ds.type-body-medium;
-  color: var(--color-text-secondary);
+  color: var(--color-text-primary);
   margin: 0;
   padding-left: var(--spacing-lg);
 
+  // A little more space between items so each point reads as its own line.
   li {
-    margin-bottom: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
 
     &:last-child {
       margin-bottom: 0;

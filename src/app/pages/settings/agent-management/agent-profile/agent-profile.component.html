@@ -31,23 +31,15 @@
             <span class="ds-avatar__initials">{{ initials() || '—' }}</span>
           </div>
           <div class="agent-detail__hero-id">
+            <!-- Line 1: name + status. -->
             <div class="agent-detail__hero-name-row">
               <p class="agent-detail__hero-name">{{ fullName() }}</p>
-              <span class="ds-label ds-label--pill ds-label--sm ds-label--has-dot ds-label--{{ statusColor() }}">
+              <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--has-dot ds-label--{{ statusColor() }}">
                 <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
               </span>
-              <!-- Source provenance — synced-from-integration vs. manual entry, at a glance. -->
-              @if (sourceBadge(); as src) {
-                <span class="agent-detail__source"
-                      [class.agent-detail__source--synced]="src.synced"
-                      [class.agent-detail__source--manual]="!src.synced"
-                      [title]="src.title">
-                  <span class="ds-icon ds-icon--xs" aria-hidden="true">{{ src.icon }}</span>
-                  {{ src.label }}
-                </span>
-              }
             </div>
-            <p class="agent-detail__hero-sub">{{ subtitle() }}</p>
+            <!-- Line 2: source · email (plain text — raw source word, no icon). -->
+            <p class="agent-detail__hero-sub">{{ u.source }} · {{ u.email }}</p>
           </div>
           <!-- Top-right hero action. TODO eng: wire edit behavior. -->
           <button class="ds-button ds-button--outlined ds-button--leading-icon agent-detail__hero-edit" type="button" (click)="editOpen.set(true)">
@@ -80,37 +72,60 @@
       @case ('details') {
         <div class="agent-detail__panel" role="tabpanel" id="ap-panel-details" aria-labelledby="ap-tab-details">
 
-          <section class="ds-card ds-card--elevated" aria-labelledby="ap-info-title">
+          <!-- One Details card holding two sections: Basic Information + Custom Fields,
+               split by a DS section divider. -->
+          <div class="ds-card ds-card--elevated">
             <div class="ds-card__body">
-              <div class="agent-detail__section-head">
-                <h2 class="agent-detail__section-title" id="ap-info-title">Basic Information</h2>
-              </div>
-              <div class="agent-detail__info">
-                @for (field of basicInfo(); track field.label) {
-                  <div class="agent-detail__info-item">
-                    <span class="agent-detail__info-label">{{ field.label }}</span>
-                    <div class="agent-detail__info-values">
-                      @for (v of fieldValues(field); track $index) {
-                        <span class="agent-detail__info-value">
-                          @if (field.icon) {
-                            <span class="ds-icon ds-icon--sm ds-icon--filled agent-detail__info-icon agent-detail__info-icon--{{ field.iconColor }}" aria-hidden="true">{{ field.icon }}</span>
-                          }
-                          {{ v }}
-                        </span>
-                      }
+
+              <!-- Basic Information: the 12 standard fields. -->
+              <section aria-labelledby="ap-info-title">
+                <div class="agent-detail__section-head">
+                  <h2 class="agent-detail__section-title" id="ap-info-title">Basic Information</h2>
+                </div>
+                <div class="agent-detail__info">
+                  @for (field of basicInfo(); track field.label) {
+                    <div class="agent-detail__info-item">
+                      <span class="agent-detail__info-label">{{ field.label }}</span>
+                      <div class="agent-detail__info-values">
+                        @for (v of fieldValues(field); track $index) {
+                          <span class="agent-detail__info-value">
+                            @if (field.icon) {
+                              <span class="ds-icon ds-icon--sm ds-icon--filled agent-detail__info-icon agent-detail__info-icon--{{ field.iconColor }}" aria-hidden="true">{{ field.icon }}</span>
+                            }
+                            {{ v }}
+                          </span>
+                        }
+                      </div>
                     </div>
-                    @if (field.managedBy) {
-                      <span class="agent-detail__managed">
-                        <span class="ds-icon ds-icon--xs agent-detail__managed-icon" aria-hidden="true">cloud</span>
-                        Managed by {{ field.managedBy }}
-                      </span>
-                    }
-                  </div>
-                }
-              </div>
+                  }
+                </div>
+              </section>
+
+              <hr class="ds-divider agent-detail__section-divider" />
+
+              <!-- Custom Fields: district-defined fields beyond the 12 standard ones. Dynamic per
+                   district; each agent's value shows here ("—" when unset).
+                   TODO eng: render the district's configured custom fields + this agent's stored values. -->
+              <section aria-labelledby="ap-custom-title">
+                <div class="agent-detail__section-head">
+                  <h2 class="agent-detail__section-title" id="ap-custom-title">Custom Fields</h2>
+                </div>
+                <div class="agent-detail__info">
+                  @for (field of customFields(); track field.label) {
+                    <div class="agent-detail__info-item">
+                      <span class="agent-detail__info-label">{{ field.label }}</span>
+                      <div class="agent-detail__info-values">
+                        @for (v of fieldValues(field); track $index) {
+                          <span class="agent-detail__info-value">{{ v }}</span>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </section>
+
             </div>
-            <!-- TODO eng: render the agent's real field set (standard + custom). -->
-          </section>
+          </div>
 
         </div>
       }

@@ -1,6 +1,9 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { PermissionSet } from '../../../../data/models';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { UsersService } from '../../../../data/users.service';
+import { TeamsService } from '../../../../data/teams.service';
+import { ModuleContextService } from '../../../../data/module-context.service';
 import {
   ACTIONS_SECTIONS,
   PermissionDef,
@@ -30,8 +33,12 @@ const DV_ASSET_SCOPE = 'dv-asset-scope';
 @Injectable()
 export class PermissionEditorStateService {
   private readonly setsSvc = inject(PermissionSetsService);
+  private readonly usersSvc = inject(UsersService);
+  private readonly teamsSvc = inject(TeamsService);
+  private readonly moduleCtx = inject(ModuleContextService);
 
-  private setId = '';
+  /** The id of the loaded set — read by the Details tab to resolve live assignments. */
+  readonly setId = signal('');
   private readonly allSections: PermissionSection[] = [...ACTIONS_SECTIONS, ...SETTINGS_SECTIONS];
   private readonly permById = new Map<string, PermissionDef>(
     this.allSections.flatMap(s => s.perms).map(p => [p.id, p] as const),
@@ -81,15 +88,33 @@ export class PermissionEditorStateService {
       teams: this.assignedTeamIds(),
     });
   }
-  readonly dirty = computed(() => !this.readOnly() && this.snapshot() !== this._baseline());
+  // Dirty whenever the working state diverges from the load-time baseline. Read-only (system) sets
+  // can't change name/description/capabilities (their setters no-op), so for them this only ever
+  // flips on assignment edits — which ARE allowed, and which the save bar then commits.
+  readonly dirty = computed(() => this.snapshot() !== this._baseline());
 
   // ── Load ─────────────────────────────────────────────────────────────────────────
   init(set: PermissionSet): void {
-    this.setId = set.id;
+    this.setId.set(set.id);
     this.name.set(set.name);
     this.description.set(set.description ?? '');
-    this.assignedUserIds.set([...(set.assignedUserIds ?? [])]);
-    this.assignedTeamIds.set([...(set.assignedTeamIds ?? [])]);
+
+    // Seed assignments from LIVE data — the agents who actually hold this set (via
+    // `permissionSetByModule`) and the teams assigned it (`Team.permissionSetId`), scoped to the
+    // current switcher context. This is the same derivation the Permission Sets table's Agents count
+    // uses, so the editor opens matching the table; edits buffer here and the save bar commits them.
+    const moduleId = this.moduleCtx.currentModuleId();
+    const holders = this.usersSvc.byModule(moduleId).filter(u =>
+      moduleId === null
+        ? Object.values(u.permissionSetByModule).includes(set.id)
+        : u.permissionSetByModule[moduleId] === set.id,
+    );
+    this.assignedUserIds.set(holders.map(u => u.id));
+    this.assignedTeamIds.set(
+      this.teamsSvc.teams()
+        .filter(t => t.module === moduleId && t.permissionSetId === set.id)
+        .map(t => t.id),
+    );
 
     // Catalog-keyed sets (saved by this editor) clone verbatim; legacy/system seed sets seed
     // from their role preset; brand-new custom sets fall back to defaults.
@@ -283,45 +308,39 @@ export class PermissionEditorStateService {
   }
 
   // ── Assignments ────────────────────────────────────────────────────────────────
-  // Assignments stay editable even on read-only (system) sets — this is where you pick who
-  // gets the set. System sets have no Save button, so their changes persist immediately;
-  // editable sets buffer into the working state and flush on Save.
+  // Buffered like every other edit: Add/Remove mutate the working lists, which makes the editor
+  // `dirty` (so the save bar appears) and flush to the set on Save / revert on Discard. Assignments
+  // stay editable even on read-only (system) sets — picking who holds a set is allowed there.
   applyAssignments(userIds: string[], teamIds: string[]): void {
     this.assignedUserIds.update(cur => [...new Set([...cur, ...userIds])]);
     this.assignedTeamIds.update(cur => [...new Set([...cur, ...teamIds])]);
-    if (this.readOnly()) this.persistAssignments();
   }
   removeUser(id: string): void {
     this.assignedUserIds.update(cur => cur.filter(u => u !== id));
-    if (this.readOnly()) this.persistAssignments();
   }
   removeTeam(id: string): void {
     this.assignedTeamIds.update(cur => cur.filter(t => t !== id));
-    if (this.readOnly()) this.persistAssignments();
-  }
-  /** Write just the assignment fields through to the service (read-only sets have no Save). */
-  private persistAssignments(): void {
-    this.setsSvc.update(this.setId, {
-      assignedUserIds: this.assignedUserIds(),
-      assignedTeamIds: this.assignedTeamIds(),
-    });
   }
 
   // ── Save ─────────────────────────────────────────────────────────────────────────
   save(): void {
-    if (this.readOnly()) return;
-    const capabilities = {
-      ...this.caps(),
-      [DV_TICKET_SCOPE]: this.ticketScope(),
-      [DV_ASSET_SCOPE]: this.assetScope(),
-    };
-    this.setsSvc.update(this.setId, {
-      name: this.name().trim() || this.name(),
-      description: this.description(),
+    // Assignments persist on every set (including read-only system sets — assignments are editable
+    // there); name / description / capabilities only on editable sets (their inputs are disabled
+    // otherwise, so there's nothing to write).
+    const patch: Partial<PermissionSet> = {
       assignedUserIds: this.assignedUserIds(),
       assignedTeamIds: this.assignedTeamIds(),
-      capabilities,
-    });
+    };
+    if (!this.readOnly()) {
+      patch.name = this.name().trim() || this.name();
+      patch.description = this.description();
+      patch.capabilities = {
+        ...this.caps(),
+        [DV_TICKET_SCOPE]: this.ticketScope(),
+        [DV_ASSET_SCOPE]: this.assetScope(),
+      };
+    }
+    this.setsSvc.update(this.setId(), patch);
     // Working state is now the saved state — re-baseline so `dirty` clears (you stay on the page).
     this._baseline.set(this.snapshot());
   }
@@ -329,7 +348,7 @@ export class PermissionEditorStateService {
   /** Discard unsaved changes: reload the working state from the last-saved set. Re-baselines, so
    *  `dirty` goes false and the save bar clears — you stay on the page either way. */
   discard(): void {
-    const set = this.setsSvc.sets().find(s => s.id === this.setId);
+    const set = this.setsSvc.sets().find(s => s.id === this.setId());
     if (set) this.init(set);
   }
 }

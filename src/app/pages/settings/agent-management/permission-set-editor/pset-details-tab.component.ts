@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { UsersService } from '../../../../data/users.service';
 import { Team, User, fullName } from '../../../../data/models';
@@ -8,8 +7,10 @@ import { PermissionEditorStateService } from './permission-editor-state.service'
 import { AssignMembersModalComponent } from './assign-members-modal.component';
 
 /**
- * Details tab: the set's name + description, and the Assigned Users & Teams list (with the
- * Add Assignment modal and a remove-confirm). Reads/writes via PermissionEditorStateService.
+ * Details tab: the set's name + description, and the Assigned Users & Teams list — removable chips
+ * plus an Add Assignment modal. The assignment lists live in PermissionEditorStateService (seeded
+ * from live data on open); edits buffer there and the save bar commits/discards them, so × removes
+ * immediately with no confirm.
  */
 @Component({
   selector: 'app-pset-details-tab',
@@ -23,47 +24,26 @@ export class PsetDetailsTabComponent {
   readonly state = inject(PermissionEditorStateService);
   private readonly usersSvc = inject(UsersService);
   private readonly teamsSvc = inject(TeamsService);
-  private readonly modulesSvc = inject(ModulesService);
   readonly fullName = fullName;
 
-  private moduleName(id: string | null): string {
-    return id ? this.modulesSvc.modules().find(m => m.id === id)?.name ?? id : 'Global';
-  }
-
-  readonly assignedTeams = computed(() => {
-    const ids = new Set(this.state.assignedTeamIds());
-    return this.teamsSvc.teams().filter(t => ids.has(t.id));
+  // The assigned users/teams, resolved (in list order) from the working lists in the state service
+  // — seeded from live data on open, then buffered through the save bar. The lists are also the ids
+  // shown, so they feed the Add Assignment modal's exclusion set.
+  readonly assignedUsers = computed<User[]>(() => {
+    const byId = new Map(this.usersSvc.users().map(u => [u.id, u] as const));
+    return this.state.assignedUserIds().map(id => byId.get(id)).filter((u): u is User => !!u);
   });
-  readonly assignedUsers = computed(() => {
-    const ids = new Set(this.state.assignedUserIds());
-    return this.usersSvc.users().filter(u => ids.has(u.id));
+  readonly assignedTeams = computed<Team[]>(() => {
+    const byId = new Map(this.teamsSvc.teams().map(t => [t.id, t] as const));
+    return this.state.assignedTeamIds().map(id => byId.get(id)).filter((t): t is Team => !!t);
   });
-
-  teamMeta(t: Team): string {
-    return `${this.moduleName(t.module)} · ${t.memberIds.length} members`;
-  }
-  userMeta(u: User): string {
-    return `${u.email} · ${this.moduleName(u.modules[0] ?? null)}`;
-  }
-  initials(u: User): string {
-    return ((u.firstName[0] ?? '') + (u.lastName[0] ?? '')).toUpperCase();
-  }
+  readonly displayedUserIds = computed(() => this.state.assignedUserIds());
+  readonly displayedTeamIds = computed(() => this.state.assignedTeamIds());
 
   readonly showAssign = signal(false);
-  readonly removeTarget = signal<{ type: 'user' | 'team'; id: string; name: string } | null>(null);
 
   onAssign(p: { userIds: string[]; teamIds: string[] }): void {
     this.state.applyAssignments(p.userIds, p.teamIds);
     this.showAssign.set(false);
-  }
-  askRemove(type: 'user' | 'team', id: string, name: string): void {
-    this.removeTarget.set({ type, id, name });
-  }
-  confirmRemove(): void {
-    const t = this.removeTarget();
-    if (!t) return;
-    if (t.type === 'user') this.state.removeUser(t.id);
-    else this.state.removeTeam(t.id);
-    this.removeTarget.set(null);
   }
 }

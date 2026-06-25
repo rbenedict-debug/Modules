@@ -9,7 +9,8 @@ import {
   signal,
 } from '@angular/core';
 
-import { ModulesService } from '../../../../data/modules.service';
+import { DatePipe } from '@angular/common';
+
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { ModuleContextService } from '../../../../data/module-context.service';
@@ -18,22 +19,22 @@ import { TeamSource } from '../../../../data/models';
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
 declare const OnfloTableInit: { initTable: (config: unknown) => void };
 
-// A team row pre-resolved for the table: the module name and the permission-set name are
-// resolved once during the initial render, before the view is detached. The table is a
-// static design-mode visual driven by table-init.js after that.
+// A team row pre-resolved for the table: the permission-set name is resolved once during the
+// initial render, before the view is detached. The table is a static design-mode visual driven
+// by table-init.js after that.
 interface TeamRow {
   id: string;
   name: string;
-  moduleName: string;
   memberCount: number;
   permissionSetName: string; // resolved name, or 'None'
   source: TeamSource;
+  updatedAt: string; // ISO timestamp; rendered via the date pipe
 }
 
 @Component({
   selector: 'app-teams-tab',
   standalone: true,
-  imports: [],
+  imports: [DatePipe],
   templateUrl: './teams-tab.component.html',
   styleUrl: './teams-tab.component.scss',
   // Transparent wrapper: the parent User Management page owns the ds-page-content host,
@@ -51,20 +52,13 @@ export class TeamsTabComponent implements AfterViewInit {
    *  it survives cdr.detach() + table-init's row reordering (same pattern as the Agents tab). */
   @Output() editTeam = new EventEmitter<string>();
 
-  private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);
   private readonly moduleCtx = inject(ModuleContextService);
 
   constructor(private cdr: ChangeDetectorRef) {}
 
-  // Fast id→name lookups for resolving module + permission-set names once during render.
-  private moduleNameById(): Map<string, string> {
-    const map = new Map<string, string>();
-    for (const m of this.modulesSvc.modules()) map.set(m.id, m.name);
-    return map;
-  }
-
+  // Fast id→name lookup for resolving the permission-set name once during render.
   private permSetNameById(): Map<string, string> {
     const map = new Map<string, string>();
     for (const s of this.permissionSetsSvc.sets()) map.set(s.id, s.name);
@@ -80,7 +74,6 @@ export class TeamsTabComponent implements AfterViewInit {
   readonly rows = signal<TeamRow[]>(this.resolveRows());
 
   private resolveRows(): TeamRow[] {
-    const moduleNames = this.moduleNameById();
     const permSetNames = this.permSetNameById();
     const moduleId = this.moduleCtx.currentModuleId();
 
@@ -89,20 +82,20 @@ export class TeamsTabComponent implements AfterViewInit {
       .map(t => ({
         id: t.id,
         name: t.name,
-        moduleName: t.module === null ? 'Global' : (moduleNames.get(t.module) ?? t.module),
         memberCount: t.memberIds.length,
         permissionSetName: t.permissionSetId ? (permSetNames.get(t.permissionSetId) ?? 'None') : 'None',
         source: t.source,
+        updatedAt: t.updatedAt,
       }));
   }
 
   // Column config for table-init.js. `name` MUST match the <th> header labels exactly.
   readonly columns = [
     { name: 'Team Name',      width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
-    { name: 'Module',         width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
     { name: 'Agents',         width: 110, type: 'number', _categorical: false, _badgeOptions: null },
     { name: 'Permission Set', width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
     { name: 'Source',         width: 160, type: 'text',   _categorical: true,  _badgeOptions: null },
+    { name: 'Last Updated',   width: 140, type: 'date',   _categorical: false, _badgeOptions: null },
   ];
 
   get totalWidth(): number {
