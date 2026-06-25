@@ -51,6 +51,17 @@
   right: 0;
   z-index: 100;
   min-width: 280px;
+
+  // A district with many department modules makes this list taller than a short viewport,
+  // so without a cap the panel runs off the bottom edge and the last modules are unreachable
+  // (the trigger is anchored at the top of the page, so the list only ever grows downward).
+  // Cap to the space below the top nav and scroll the overflow — same vh-relative pattern the
+  // command palette uses. The scrollbar only appears when the list can't fit, so tall screens
+  // are unchanged. The 48px is the panel's distance from the viewport top (top nav + the
+  // trigger + this panel's own top offset); there is no token for the nav height, and being
+  // conservative here only widens the bottom gap, it can never clip.
+  max-height: calc(100vh - 48px - var(--spacing-xl));
+  overflow-y: auto;
 }
 
 // Selected-context indicator — trailing check, brand-colored to match the menu's selected state.
