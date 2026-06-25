@@ -52,7 +52,10 @@
   @include ds.type-body-medium;
   color: var(--color-text-primary);
   margin: 0;
-  padding-left: var(--spacing-lg);
+  // Indent the whole numbered list so it steps in under its heading — clearer hierarchy
+  // and an easier read. Markers stay in the gutter (list-style-position: outside), so
+  // wrapped lines still align under the text, not the number.
+  padding-left: calc(var(--spacing-lg) * 2);
 
   // A little more space between items so each point reads as its own line.
   li {
