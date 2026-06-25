@@ -47,6 +47,14 @@ export class PermissionEditorStateService {
   readonly name = signal('');
   readonly description = signal('');
   readonly readOnly = signal(false);
+
+  // ── Validation ─────────────────────────────────────────────────────────────────
+  // `submitted` flips true on the first Save attempt, gating the Name field's error display so
+  // errors stay hidden until the user tries to save (reset on each load). `nameInvalid` is only
+  // meaningful for editable sets — read-only system sets don't edit the name, so it never reports
+  // invalid for them (same `!readOnly()` gate `save()` uses for writing name/description/caps).
+  readonly submitted = signal(false);
+  readonly nameInvalid = computed(() => !this.readOnly() && this.name().trim() === '');
   /** Whether the loaded set is a global-tier set (isGlobalOnly). Fixed per set — never edited here,
    *  so it's not part of the dirty snapshot. Drives the editor's tab/section filtering: global sets
    *  hide Data Visibility + Actions and show only the Global section in Settings. */
@@ -138,6 +146,8 @@ export class PermissionEditorStateService {
     this.isGlobalOnly.set(set.isGlobalOnly === true);
     this.seedManageSubs();
     this._baseline.set(this.snapshot());
+    // Fresh load (open / duplicate / discard) — clear any error state from a prior attempt.
+    this.submitted.set(false);
   }
 
   /** The source uses 'all' | 'assigned' | 'department'; the UI offers all / assigned only. */

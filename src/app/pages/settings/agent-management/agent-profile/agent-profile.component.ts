@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -8,6 +8,7 @@ import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { ChromeService } from '../../../../data/chrome.service';
+import { OpenAgentTabsService } from '../../../../data/open-agent-tabs.service';
 import { MessagingService } from '../../../../data/messaging.service';
 import { AgentActivityTabComponent } from './agent-activity-tab/agent-activity-tab.component';
 import { AgentFormComponent } from '../agent-form/agent-form.component';
@@ -69,6 +70,8 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   // on leave — the same shell mechanism the permission-set editor uses for its takeover view.
   private readonly chrome = inject(ChromeService);
   private readonly msg = inject(MessagingService);
+  // Opening this profile registers it as a top-nav tab (see the constructor).
+  private readonly openTabs = inject(OpenAgentTabsService);
 
   // Agent id from the route; reactive so navigating between profiles updates the view.
   private readonly agentId = toSignal(
@@ -79,6 +82,15 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   readonly user = computed<User | undefined>(() =>
     this.usersSvc.users().find((u) => u.id === this.agentId()),
   );
+
+  constructor() {
+    // Opening (or navigating between) an agent profile spawns/focuses its top-nav tab. An effect so
+    // a row click, a deep-link, and a refresh all register the tab; open() is idempotent (no dupes).
+    effect(() => {
+      const id = this.agentId();
+      if (id) this.openTabs.open(id);
+    });
+  }
 
   // ── Tabs (Details / Permissions / Activity) ───────────────────────────────────
   readonly tabs: ProfileTab[] = [

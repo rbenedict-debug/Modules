@@ -1,9 +1,9 @@
 <!-- Canonical Design System table (driven by table-init.js, wired in angular.json).
      Scaffold mirrors the Agent Tickets table; the toolbar is trimmed to Search / Filter /
      Tool panel / Download. Do NOT rename any id — table-init.js resolves elements by id.
-     Data-driven: the table (and its engine) mount only when the agent has activity. With no
-     activity the @else below renders the DS empty state instead — see the ngAfterViewInit guard. -->
-@if (rows.length) {
+     Same table whether or not the agent has activity: it always renders and the engine always
+     boots. When there are no rows the @for below emits nothing and the DS empty state (inside
+     #table-scroll, the same placement the engine uses for its own no-results state) shows. -->
 <div class="agent-activity-table" #tableRoot>
   <div class="ds-page-content__main ds-page-content__main--table">
     <div class="table-container">
@@ -136,6 +136,26 @@
               <!-- TODO eng: replace with AG Grid + onfloTheme (real sort, filter, resize, row grouping) -->
               <tfoot id="main-table-foot"></tfoot>
             </table>
+            @if (!rows.length) {
+              <!-- No recorded activity (a Pending agent). The table still renders and the engine
+                   still boots; this DS empty state sits where the rows would be, reusing the
+                   engine's own `.table-no-results` placement (centred in the body, sticky header
+                   stays visible). -->
+              <div class="ds-empty-state table-no-results" role="status">
+                <div class="ds-empty-state__graphic" aria-hidden="true">
+                  <svg viewBox="0 0 98 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M10.085 31.25C12.3158 31.25 14.2877 32.0431 16.002 33.627C15.9403 34.4958 15.9092 35.3768 15.9092 36.2695C15.9093 42.3347 17.3358 47.8519 20.1709 52.7402V87.5C20.1709 90.9375 19.183 93.8802 17.208 96.3281C15.233 98.776 12.8584 100 10.085 100C7.31173 99.9999 4.93781 98.7758 2.96289 96.3281C0.987877 93.8802 1.0228e-05 90.9375 0 87.5V43.75C0 40.3125 0.987867 37.3698 2.96289 34.9219C4.93782 32.4741 7.31171 31.2501 10.085 31.25ZM30.2559 63.5752C35.6318 67.2693 41.8436 69.1289 48.7695 69.1289C49.3251 69.1289 49.8771 69.1137 50.4258 69.0869V87.5C50.4258 90.9374 49.4388 93.8802 47.4639 96.3281C45.4888 98.776 43.1143 100 40.3408 100C37.5675 100 35.1937 98.7758 33.2188 96.3281C31.2437 93.8802 30.2559 90.9375 30.2559 87.5V63.5752ZM80.6816 80.709V87.5C80.6816 90.9374 79.6947 93.8802 77.7197 96.3281C75.7447 98.776 73.3701 100 70.5967 100C67.8232 100 65.4487 98.776 63.4736 96.3281C61.4987 93.8802 60.5117 90.9374 60.5117 87.5V66.8896C62.0032 66.2906 63.426 65.5962 64.7744 64.8008L80.6816 80.709ZM40.3408 0C43.0242 0 45.3316 1.14788 47.2676 3.43945C41.1397 3.68239 35.5952 5.42309 30.7227 8.64648C31.1952 6.8081 32.0265 5.14963 33.2188 3.67188C35.1937 1.22416 37.5675 4.37684e-05 40.3408 0Z" fill="currentColor"/>
+                    <ellipse cx="48.8636" cy="36.3636" rx="21.5909" ry="21.5909" style="fill: var(--color-surface-subtle)"/>
+                    <path d="M48.769 64.5833C40.8555 64.5833 34.158 61.8427 28.6767 56.3613C23.1953 50.8799 20.4546 44.1825 20.4546 36.269C20.4546 28.3555 23.1953 21.658 28.6767 16.1766C34.158 10.6953 40.8555 7.95459 48.769 7.95459C56.6825 7.95459 63.3799 10.6953 68.8613 16.1766C74.3427 21.658 77.0834 28.3555 77.0834 36.269C77.0834 39.4634 76.5752 42.4763 75.5588 45.3078C74.5424 48.1392 73.1629 50.644 71.4205 52.822L95.8145 77.2159C96.6131 78.0145 97.0124 79.0309 97.0124 80.2652C97.0124 81.4994 96.6131 82.5158 95.8145 83.3144C95.0158 84.113 93.9994 84.5123 92.7652 84.5123C91.531 84.5123 90.5146 84.113 89.716 83.3144L65.322 58.9205C63.144 60.6629 60.6393 62.0423 57.8078 63.0587C54.9764 64.0751 51.9634 64.5833 48.769 64.5833ZM48.769 55.8712C54.2141 55.8712 58.8424 53.9655 62.6539 50.1539C66.4655 46.3423 68.3713 41.714 68.3713 36.269C68.3713 30.8239 66.4655 26.1956 62.6539 22.384C58.8424 18.5725 54.2141 16.6667 48.769 16.6667C43.3239 16.6667 38.6956 18.5725 34.884 22.384C31.0725 26.1956 29.1667 30.8239 29.1667 36.269C29.1667 41.714 31.0725 46.3423 34.884 50.1539C38.6956 53.9655 43.3239 55.8712 48.769 55.8712Z" fill="currentColor"/>
+                    <path d="M52.734 29.218C52.734 28.0607 52.3463 27.1322 51.5709 26.4324C50.7955 25.7326 49.7684 25.3828 48.4897 25.3828C47.7007 25.3828 46.9866 25.551 46.3472 25.8874C45.7079 26.2238 45.1569 26.715 44.6944 27.3609C44.2591 27.9799 43.6674 28.3365 42.9192 28.4307C42.171 28.5249 41.5249 28.3298 40.9807 27.8454C40.5998 27.4955 40.389 27.0649 40.3482 26.5535C40.3074 26.0421 40.4366 25.5577 40.7359 25.1002C41.6065 23.8083 42.7151 22.8057 44.0619 22.0925C45.4086 21.3793 46.8845 21.0227 48.4897 21.0227C51.1288 21.0227 53.2713 21.7628 54.9173 23.2431C56.5633 24.7234 57.3863 26.6612 57.3863 29.0565C57.3863 30.2676 57.1278 31.3576 56.6109 32.3265C56.094 33.2954 55.1417 34.4393 53.7542 35.758C52.7476 36.7 52.0674 37.4334 51.7137 37.9583C51.36 38.4831 51.1288 39.0819 51.0199 39.7548C50.9111 40.4007 50.6322 40.939 50.1833 41.3696C49.7344 41.8002 49.1971 42.0155 48.5714 42.0155C47.9456 42.0155 47.4083 41.8069 46.9594 41.3898C46.5105 40.9726 46.286 40.4545 46.286 39.8355C46.286 38.7859 46.5173 37.8237 46.9798 36.949C47.4423 36.0743 48.2177 35.1525 49.3059 34.1836C50.6935 32.9725 51.6117 32.0372 52.0606 31.3778C52.5095 30.7184 52.734 29.9985 52.734 29.218ZM48.4897 51.7045C47.5919 51.7045 46.8233 51.3883 46.184 50.7558C45.5446 50.1233 45.2249 49.363 45.2249 48.4748C45.2249 47.5867 45.5446 46.8264 46.184 46.1939C46.8233 45.5614 47.5919 45.2452 48.4897 45.2452C49.3875 45.2452 50.1561 45.5614 50.7955 46.1939C51.4348 46.8264 51.7545 47.5867 51.7545 48.4748C51.7545 49.363 51.4348 50.1233 50.7955 50.7558C50.1561 51.3883 49.3875 51.7045 48.4897 51.7045Z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="ds-empty-state__body">
+                  <p class="ds-empty-state__heading">No activity yet</p>
+                  <p class="ds-empty-state__description">This agent hasn’t performed any actions yet. Activity will appear here as they sign in and work in Onflo.</p>
+                </div>
+              </div>
+            }
           </div><!-- /table-scroll -->
           <div class="ds-table-vbar-header"></div>
           <div class="ds-table-vbar" id="ds-table-vbar"><div class="ds-table-vbar__thumb" id="ds-table-vbar-thumb"></div></div>
@@ -451,23 +471,6 @@
     Excel Export (.xlsx)
   </button>
 </div>
-} @else {
-  <!-- No recorded activity for this agent — the DS empty state stands in for the table,
-       consistent with the Permissions tab's empty state (same graphic treatment + copy rhythm). -->
-  <div class="ds-card ds-card--elevated agent-activity-empty">
-    <div class="ds-card__body">
-      <div class="ds-empty-state">
-        <div class="ds-empty-state__graphic agent-activity-empty__graphic" aria-hidden="true">
-          <span class="ds-icon ds-icon--lg">history</span>
-        </div>
-        <div class="ds-empty-state__body">
-          <p class="ds-empty-state__heading">No activity yet</p>
-          <p class="ds-empty-state__description">This agent hasn’t performed any actions yet. Activity will appear here as they sign in and work in Onflo.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-}
 
 <!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
      is called from agent-activity-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

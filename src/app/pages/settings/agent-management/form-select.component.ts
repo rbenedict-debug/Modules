@@ -20,7 +20,7 @@ let selectUid = 0;
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [':host { display: block; } .ds-select { width: 100%; }'],
   template: `
-    <div class="ds-select" [class.ds-select--multi]="multiple" [class.is-disabled]="disabled">
+    <div class="ds-select" [class.ds-select--multi]="multiple" [class.is-disabled]="disabled" [class.is-error]="error">
       <label class="ds-select__label" [class.ds-sr-only]="hideLabel" [attr.for]="inputId">
         {{ label }}@if (required) {<span class="ds-select__required" aria-hidden="true">*</span>}
       </label>
@@ -31,8 +31,13 @@ let selectUid = 0;
                  [value]="displayValue" [attr.data-default-placeholder]="placeholder" [attr.placeholder]="placeholder"
                  autocomplete="off" spellcheck="false"
                  role="combobox" aria-haspopup="listbox" aria-expanded="false"
-                 [attr.aria-controls]="menuId" [attr.aria-label]="label" />
-          <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+                 [attr.aria-controls]="menuId" [attr.aria-label]="label"
+                 [attr.aria-invalid]="error ? 'true' : null" [attr.aria-describedby]="error ? helperId : null" />
+          @if (error) {
+            <span class="ds-icon ds-icon--sm ds-icon--filled ds-select__error-icon" aria-hidden="true">error</span>
+          } @else {
+            <span class="ds-icon ds-icon--sm ds-select__arrow" aria-hidden="true">arrow_drop_down</span>
+          }
         </div>
         <div class="ds-select__dropdown" [id]="menuId" role="listbox"
              [attr.aria-multiselectable]="multiple ? 'true' : null" [attr.aria-label]="label">
@@ -54,7 +59,11 @@ let selectUid = 0;
           </div>
         </div>
       </div>
-      @if (helper) { <span class="ds-select__helper">{{ helper }}</span> }
+      @if (error) {
+        <span class="ds-select__helper" [id]="helperId" role="alert">{{ errorMessage }}</span>
+      } @else if (helper) {
+        <span class="ds-select__helper">{{ helper }}</span>
+      }
     </div>
   `,
 })
@@ -71,9 +80,14 @@ export class FormSelectComponent {
   @Input() required = false;
   @Input() disabled = false;
   @Input() helper?: string;
+  /** When true, render the DS error state (red, error icon) + the error helper. */
+  @Input() error = false;
+  /** Error helper text shown (with role="alert") when `error` is true. */
+  @Input() errorMessage = '';
 
   readonly inputId = `afs-${++selectUid}`;
   readonly menuId = `${this.inputId}-menu`;
+  readonly helperId = `${this.inputId}-helper`;
 
   /** Field text: the label (single), or "N selected" (multi). */
   get displayValue(): string {

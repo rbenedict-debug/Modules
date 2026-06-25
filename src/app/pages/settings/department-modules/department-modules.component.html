@@ -194,9 +194,10 @@
       <div class="ds-dialog__actions">
         <button class="ds-button ds-button--text ds-button--md" type="button"
                 [disabled]="submitting()" (click)="closeRequest()">Cancel</button>
+        <!-- On-submit validation: the button stays clickable with an empty/duplicate name so the
+             click can trigger the field-level error; only the in-flight submit disables it. -->
         <button class="ds-button ds-button--filled ds-button--md" type="button"
-                [disabled]="(isCustomRequest && (!customName.trim() || !!nameError)) || submitting()"
-                [class.is-disabled]="isCustomRequest && (!customName.trim() || !!nameError)"
+                [disabled]="submitting()"
                 [class.is-loading]="submitting()"
                 [attr.aria-busy]="submitting() ? 'true' : null"
                 (click)="confirmRequest($event)">{{ submitting() ? 'Sending...' : 'Send request' }}</button>

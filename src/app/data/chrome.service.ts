@@ -4,6 +4,10 @@ import { Injectable, signal } from '@angular/core';
 export interface SaveBarConfig {
   onCancel: () => void;
   onSave: () => void;
+  /** When true, the docked bar renders the DS error variant (red) and uses role="alert". */
+  error?: boolean;
+  /** Overrides the default "You have unsaved changes" message (e.g. the error prompt). */
+  message?: string;
 }
 
 /**
@@ -44,4 +48,16 @@ export class ChromeService {
 
   showSaveBar(config: SaveBarConfig): void { this.saveBar.set(config); }
   hideSaveBar(): void { this.saveBar.set(null); }
+
+  // ── Editor tab request ─────────────────────────────────────────────────────────
+  // A full-area takeover view (the permission-set editor) owns its tab content, but its tab BAR
+  // lives in the parent shell (the Agent Management page) — so the editor can't switch tabs itself.
+  // It bumps this signal with a tab id (e.g. on a failed Save, to surface the invalid field); the
+  // parent watches it via an effect and applies the switch. Bump even for a repeat of the same tab
+  // (the version increments) so a second failed Save still re-requests Details.
+  readonly editorTabRequest = signal<{ tab: string; v: number } | null>(null);
+  private _editorTabReqV = 0;
+  requestEditorTab(tab: string): void {
+    this.editorTabRequest.set({ tab, v: ++this._editorTabReqV });
+  }
 }

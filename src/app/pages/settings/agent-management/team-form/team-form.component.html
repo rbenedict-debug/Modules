@@ -1,7 +1,7 @@
 <!-- Scrim closes on click; the modal stops propagation so inner clicks never reach it. -->
 <div class="team-form__backdrop" (click)="cancel()">
   <div class="ds-modal team-form__modal" role="dialog" aria-modal="true" aria-labelledby="team-form-title"
-       (click)="$event.stopPropagation()">
+       (click)="$event.stopPropagation(); addOpen.set(false)">
 
     <button class="ds-modal__dismiss" type="button" aria-label="Close" (click)="cancel()">
       <span class="ds-icon" aria-hidden="true">close</span>
@@ -13,6 +13,21 @@
     </header>
 
     <div class="ds-modal__body team-form__body">
+
+      <!-- Validation summary — only in editable modes on an invalid submit. (Synced mode is
+           read-only and never reaches submit, so this and the synced banner below never collide.) -->
+      @if (submitted() && hasErrors()) {
+        <div class="ds-alert ds-alert--error" role="alert">
+          <div class="ds-alert__header">
+            <span class="ds-icon ds-alert__icon" aria-hidden="true">error</span>
+            <div class="ds-alert__content">
+              <div class="ds-alert__text">
+                <p class="ds-alert__message">Please fill in the required fields highlighted below.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
 
       <!-- Synced provenance: an integration owns this team, so every field is read-only here. -->
       @if (isSynced()) {
@@ -31,12 +46,20 @@
         </div>
       }
 
-      <div class="ds-input" [class.is-disabled]="isSynced()">
+      <div class="ds-input" [class.is-disabled]="isSynced()" [class.is-error]="submitted() && nameInvalid()">
         <label class="ds-input__label" for="tf-name">Team Name<span class="ds-input__required" aria-hidden="true">*</span></label>
         <div class="ds-input__field">
           <input id="tf-name" class="ds-input__control" type="text" placeholder="Enter team name"
-                 [value]="editing()?.name ?? ''" [disabled]="isSynced()" />
+                 [(ngModel)]="teamName" [disabled]="isSynced()"
+                 [attr.aria-invalid]="(submitted() && nameInvalid()) ? 'true' : null"
+                 [attr.aria-describedby]="(submitted() && nameInvalid()) ? 'tf-name-err' : null" />
+          @if (submitted() && nameInvalid()) {
+            <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+          }
         </div>
+        @if (submitted() && nameInvalid()) {
+          <span class="ds-input__helper" id="tf-name-err" role="alert">Team name is required.</span>
+        }
       </div>
 
       <!-- No Department field: a team belongs to one department, and you only ever see and edit
@@ -65,32 +88,80 @@
           </div>
         </div>
       } @else {
-        <!-- Members: current members as removable chips + a search-to-add stand-in. The chips are
-             the real agents on the team (the Agents count in the table). Remove is visual only;
-             TODO eng: wire user search + real add/remove. -->
+        <!-- Members (editable): a click-to-open dropdown to add agents, a search to filter the
+             chips, and the current members as removable chips. The chips are the real agents on the
+             team (the Agents count in the table). The dropdown is a custom Angular control built on
+             ds-menu + ds-autocomplete chrome — deliberately NOT .ds-select, so the design system's
+             select.js runtime leaves it alone, and the panel expands inline so the modal's scrolling
+             body can't clip it. Add/remove are visual only.
+             TODO eng: wire real user search + add/remove, and scope the addable pool to the team's
+             module/context (it currently offers every agent). -->
         <div class="team-form__members">
-          <label class="ds-input__label" for="tf-members">Members</label>
-          <div class="ds-input ds-search" role="search">
-            <div class="ds-input__field">
-              <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
-              <input id="tf-members" class="ds-input__control" type="search"
-                     placeholder="Search users to add…" aria-label="Search users to add" />
+          <span class="ds-input__label" id="tf-members-label">Members</span>
+
+          <!-- Add agents: select-style trigger → inline panel with a sticky in-panel search + a
+               scrollable list of agents not already on the team. -->
+          <div class="ds-autocomplete team-form__add">
+            <div class="ds-autocomplete__field"
+                 (click)="toggleAdd(); $event.stopPropagation()"
+                 (keydown.enter)="toggleAdd(); $event.stopPropagation()"
+                 (keydown.space)="toggleAdd(); $event.preventDefault(); $event.stopPropagation()">
+              <input class="ds-autocomplete__control" type="text" readonly
+                     placeholder="Add agents…" aria-label="Add agents"
+                     role="combobox" aria-haspopup="listbox" [attr.aria-expanded]="addOpen()"
+                     aria-controls="tf-add-panel" />
+              <span class="ds-icon ds-icon--sm ds-autocomplete__arrow" aria-hidden="true">arrow_drop_down</span>
             </div>
-          </div>
-          @if (members().length) {
-            <div class="ds-chip-list" role="listbox" aria-label="Team members">
-              @for (m of members(); track m.id) {
-                <div class="ds-chip" role="option" tabindex="0">
-                  <span class="ds-chip__label">{{ m.name }}</span>
-                  <button class="ds-chip__remove" type="button" aria-label="Remove {{ m.name }}"
-                          (click)="removeMember(m.id)">
-                    <span class="ds-icon ds-icon--sm">close</span>
-                  </button>
+
+            @if (addOpen()) {
+              <div class="ds-menu team-form__add-panel" id="tf-add-panel" role="listbox"
+                   aria-label="Agents to add" (click)="$event.stopPropagation()">
+                <div class="ds-menu__search">
+                  <div class="ds-input ds-search" role="search">
+                    <div class="ds-input__field">
+                      <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                      <input class="ds-input__control" type="search" placeholder="Search agents…"
+                             aria-label="Search agents to add" [(ngModel)]="addQuery" />
+                    </div>
+                  </div>
                 </div>
-              }
+                @for (a of addableFiltered(); track a.id) {
+                  <button class="ds-menu__item" type="button" role="option"
+                          (click)="addMember(a.id)">{{ a.name }}</button>
+                } @empty {
+                  <div class="team-form__add-empty">
+                    {{ addableAgents().length ? 'No agents match your search.' : 'All agents are already members.' }}
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+          @if (members().length) {
+            <!-- Filter the chips below — handy once a team has many members. -->
+            <div class="ds-input ds-search" role="search">
+              <div class="ds-input__field">
+                <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                <input class="ds-input__control" type="search" placeholder="Filter members…"
+                       aria-label="Filter members" [(ngModel)]="chipQuery" />
+              </div>
             </div>
-          } @else {
-            <span class="team-form__empty">No members yet — search to add.</span>
+
+            @if (membersFiltered().length) {
+              <div class="ds-chip-list" role="listbox" aria-label="Team members">
+                @for (m of membersFiltered(); track m.id) {
+                  <div class="ds-chip" role="option" tabindex="0">
+                    <span class="ds-chip__label">{{ m.name }}</span>
+                    <button class="ds-chip__remove" type="button" aria-label="Remove {{ m.name }}"
+                            (click)="removeMember(m.id)">
+                      <span class="ds-icon ds-icon--sm">close</span>
+                    </button>
+                  </div>
+                }
+              </div>
+            } @else {
+              <span class="team-form__empty">No members match “{{ chipQuery() }}”.</span>
+            }
           }
         </div>
       }

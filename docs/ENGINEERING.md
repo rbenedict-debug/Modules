@@ -152,6 +152,18 @@ One app-wide toast system — `MessagingService` → a single top-center `Snackb
 - ⚠️ **DS gap** — the DS snackbar has no error variant; failures reuse the text-action shell + a tinted `error` icon. Flag as a DS candidate.
 - ⛔ **Production** — drive success/failure from the real result; replace the Shift-simulate with real error handling.
 
+### Form validation
+
+Every create/edit form validates **required fields on submit** — errors stay hidden until the user clicks the primary action (`Add Agent` / `Save Changes` / `Create` / `Send request`, or the save bar's `Save Changes`). On an invalid submit the form **does not close or fire the success toast**: it surfaces errors, moves focus to the first invalid control, and clears each field's error reactively as the user fixes it. ✅ (🟡 submit itself stays mocked — validation gates the existing toast/close; it adds no persistence.)
+
+Three layers, all DS class-API (no new CSS — every class is DS-provided):
+
+- **Field level** — the invalid control's wrapper gets `is-error`, the label keeps its `*` (`ds-{input,select,textarea}__required`), the control gets `aria-invalid="true"` + `aria-describedby`, and the message renders in a `ds-{…}__helper` with `role="alert"` (inputs/selects also show the filled `error` icon; the DS textarea has none). The shared `app-form-select` gained `[error]` / `errorMessage` inputs to render this for required selects.
+- **Modal / dialog summary** — a `ds-alert--error` pinned at the top of `ds-modal__body` (`Please fill in the required fields highlighted below.`). The single-field **Department-Modules** dialog is the documented exception — its field error *is* the summary (its top `ds-alert--error` slot stays reserved for submit-failure).
+- **Save-bar summary** — the **Permission Set editor** is a full-area takeover, not a modal, so its summary is the docked save bar flipping to `ds-save-bar--error` (red, `role="alert"`, `Fix the required fields before saving.`) while switching to Details + focusing the field. `SaveBarConfig` carries optional `error` / `message`; the bar's error state is a pure reactive function of validity, so it un-sticks the instant the field is fixed.
+
+**Rules:** required text → non-empty; required select → a choice made; **Email** → required *and* `/^[^\s@]+@[^\s@]+\.[^\s@]+$/` (`Email address is required.` / `Enter a valid email address.`); **Phone** → optional but format-checked when filled (`Enter a valid phone number.`; ⛔ `TODO eng: real phone validation — libphonenumber`). Radio groups with defaults, the Authentication tab, the permission matrix, and search inputs are out of scope (nothing can be left empty).
+
 ### Session and timeout messaging ⛔
 
 No session, idle, or auth-timeout handling exists yet. (Existing `setTimeout`s are UI timing only — toast dismissal, submit latency, scrollbar — not session timeouts.) Placeholder for session-expiry messaging, request timeouts, and retry-on-timeout.
@@ -220,7 +232,7 @@ The switcher ([§1.2](#12-department-switcher-top-nav)) only ever lists **`activ
 **Request department module** opens a confirmation dialog:
 
 - **Real module** → confirm → added to `pendingIds`; the card moves to **Active** under an *Under review* overlay.
-- **Custom module** → a required **name** + **icon/color pickers** with a live preview → spawns a pending copy carrying the chosen name/icon/color; the reusable card stays in Available. The **name must be unique** — no duplicate of any existing module, prebuilt or custom (case-insensitive); a duplicate shows an inline field error (`is-error` + `role="alert"`) and blocks Send. ⛔ The number of custom requests is **uncapped today**; a cap is coming (how is TBD).
+- **Custom module** → a required **name** + **icon/color pickers** with a live preview → spawns a pending copy carrying the chosen name/icon/color; the reusable card stays in Available. The name is **required and must be unique** — no duplicate of any existing module, prebuilt or custom (case-insensitive). On `Send request`, an empty name shows `Module name is required.` and a duplicate shows the existing-name error; both render as an inline field error (`is-error` + `role="alert"`) that blocks the send ([Form validation](#form-validation)). `Send` is no longer disabled for an empty name — the click surfaces the error instead. ⛔ The number of custom requests is **uncapped today**; a cap is coming (how is TBD).
 - **Submit** — `Send request` → `Sending...` (~600ms), then a success toast `Request submitted for "[name]".`, or on failure an in-dialog error `Couldn't send your request. Please try again.` (`Send request` retries). Toast system + Shift-to-simulate: [App-wide messaging](#app-wide-messaging).
 - 🟡 In-memory only (resets on refresh); the request dialog is a static mock (no focus trap or Escape-to-close).
 
@@ -309,7 +321,7 @@ A full-width table of the user directory, rendered with the engine above.
 - **Columns (in order):** `Name`, `Email`, `Permission Sets`, `Status`, `Module(s)`, `Teams`, `Locations`, `Phone`, `Source`, `Job Title`, `Last Login`, `Date Added`.
 - **Permission Sets column** (3rd) — resolves each agent's `permissionSetByModule` values to set **names** via `PermissionSetsService`, de-duplicated, in module order (joined by `, `, or `—` if none). This **replaced the old "Roles" column** and reads the *same* `PermissionSetsService` the profile and the Permission Sets table use — the single-source-of-truth seam ([§3.5](#35-the-single-source-of-truth)).
 - **Status cell** — `ds-label` pill with a dot, one of three account states: `Active` (green — has signed-in access), `Pending` (yellow — activation sent, awaiting the agent to activate), `Inactive` (grey — account exists, no access). *(The former `Unverified` state was merged into `Pending`.)*
-- **Row click → profile** ✅ — the whole row navigates to `/settings/agent-management/:id`. No per-row kebab / edit / delete menu.
+- **Row click → profile** ✅ — the whole row navigates to `/settings/agent-management/:id`, which **opens in its own top-nav tab** ([§2.2](#22-agent-profile)). No per-row kebab / edit / delete menu.
 - **Data:** `UsersService.byModule(currentModuleId)` — **scoped to the switcher context**: a global admin in **Global** sees **all** 32 users; scoped into a department (and every department admin) sees only that department's agents (users whose `modules` include it). Re-resolved on context change via the shell re-mount.
 - ⛔ Toolbar **Download** button is unwired (`<!-- TODO eng: wire download / export -->`). No paginator (`paginator: false`).
 - ⚠️ **ADA:** the clickable `<tr>` is click-only — not keyboard-focusable / `role="button"`. Flag for eng.
@@ -319,6 +331,8 @@ A full-width table of the user directory, rendered with the engine above.
 ✅ built / 🟡 data (Activity tab ⛔) · **Route:** `/settings/agent-management/:id` · **Files:** `agent-profile/` (+ `agent-activity-tab/`)
 
 A full-page profile (it replaced an earlier slide-out drawer). Reads `:id` reactively, so navigating between agents updates in place. On open it collapses the Settings subnav via `chrome.setEditorOpen(true)` (full-area takeover).
+
+**Opens in its own top-nav tab** ✅ — opening an agent profile spawns a browser-style `ds-nav-tab` document tab in the top nav (one per agent, beside the section tab) so several agents can be open at once and switched between; tabs are pinned and individually closeable, matching the prod ticket-tab behavior (close-all → Inbox, section tab relabels per sidebar section — all standard). The only new wiring: `OpenAgentTabsService` (`data/open-agent-tabs.service.ts`) owns the ordered set of open agent ids; the shell (`app.ts` / `app.html`) renders the strip and derives the **active** tab from the URL; this component registers/focuses its tab on open via an `effect` on the route `:id` (so a row click, a deep-link, and a refresh all create it). 🟡 in-memory for the session — `<!-- TODO eng: persist open tabs across reloads -->`. When tabs don't fit the strip width they collapse into the DS `ds-nav-tab--more` "…" tab, whose panel lists the hidden tabs (each closeable) plus a destructive **Close all tabs** (→ Inbox) — the standard prod overflow behavior. Design-mode collapse is width-measured in `app.ts` (`recomputeTabOverflow`, a `ResizeObserver`); the panel is `position: fixed` to escape the strip's `overflow: hidden`. `<!-- TODO eng: use the real DS overflow component -->`
 
 - **Heading** — a component-local breadcrumb `Agent Management` › `{name}` (⚠️ DS gap — `<!-- TODO eng: promote to a real ds-breadcrumb -->`, no DS breadcrumb exists yet) + an `ds-sr-only` `<h1>` carrying the name (every page keeps an H1).
 - **Hero card** — XL avatar/initials, name, status pill, a source chip (`Manual entry` or `Synced from {source}`), a `{roles} · {location}` subtitle, and an `Edit` button (opens the [Edit Agent form](#23-create-and-edit-agent-form)). When the account is `Pending`, a `Resend activation email` button (icon `forward_to_inbox`) appears beside `Edit` — the yellow status pill is the indicator. It fires a success toast (`Activation email resent to {email}.`); ⛔ `<!-- TODO eng: wire to the real resend-activation endpoint -->`.
@@ -344,12 +358,12 @@ One `ds-modal` component, two modes by the optional `[agent]` input. **Create** 
 - **Title / subtitle:** `Create New Agent` / `Add a new agent to the system` — or `Edit Agent` / `Update this agent's information`.
 - **Sections & fields:**
   - **Personal Information** — `First Name`*, `Middle Name`, `Last Name`*, `Email Address`*, `Phone Number`, `Employee ID`, `Job Title`, `Locations` (multi-select).
-  - **Modules & Access** — repeatable rows of `Department`* (single) + `Permission Set`* (single) + `Teams` (multi), with `Add another department` and a per-row remove.
+  - **Modules & Access** — repeatable rows of `Department`* (single) + `Permission Set` (single, optional) + `Teams` (multi), with `Add another department` and a per-row remove (trashcan icon button).
   - **Custom Fields** — `Office / Room`, `Shift`, `Badge ID` (⛔ hard-coded; `<!-- TODO eng: render from the district custom-field schema -->`).
   - **Activation** (create) — radios `Send activation email` (default) / `Activate user` / `Do not activate` (→ `Pending` / `Active` / `Inactive`); **Account** (edit) — `Account Status` select (`Active` / `Pending` / `Inactive`).
 - **Footer:** `Cancel` + `Add Agent` (create) / `Save Changes` (edit).
 - **Synced agents** — a `ds-alert--info` banner + locked fields (`Managed by {source}`), driven by `SOURCE_LOCKED_FIELDS`. ✅
-- **Submit** 🟡 — `submit()` shows a toast (`Agent created.` / `Agent updated.`) and closes. It does **not** validate or persist; inputs are uncontrolled; there are **no error states**. ⛔ `<!-- TODO eng: wire real submit (validation + persistence), integration field-toggle config, and modal focus trap + return-focus-on-close -->`.
+- **Submit** ✅ validates / 🟡 persistence mocked — `submit()` now **validates required fields on submit** ([Form validation](#form-validation)) before the mocked toast (`Agent created.` / `Agent updated.`) + close. Required: `First Name`, `Last Name`, `Email Address` (+ email format), and each Modules & Access row's `Department`; `Permission Set` is optional (a global admin assigns the module, a department admin picks the set later) and `Phone` is optional but format-checked when filled. The four validated text inputs are now `[(ngModel)]`-bound (were uncontrolled); the required `Department` select validates via a submit-time DOM read bound to the `app-form-select` `[error]` input. Locked/synced fields are never flagged. Still ⛔ no real persistence / focus trap: `<!-- TODO eng: wire real submit persistence, integration field-toggle config, and modal focus trap + return-focus-on-close -->`.
 - ⛔ Permission-set / team options are **not** scoped to the chosen department yet (`<!-- TODO eng: scope … to the row's selected department -->`).
 
 ### 2.4 Teams tab
@@ -382,7 +396,7 @@ A `ds-modal` hosted on the shell with **three modes**, driven by the optional `[
 
 - **Fields:** `Team Name`* (text), `Permission Set` (single), and a `Members` field. **Members render as chips** — the real agents on the team (the same `memberIds` the table's Agents column counts): **read-only** on a synced team, **removable** (× per chip) on a manual/new team, shown below a `Search users to add…` field. 🟡 Remove is a visual stand-in (resets on reopen) and the search is non-functional (⛔ `<!-- TODO eng: wire user search + real add/remove -->`). **No Department field in any mode** — a team's `module` is the current switcher context (Global → a global team), set on create and preserved on edit, never picked in this form.
 - **Footer:** synced → `Close`; otherwise `Cancel` + `Add Team` (create) / `Save Changes` (edit).
-- **Submit** 🟡 — toast (`Team created.` / `Team updated.`) + close; does **not** validate or call `TeamsService.add()` / `.update()`. ⛔ `<!-- TODO eng: validate + persist; link the synced banner to Integration Hub -->`.
+- **Submit** ✅ validates / 🟡 persistence mocked — validates the required `Team Name` (`Team name is required.`) on submit ([Form validation](#form-validation)) before the mocked toast (`Team created.` / `Team updated.`) + close; the name input is now `[(ngModel)]`-bound. Validation applies only to the editable modes (the synced/read-only mode has no Save). Still does **not** call `TeamsService.add()` / `.update()`. ⛔ `<!-- TODO eng: persist; link the synced banner to Integration Hub -->`.
 
 ### 2.6 Authentication tab
 
@@ -464,7 +478,7 @@ A catalog of **permission sets** — named capability bundles assigned to agents
 
 Engine-driven table.
 
-- **CTA:** `Create permission set` → opens the **New Permission Set modal** (`create-permission-set-modal/`): name, description, a context-locked **Department** (Global → "Global"), and an optional **Copy From** (seeds capabilities from an existing set). On Create it adds the set (scoped to the switcher context — **a set created in the Global context is marked `isGlobalOnly`**, making it a global-tier set) and opens its editor. 🟡
+- **CTA:** `Create permission set` → opens the **New Permission Set modal** (`create-permission-set-modal/`): name, description, a context-locked **Department** (Global → "Global"), and an optional **Copy From** (seeds capabilities from an existing set). On Create — which now validates the required `Name` (`Name is required.`) on click; the `Create` button is no longer disabled-until-valid ([Form validation](#form-validation)) — it adds the set (scoped to the switcher context — **a set created in the Global context is marked `isGlobalOnly`**, making it a global-tier set) and opens its editor. 🟡
 - **Search:** `Search permission sets…`. **Columns:** `Name`, `Type` (`System` blue / `Custom` grey badge), `Agents` (count of agents assigned the set, scoped to the current context — in a department, agents whose set *for that module* is this one; in Global, agents holding the global-only set in any module), `Last Updated` (`PermissionSet.updatedAt`, rendered via the date pipe). *(`Scope` and `Status` columns were removed.)*
 - **Scoped to the switcher context** ✅ (like Teams): the **Global context** shows only the **global-tier** set (`Global Admin`, `isGlobalOnly`); a **department** shows the department-tier system-wide sets + only that department's own custom sets, and **hides `Global Admin`**. Re-mounts on context change.
 - **Whole row → editor** ✅ (`aria-label="Open {name}"`). No kebab menu.
@@ -480,7 +494,7 @@ Opens **full-area, replacing the tab bar** (driven by the shell's `editingSetId`
 - **Details tab** (`pset-details-tab`) — name + description, and **Assigned Users & Teams**. The list is **derived from live data** so it always matches the table's Agents count: **Users** = agents holding this set via `permissionSetByModule`, scoped to the current switcher context (the same derivation the Permission Sets table's Agents column uses); **Teams** = teams whose `permissionSetId` is this set (context-scoped, like the Teams table). Members render as **removable chips** (`ds-tag`, the same chip style as the team modal) inside a card on `--color-surface-page`; counts + an **Add Assignment** modal (`assign-members-modal`, searchable `UsersService` / `TeamsService` list). **Add/Remove are buffered edits** — the chip × removes immediately (no confirm) and Add appends; both make the editor `dirty` and are committed on **Save Changes** / reverted on **Discard**. 🟡 In design mode they don't truly persist (reopen re-seeds from live data — `⛔ TODO eng: real add/remove`).
 - **Data Visibility tab** (`pset-data-visibility-tab`) — Tickets + Assets record scopes (All / Assigned), plus the Assets **filter builder**: three reactive multiselects (Asset Type / Assigned User Type / Grade), each with an **Exclude** toggle + live helper text ("User can only see / cannot see assets …"). **Hidden for global-tier sets** — a global set has no department tickets/assets to scope.
 - **Actions & Settings tabs** — both render the shared **`pset-matrix-tab`** (left section nav + search, right perm grid), fed `ACTIONS_SECTIONS` / `SETTINGS_SECTIONS`. Each row is a **toggle** or **segment** (`Hide`/`View`/`Manage`, or `…/Edit`); a `Manage` segment reveals sub-checkboxes (`Create`/`Edit`/`Delete`, or custom — Archived Assets → `Recover`/`Permanently Delete`). Per-section bulk **presets** (`No Access` / `View Only` / `Full Access` / `Custom`; Actions Tickets/Assets omit View Only). A child perm gates on a parent via `disabledByKey`; sub-groups collapse. **Global-tier sets:** the **Actions tab is hidden** and **Settings shows only the Global section** — both via `globalTierSections()` (Actions has no global-tier sections; the Settings Global section is now all global-tier, so it shows in full). The matrix component itself is unchanged; it just receives a smaller `sections` array.
-- **Save** 🟡 — in-memory (`setsSvc.update`), with the project's **snackbar pattern** (`MessagingService`): a **success** toast on save (`Permission set saved.`) and an **error** toast when an editable set's name is blank (`Enter a permission set name before saving.`, blocks the save). **Duplicate** (system sets) → a `{name} (copy)` Custom set, opened editable.
+- **Save** 🟡 — in-memory (`setsSvc.update`), with the project's **snackbar pattern** (`MessagingService`): a **success** toast on save (`Permission set saved.`). A **blank name** on an editable set no longer toasts — it triggers the **save-bar error** state (`ds-save-bar--error`, `Fix the required fields before saving.`), switches to the **Details** tab, and shows the field-level `Name is required.` ([Form validation](#form-validation)); the bar reverts the instant the name is filled. **Duplicate** (system sets) → a `{name} (copy)` Custom set, opened editable.
 - ⚠️ **Capability vocabulary.** Seed sets store a *legacy* vocabulary (`manageUsers`, `ticketAccess`, …); the editor seeds system sets from `ROLE_PRESET_STATES` and rewrites `capabilities` into catalog ids (`tk-*`, `as-*`, `gl-*`, …) on save.
 
 ### 3.5 The single source of truth
@@ -527,6 +541,7 @@ The two lists must stay in lockstep: **add or rename a settings nav item ⇒ add
 | Module context model + nav/Settings gating | ✅ / 🟡 | Derived from the active persona via `ModuleContextService` |
 | Integration Hub access (global-only + per-dept grants) | ✅ / 🟡 | Visibility via `IntegrationsService`; Marketplace assignment UI is the Integrations team's |
 | App-wide messaging (success/error toasts) | ✅ | Shared `MessagingService` + top-center snackbar |
+| Form validation (required + email/phone format) | ✅ / 🟡 | On-submit; field `is-error` + modal `ds-alert--error` / save-bar `--error`; submit stays mocked. See [Form validation](#form-validation) |
 | Theme (light/dark, persisted) | ✅ | |
 | Persona swapper (⌘K) | ✅ / 🟡 | Demo stand-in for the signed-in user |
 | Session / timeout messaging | ⛔ | None today |
@@ -537,7 +552,7 @@ The two lists must stay in lockstep: **add or rename a settings nav item ⇒ add
 | Area | Status | Note |
 |---|---|---|
 | Module catalog + Active/Available/Coming soon | ✅ | SSOT = `ModulesService` |
-| Module request flow (incl. custom) | ✅ / 🟡 | Loading + success toast + in-dialog error; unique-name validation; in-memory only |
+| Module request flow (incl. custom) | ✅ / 🟡 | Loading + success toast + in-dialog error; on-submit required + unique-name validation; in-memory only |
 | Custom module appearance (name + icon + color) | ✅ / 🟡 | ~30-icon library + 20-color palette + live preview; the 11 extra colors are app-local (DS-promotion candidate) |
 | Switcher (visibility, contents, role labels, swap) | ✅ | Derived from the active persona |
 | Switcher shows only `active` modules | ⛔ | Prototype is persona-driven (see Open questions) |
@@ -553,7 +568,7 @@ The two lists must stay in lockstep: **add or rename a settings nav item ⇒ add
 | Agents table Permission Sets column | ✅ | Resolves the shared `PermissionSetsService` |
 | Agent profile (Details / Permissions) | ✅ / 🟡 | Live off in-memory services |
 | Agent profile **Activity** tab | ⛔ | Hard-coded 18-row mock — needs a real audit log |
-| Create/Edit Agent + Create/Edit Team forms | ✅ / 🟡 | Open/close/pre-fill built; **submit is a toast** — no validation, no persistence |
+| Create/Edit Agent + Create/Edit Team forms | ✅ / 🟡 | Open/close/pre-fill + **on-submit required/format validation** built ([Form validation](#form-validation)); submit still a mocked toast — no persistence |
 | Authentication (2FA) | 🟡 | Toggle not persisted; no SSO |
 | CSV export (profile Activity table) | 🟡 | Client-side DOM scrape; wire to real endpoint |
 | Form focus trap / return-focus | ⛔ | Not built |

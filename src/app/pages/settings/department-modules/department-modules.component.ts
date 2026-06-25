@@ -196,18 +196,23 @@ export class DepartmentModulesComponent {
   private readonly msg = inject(MessagingService);
   readonly submitting = signal(false);
   readonly requestError = signal<string | null>(null);
+  // Errors are hidden until the first submit attempt (on-submit validation model). Set on the
+  // first `Send request` click; reset whenever the dialog opens/closes.
+  readonly submitted = signal(false);
 
   get isCustomRequest(): boolean {
     return this.requestTarget()?.id === 'custom';
   }
 
-  /** Custom-module name validation: a name can't duplicate any existing module — prebuilt/catalog
-   *  (Classic, Transportation, …) or an already-requested custom (e.g. a second "Music"). Matched
-   *  case-insensitively and trimmed. Returns the error message, or null when valid. An empty name
-   *  isn't an error here — that's handled by the required-field disable on Send. */
+  /** Custom-module name validation. Returns the error message, or null when valid — recomputed
+   *  reactively (getter over `customName` + `submitted`), so the error clears as the user types.
+   *  Once submitted, an empty name is the required error; otherwise a name can't duplicate any
+   *  existing module — prebuilt/catalog (Classic, Transportation, …) or an already-requested custom
+   *  (e.g. a second "Music"), matched case-insensitively and trimmed. The duplicate check runs even
+   *  before the first submit so the field flags a clash as the user types. */
   get nameError(): string | null {
     const name = this.customName.trim();
-    if (!name) return null;
+    if (!name) return this.submitted() ? 'Module name is required.' : null;
     const taken = new Set<string>([
       ...this.modulesSvc.modules().map(m => m.name.trim().toLowerCase()),
       ...this.localPending().map(m => m.name.trim().toLowerCase()),
@@ -224,20 +229,27 @@ export class DepartmentModulesComponent {
     this.selectedColor = this.colorOptions[0].key;
     this.openPicker.set(null);
     this.requestError.set(null);
+    this.submitted.set(false);
     this.requestTarget.set(module);
   }
 
   closeRequest(): void {
     this.requestTarget.set(null);
     this.requestError.set(null);
+    this.submitted.set(false);
     this.openPicker.set(null);
   }
 
   confirmRequest(event?: MouseEvent): void {
     const target = this.requestTarget();
     if (!target) return;
-    // Name is required for a custom module, and must be unique (no dupe of a prebuilt or existing custom).
-    if (target.id === 'custom' && (!this.customName.trim() || this.nameError !== null)) return;
+    // On-submit validation for the custom module: mark submitted so `nameError` surfaces the
+    // required message for an empty name (and the duplicate message otherwise). If the name is
+    // invalid, the field-level error renders and we stop before sending — no toast, no close.
+    if (target.id === 'custom') {
+      this.submitted.set(true);
+      if (this.nameError !== null) return;
+    }
 
     // Mock submit: ~600ms latency behind a button loading state. Hold Shift while clicking
     // Send request to simulate a backend failure (mock submits otherwise always succeed).

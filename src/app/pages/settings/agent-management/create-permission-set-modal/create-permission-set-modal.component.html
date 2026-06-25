@@ -11,12 +11,33 @@
     </header>
 
     <div class="ds-modal__body cps-modal__body">
-      <div class="ds-input">
+      @if (submitted() && hasErrors()) {
+        <div class="ds-alert ds-alert--error" role="alert">
+          <div class="ds-alert__header">
+            <span class="ds-icon ds-alert__icon" aria-hidden="true">error</span>
+            <div class="ds-alert__content">
+              <div class="ds-alert__text">
+                <p class="ds-alert__message">Please fill in the required fields highlighted below.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <div class="ds-input" [class.is-error]="submitted() && nameInvalid()">
         <label class="ds-input__label" for="cps-name">Name<span class="ds-input__required" aria-hidden="true">*</span></label>
         <div class="ds-input__field">
           <input id="cps-name" class="ds-input__control" type="text" placeholder="Enter permission set name"
-                 [ngModel]="name()" (ngModelChange)="name.set($event)" />
+                 [ngModel]="name()" (ngModelChange)="name.set($event)"
+                 [attr.aria-invalid]="(submitted() && nameInvalid()) ? 'true' : null"
+                 [attr.aria-describedby]="(submitted() && nameInvalid()) ? 'cps-name-err' : null" />
+          @if (submitted() && nameInvalid()) {
+            <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+          }
         </div>
+        @if (submitted() && nameInvalid()) {
+          <span class="ds-input__helper" id="cps-name-err" role="alert">Name is required.</span>
+        }
       </div>
 
       <div class="ds-textarea">
@@ -38,7 +59,7 @@
 
     <footer class="ds-modal__actions">
       <button class="ds-button ds-button--text ds-button--md" type="button" (click)="cancel()">Cancel</button>
-      <button class="ds-button ds-button--filled ds-button--md" type="button" [disabled]="!canCreate()" (click)="create()">Create</button>
+      <button class="ds-button ds-button--filled ds-button--md" type="button" (click)="create()">Create</button>
     </footer>
   </div>
 </div>

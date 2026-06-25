@@ -90,21 +90,7 @@
 #cp-picker-overlay { z-index: 1101; }
 
 // ── Empty state (no activity) ──────────────────────────────────────────────────────
-// Stands in for the table when the agent has no recorded activity. Holds the table's
-// footprint (same clamp) so the panel doesn't resize between empty and populated, and
-// centres the DS empty state within it. The graphic uses the disabled-icon tint to match
-// the Permissions tab's empty state.
-.agent-activity-empty {
-  width: 100%;
-}
-
-.agent-activity-empty .ds-card__body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: clamp(440px, 62vh, 760px);
-}
-
-.agent-activity-empty__graphic {
-  color: var(--color-icon-disabled);
-}
+// A Pending agent has zero rows. The table still renders and the engine still boots; the DS
+// empty state (template @if) lives inside #table-scroll and reuses the engine's own
+// `.table-no-results` class, so it centres in the table body exactly like the engine's
+// search-no-results state. Nothing to style here — placement + visuals come from the bundle.

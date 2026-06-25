@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { ChromeService } from '../../../data/chrome.service';
 import { ModuleContextService } from '../../../data/module-context.service';
 import { TeamsService } from '../../../data/teams.service';
 import { Team } from '../../../data/models';
@@ -35,8 +36,22 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 })
 export class AgentManagementComponent {
   private readonly router = inject(Router);
+  private readonly chrome = inject(ChromeService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly setsSvc = inject(PermissionSetsService);
+
+  constructor() {
+    // The editor owns its tab content but its tab BAR lives here, so it can't switch tabs itself.
+    // When a failed Save needs to surface the invalid field, the editor bumps chrome.editorTabRequest;
+    // honour it here (only for tabs this set actually exposes). The {v} bump means a repeat request
+    // for the same tab still re-fires.
+    effect(() => {
+      const req = this.chrome.editorTabRequest();
+      if (!req) return;
+      const target = this.editorTabs().find((t) => t.id === req.tab);
+      if (target) this.editorTab.set(target.id);
+    });
+  }
 
   /** Exposed to the template so the Permission Sets tab can be re-mounted when the module
    *  switcher changes (see the @for key in the template). */

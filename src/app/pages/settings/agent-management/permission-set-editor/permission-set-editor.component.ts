@@ -75,15 +75,36 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   readonly activeTab = input<EditorTab>('details');
 
   constructor() {
-    // Dock the shell's bottom save bar only while there are unsaved changes (state.dirty() clears
-    // after save/discard). The shell renders it outside the page; Save Changes persists and stays
-    // here, Discard reverts the edits — neither leaves the editor.
+    // Single owner of the shell's bottom save bar. Docks it only while there are unsaved changes
+    // (state.dirty() clears after save/discard); the shell renders it outside the page. Save Changes
+    // persists and stays here, Discard reverts — neither leaves the editor.
+    //
+    // The bar's error variant is derived purely from validity: it goes red whenever the user has
+    // attempted a Save (submitted) AND the required Name is still blank, and reverts to the normal
+    // bar the instant the name becomes valid (submitted is also cleared then). Because this is the
+    // ONLY place that writes the bar, it can never get stuck red — fixing the field re-renders it
+    // normal on the next change-detection pass, with no imperative un-sticking needed.
     effect(() => {
-      this.chrome.saveBar.set(
-        this.state.dirty()
-          ? { onCancel: () => this.discardChanges(), onSave: () => this.saveChanges() }
-          : null,
-      );
+      if (!this.state.dirty()) {
+        this.chrome.saveBar.set(null);
+        return;
+      }
+      const invalid = this.state.submitted() && this.state.nameInvalid();
+      this.chrome.saveBar.set({
+        onCancel: () => this.discardChanges(),
+        onSave: () => this.saveChanges(),
+        error: invalid,
+        message: invalid ? 'Fix the required fields before saving.' : undefined,
+      });
+    });
+
+    // Clear-as-fix: once the user makes the Name valid after a failed Save, drop the submitted flag
+    // so the field returns to its pristine (no-error) state and won't re-flag until the next Save
+    // attempt. The save-bar effect above reverts the bar to normal in the same pass.
+    effect(() => {
+      if (this.state.submitted() && !this.state.nameInvalid()) {
+        this.state.submitted.set(false);
+      }
     });
   }
 
@@ -97,14 +118,30 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   }
 
   // ── Save bar actions (the project's success/error snackbar pattern) ──────────────
-  /** Save Changes: validate, persist, toast success. A blank name (editable sets) → error toast. */
+  /**
+   * Save Changes: validate, persist, toast success. A blank name on an editable set is a required-
+   * field error — instead of a toast it sets `submitted` (which flips the Name field to its
+   * is-error state and re-renders the save bar red via the constructor effect), surfaces the field
+   * by switching to the Details tab, focuses it, and aborts the save.
+   */
   private saveChanges(): void {
-    if (!this.state.readOnly() && !this.state.name().trim()) {
-      this.msg.error('Enter a permission set name before saving.');
+    if (this.state.nameInvalid()) {
+      this.state.submitted.set(true);
+      // Surface the invalid field: ask the parent (which owns the editor tab bar) to switch to
+      // Details, then focus the Name input once it's rendered.
+      this.chrome.requestEditorTab('details');
+      this.focusNameInput();
       return;
     }
     this.state.save();
     this.msg.success('Permission set saved.');
+  }
+
+  /** Focus the Name input after the Details tab has rendered (it may have just been switched to). */
+  private focusNameInput(): void {
+    setTimeout(() => {
+      (document.getElementById('pset-name') as HTMLInputElement | null)?.focus();
+    });
   }
   /** Discard: revert the working state to the last-saved set (the save bar clears via `dirty`). */
   private discardChanges(): void {

@@ -14,6 +14,21 @@
 
     <div class="ds-modal__body agent-form__body">
 
+      <!-- Validation summary — only after a submit attempt with ≥1 error. Sits above the synced
+           info banner so both can stack (a synced agent can still have editable invalid fields). -->
+      @if (submitted() && hasErrors()) {
+        <div class="ds-alert ds-alert--error" role="alert">
+          <div class="ds-alert__header">
+            <span class="ds-icon ds-alert__icon" aria-hidden="true">error</span>
+            <div class="ds-alert__content">
+              <div class="ds-alert__text">
+                <p class="ds-alert__message">Please fill in the required fields highlighted below.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
       <!-- Synced provenance: integration-managed fields are locked below. -->
       @if (isSynced()) {
         <div class="ds-alert ds-alert--info" role="alert">
@@ -41,13 +56,22 @@
 
         <div class="agent-form__section-fields">
           <div class="agent-form__grid agent-form__grid--3">
-            <div class="ds-input" [class.is-disabled]="locked('firstName')">
+            <div class="ds-input" [class.is-disabled]="locked('firstName')" [class.is-error]="firstNameInvalid() && submitted()">
               <label class="ds-input__label" for="af-first">First Name<span class="ds-input__required" aria-hidden="true">*</span></label>
               <div class="ds-input__field">
                 <input id="af-first" class="ds-input__control" type="text" placeholder="First name" aria-required="true"
-                       [value]="editing()?.firstName ?? ''" [disabled]="locked('firstName')" />
+                       [ngModel]="firstName()" (ngModelChange)="firstName.set($event)" [disabled]="locked('firstName')"
+                       [attr.aria-invalid]="(submitted() && firstNameInvalid()) ? 'true' : null"
+                       [attr.aria-describedby]="(submitted() && firstNameInvalid()) ? 'af-first-err' : null" />
+                @if (submitted() && firstNameInvalid()) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
               </div>
-              @if (locked('firstName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+              @if (submitted() && firstNameInvalid()) {
+                <span class="ds-input__helper" id="af-first-err" role="alert">First name is required.</span>
+              } @else if (locked('firstName')) {
+                <span class="ds-input__helper">Managed by {{ source() }}</span>
+              }
             </div>
 
             <div class="ds-input" [class.is-disabled]="locked('middleName')">
@@ -59,33 +83,61 @@
               @if (locked('middleName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
             </div>
 
-            <div class="ds-input" [class.is-disabled]="locked('lastName')">
+            <div class="ds-input" [class.is-disabled]="locked('lastName')" [class.is-error]="lastNameInvalid() && submitted()">
               <label class="ds-input__label" for="af-last">Last Name<span class="ds-input__required" aria-hidden="true">*</span></label>
               <div class="ds-input__field">
                 <input id="af-last" class="ds-input__control" type="text" placeholder="Last name" aria-required="true"
-                       [value]="editing()?.lastName ?? ''" [disabled]="locked('lastName')" />
+                       [ngModel]="lastName()" (ngModelChange)="lastName.set($event)" [disabled]="locked('lastName')"
+                       [attr.aria-invalid]="(submitted() && lastNameInvalid()) ? 'true' : null"
+                       [attr.aria-describedby]="(submitted() && lastNameInvalid()) ? 'af-last-err' : null" />
+                @if (submitted() && lastNameInvalid()) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
               </div>
-              @if (locked('lastName')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+              @if (submitted() && lastNameInvalid()) {
+                <span class="ds-input__helper" id="af-last-err" role="alert">Last name is required.</span>
+              } @else if (locked('lastName')) {
+                <span class="ds-input__helper">Managed by {{ source() }}</span>
+              }
             </div>
           </div>
 
           <div class="agent-form__grid agent-form__grid--2">
-            <div class="ds-input" [class.is-disabled]="locked('email')">
+            <div class="ds-input" [class.is-disabled]="locked('email')" [class.is-error]="emailInvalid() && submitted()">
               <label class="ds-input__label" for="af-email">Email Address<span class="ds-input__required" aria-hidden="true">*</span></label>
               <div class="ds-input__field">
                 <input id="af-email" class="ds-input__control" type="email" placeholder="user@district.edu" aria-required="true"
-                       [value]="editing()?.email ?? ''" [disabled]="locked('email')" />
+                       [ngModel]="email()" (ngModelChange)="email.set($event)" [disabled]="locked('email')"
+                       [attr.aria-invalid]="(submitted() && emailInvalid()) ? 'true' : null"
+                       [attr.aria-describedby]="(submitted() && emailInvalid()) ? 'af-email-err' : null" />
+                @if (submitted() && emailInvalid()) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
               </div>
-              @if (locked('email')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+              @if (submitted() && emailInvalid()) {
+                <span class="ds-input__helper" id="af-email-err" role="alert">{{ emailError() }}</span>
+              } @else if (locked('email')) {
+                <span class="ds-input__helper">Managed by {{ source() }}</span>
+              }
             </div>
 
-            <div class="ds-input" [class.is-disabled]="locked('phone')">
+            <!-- TODO eng: replace with real phone validation (libphonenumber) -->
+            <div class="ds-input" [class.is-disabled]="locked('phone')" [class.is-error]="phoneInvalid() && submitted()">
               <label class="ds-input__label" for="af-phone">Phone Number</label>
               <div class="ds-input__field">
                 <input id="af-phone" class="ds-input__control" type="tel" placeholder="(555) 000-0000"
-                       [value]="editing()?.phone ?? ''" [disabled]="locked('phone')" />
+                       [ngModel]="phone()" (ngModelChange)="phone.set($event)" [disabled]="locked('phone')"
+                       [attr.aria-invalid]="(submitted() && phoneInvalid()) ? 'true' : null"
+                       [attr.aria-describedby]="(submitted() && phoneInvalid()) ? 'af-phone-err' : null" />
+                @if (submitted() && phoneInvalid()) {
+                  <span class="ds-icon ds-icon--sm ds-icon--filled ds-input__error-icon" aria-hidden="true">error</span>
+                }
               </div>
-              @if (locked('phone')) { <span class="ds-input__helper">Managed by {{ source() }}</span> }
+              @if (submitted() && phoneInvalid()) {
+                <span class="ds-input__helper" id="af-phone-err" role="alert">Enter a valid phone number.</span>
+              } @else if (locked('phone')) {
+                <span class="ds-input__helper">Managed by {{ source() }}</span>
+              }
             </div>
           </div>
 
@@ -131,10 +183,18 @@
           @for (row of accessRows(); track row.id) {
             <div class="agent-form__access-row">
               <div class="agent-form__grid agent-form__grid--3 agent-form__access-fields">
-                <app-form-select label="Department Module" [options]="departments()"
-                  [selected]="row.moduleName" placeholder="Select department module…" [required]="true" />
+                <!-- The required Department select is wrapped in an id'd <div> so submit() can read
+                     its chosen value from the DOM (.ds-select__control) per row; select.js owns the
+                     selection. Permission Set is optional, so it needs no id wrapper. -->
+                <div [id]="'af-row-dept-' + row.id">
+                  <app-form-select label="Department Module" [options]="departments()"
+                    [selected]="row.moduleName" placeholder="Select department module…" [required]="true"
+                    [error]="rowDepartmentInvalid(row.id)" errorMessage="Select a department." />
+                </div>
+                <!-- Permission Set is optional: a global admin assigns the module now and a department
+                     admin picks the permission set later, so it's not required and never validated. -->
                 <app-form-select label="Permission Set" [options]="permissionSetNames()"
-                  [selected]="row.permissionSetName" placeholder="Select permission set…" [required]="true" />
+                  [selected]="row.permissionSetName" placeholder="Select permission set (optional)…" />
                 <app-form-select label="Teams" [options]="teamNames()"
                   [selected]="row.teamNames" [multiple]="true" placeholder="Select teams (optional)…" />
               </div>
@@ -145,7 +205,7 @@
                   <span class="ds-select__label agent-form__row-remove-spacer" aria-hidden="true">Remove</span>
                   <button class="ds-icon-button ds-icon-button--icon" type="button"
                           aria-label="Remove department module" (click)="removeRow(row.id)">
-                    <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+                    <span class="ds-icon" aria-hidden="true">delete</span>
                   </button>
                 </div>
               }

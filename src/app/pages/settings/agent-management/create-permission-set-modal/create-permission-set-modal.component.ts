@@ -43,12 +43,27 @@ export class CreatePermissionSetModalComponent {
   readonly copyFromOptions = computed(() => this.setsSvc.sets().map(s => s.name));
   readonly canCreate = computed(() => this.name().trim() !== '');
 
+  // ── Validation ───────────────────────────────────────────────────────────────────────
+  /** True once the user has attempted to create; gates all error display. */
+  readonly submitted = signal(false);
+  /** Name is the only required field (required-only, no format). */
+  readonly nameInvalid = computed(() => this.name().trim() === '');
+  /** Drives the summary banner. */
+  readonly hasErrors = computed(() => this.nameInvalid());
+
   cancel(): void {
     this.close.emit();
   }
 
   create(): void {
-    if (!this.canCreate()) return;
+    this.submitted.set(true);
+    if (this.hasErrors()) {
+      // Invalid: keep the modal open, no create/close, move focus to the first invalid control.
+      queueMicrotask(() =>
+        (this.host.nativeElement.querySelector('#cps-name') as HTMLInputElement | null)?.focus(),
+      );
+      return;
+    }
     // Copy-From is a select.js visual stand-in; read its chosen value from the DOM at submit.
     const copyFrom =
       (this.host.nativeElement.querySelector('#cps-copy-from .ds-select__control') as HTMLInputElement | null)?.value?.trim() ??

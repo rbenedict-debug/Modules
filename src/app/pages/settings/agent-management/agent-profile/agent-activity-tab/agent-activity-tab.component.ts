@@ -127,10 +127,10 @@ export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    // No recorded activity → the DS empty state renders instead of the table (template @else).
-    // Skip booting the engine, and DON'T detach change detection, so the static empty state
-    // renders normally.
-    if (!this.rows.length) return;
+    // The table always renders and the engine always boots — even with zero rows. An agent with
+    // no activity gets the exact same table chrome; the DS empty state (template @if) shows where
+    // the rows would be. The engine derives its filters from config.columns (not row data) and
+    // its row ops no-op over an empty tbody, so booting empty is safe.
 
     // table-init.js relocates #cp-picker-overlay to <body> and never removes it, so a prior
     // table instance (the Tickets tab, or a /tickets page visit) can leave a stale duplicate.

@@ -115,3 +115,51 @@
   // side/bottom inset so the bar still reads as floating off the content edge.
   margin: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
 }
+
+// Top-nav document tabs — the section tab plus one per open agent profile. Tabs that don't fit the
+// strip width collapse into the DS "…" overflow tab (see app.ts recomputeTabOverflow). Collapsed
+// tabs stay in the DOM (visibility:hidden) so their widths stay measurable; overflow:hidden keeps
+// the off-strip ones from spilling into the page.
+.ds-top-nav__tabs {
+  position: relative;
+  flex-wrap: nowrap;
+  overflow: hidden;
+
+  .ds-nav-tab.is-collapsed { visibility: hidden; }
+}
+
+// The "…" overflow tab sits at the right edge of the strip, out of the tab flow, so collapsing
+// tabs never shifts the visible ones.
+.tnav-overflow {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+
+  // The panel is position:fixed (coords set in app.ts from the trigger) so the strip's
+  // overflow:hidden can't clip it.
+  &__panel {
+    position: fixed;
+    z-index: 30;
+    min-width: 240px;
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  // Each row: a full-width menu item (selects the tab) with the close button overlaid at the right.
+  &__row {
+    position: relative;
+
+    .ds-menu__item {
+      width: 100%;
+      padding-right: var(--spacing-xl);
+    }
+  }
+
+  &__close {
+    position: absolute;
+    top: 50%;
+    right: var(--spacing-xs);
+    transform: translateY(-50%);
+  }
+}

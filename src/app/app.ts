@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, OnDestroy, HostListener, effect, inject } from '@angular/core';
+import { Component, AfterViewInit, ElementRef, OnDestroy, HostListener, ViewChild, computed, effect, inject, signal } from '@angular/core';
 import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs';
@@ -8,6 +8,9 @@ import { SnackbarHostComponent } from './components/snackbar-host/snackbar-host.
 import { ModuleContextService } from './data/module-context.service';
 import { PersonaService } from './data/persona.service';
 import { ChromeService } from './data/chrome.service';
+import { OpenAgentTabsService } from './data/open-agent-tabs.service';
+import { UsersService } from './data/users.service';
+import { fullName } from './data/models';
 
 type NavSection = 'tickets' | 'assets' | 'users' | 'analytics' | 'settings';
 
@@ -37,6 +40,10 @@ export class App implements AfterViewInit, OnDestroy {
   // Shell chrome state. subNavOpen lives here so full-area takeover views (the permission-set
   // editor) can auto-collapse the drawer across the router-outlet boundary; see the proxy below.
   private readonly chrome = inject(ChromeService);
+  // Open agent profile tabs (the browser-style top-nav document tabs). The service owns the ordered
+  // set of open agents; this shell renders the strip and derives the active tab from the URL.
+  private readonly tabs = inject(OpenAgentTabsService);
+  private readonly usersSvc = inject(UsersService);
 
   /** Initials of the active persona, for the top-nav avatar. */
   get personaInitials(): string {
@@ -54,6 +61,38 @@ export class App implements AfterViewInit, OnDestroy {
   get saveBar() { return this.chrome.saveBar(); }
   activeNav: NavSection = 'tickets';
 
+  // ── Top-nav tabs ─────────────────────────────────────────────────────────────
+  // The strip = one section tab (relabels per sidebar section, closeable) + one tab per open agent
+  // profile. `activeAgentId` is the agent currently being viewed (from the URL) — null on a section
+  // page, where the section tab is the active one. `sectionTabClosed` hides the section tab after the
+  // user closes it; it reappears when they navigate to a section via the sidebar/subnav.
+  readonly activeAgentId = signal<string | null>(null);
+  readonly sectionTabClosed = signal(false);
+
+  /** Open agent tabs resolved to {id, name}. Reads UsersService so an edited name updates its tab. */
+  readonly agentTabs = computed(() =>
+    this.tabs.ids().map((id) => {
+      const u = this.usersSvc.users().find((x) => x.id === id);
+      return { id, name: u ? fullName(u) : 'Agent' };
+    }),
+  );
+
+  // Overflow — agent tabs that don't fit the strip width collapse into the DS "…" tab.
+  @ViewChild('tabStrip') private tabStrip?: ElementRef<HTMLElement>;
+  @ViewChild('overflowTrigger') private overflowTrigger?: ElementRef<HTMLElement>;
+  private _tabResizeObserver?: ResizeObserver;
+  /** Agent ids currently collapsed into the "…" overflow tab. */
+  readonly hiddenAgentIds = signal<string[]>([]);
+  /** The "…" overflow panel: open state + fixed position (computed from the trigger on open). */
+  readonly overflowPanelOpen = signal(false);
+  readonly overflowPanelTop = signal(0);
+  readonly overflowPanelRight = signal(0);
+  /** The collapsed agent tabs, listed in the overflow panel. */
+  readonly overflowTabs = computed(() => {
+    const hidden = new Set(this.hiddenAgentIds());
+    return this.agentTabs().filter((t) => hidden.has(t.id));
+  });
+
   private _scrollCleanup: (() => void) | null = null;
   private _routerSub: Subscription;
 
@@ -70,6 +109,7 @@ export class App implements AfterViewInit, OnDestroy {
       this._syncSettingsFromUrl((e as NavigationEnd).urlAfterRedirects);
       this._reconcileSettingsPage();
       if (this.activeNav === 'settings') setTimeout(() => this._setupSettingsScrollbar(), 0);
+      setTimeout(() => this.recomputeTabOverflow(), 0);
     });
 
     // ModuleContextService.select() only flips a signal — no router event fires — so the
@@ -88,6 +128,15 @@ export class App implements AfterViewInit, OnDestroy {
         return;
       }
       this._reconcileSettingsPage();
+    });
+
+    // Recompute tab overflow when the open-tab set / section tab / active tab changes (deferred so
+    // the DOM reflects the new tabs first). Width changes are handled by the ResizeObserver.
+    effect(() => {
+      this.agentTabs();
+      this.sectionTabClosed();
+      this.activeAgentId();
+      setTimeout(() => this.recomputeTabOverflow(), 0);
     });
   }
 
@@ -124,15 +173,30 @@ export class App implements AfterViewInit, OnDestroy {
       return;
     }
     this.activeNav = next;
+
+    // Which agent profile (if any) is being viewed — drives the active top-nav tab. The profile
+    // route is /settings/agent-management/:id; the bare list and other settings pages have no id.
+    const segs = url.split('?')[0].split('/').filter(Boolean);
+    this.activeAgentId.set(
+      segs[0] === 'settings' && segs[1] === 'agent-management' && segs[2] ? segs[2] : null,
+    );
   }
 
   ngAfterViewInit(): void {
     if (this.activeNav === 'settings') setTimeout(() => this._setupSettingsScrollbar(), 0);
+    // Recompute tab overflow whenever the strip's width changes.
+    const strip = this.tabStrip?.nativeElement;
+    if (strip && typeof ResizeObserver !== 'undefined') {
+      this._tabResizeObserver = new ResizeObserver(() => this.recomputeTabOverflow());
+      this._tabResizeObserver.observe(strip);
+    }
+    setTimeout(() => this.recomputeTabOverflow(), 0);
   }
 
   ngOnDestroy(): void {
     this._scrollCleanup?.();
     this._routerSub.unsubscribe();
+    this._tabResizeObserver?.disconnect();
   }
 
   setNav(section: NavSection): void {
@@ -141,12 +205,123 @@ export class App implements AfterViewInit, OnDestroy {
       section = 'tickets';
     }
     this.subNavOpen = true;
+    this.sectionTabClosed.set(false); // a sidebar section click always (re)shows its tab
     this.router.navigate([section]);
   }
 
   /** Navigate to a routed settings sub-page, e.g. /settings/department-modules. */
   goSettings(id: string): void {
+    this.sectionTabClosed.set(false); // navigating to a settings page (re)shows the section tab
     this.router.navigate(['/settings', id]);
+  }
+
+  // ── Top-nav tab actions ──────────────────────────────────────────────────────
+  /** Activate the section tab — return to the current section's page (the Agents list in Settings). */
+  onSectionTabClick(): void {
+    if (this.activeNav === 'settings') {
+      this.router.navigate(['/settings', this.settingsNavItem]);
+    } else {
+      this.router.navigate([this.activeNav]);
+    }
+  }
+
+  /** Activate an agent tab — open that agent's profile. */
+  onAgentTabClick(id: string): void {
+    this.router.navigate(['/settings/agent-management', id]);
+  }
+
+  /** Close the section tab. If it was the active view, move to an agent tab (or the Inbox home if
+   *  none); closing it while viewing an agent just hides it and you stay on the agent. */
+  onSectionTabClose(event: Event): void {
+    event.stopPropagation();
+    const wasActive = this.activeAgentId() === null;
+    this.sectionTabClosed.set(true);
+    if (!wasActive) return;
+    const open = this.tabs.ids();
+    if (open.length > 0) {
+      this.router.navigate(['/settings/agent-management', open[0]]);
+    } else {
+      this._goInbox();
+    }
+  }
+
+  /** Close an agent tab. Closing the active one lands you on its neighbour; closing the very last
+   *  tab returns to the Inbox home (matching prod). Closing a background tab leaves you in place. */
+  onAgentTabClose(id: string, event: Event): void {
+    event.stopPropagation();
+    const open = this.tabs.ids();
+    const idx = open.indexOf(id);
+    const wasActive = this.activeAgentId() === id;
+    this.tabs.close(id);
+    if (!wasActive) return;
+    const remaining = this.tabs.ids();
+    if (remaining.length > 0) {
+      // The tab that shifted into this slot, else the previous one.
+      const next = remaining[idx] ?? remaining[idx - 1];
+      this.router.navigate(['/settings/agent-management', next]);
+    } else if (!this.sectionTabClosed()) {
+      this.onSectionTabClick();
+    } else {
+      this._goInbox();
+    }
+  }
+
+  /** The Inbox home — the fallback when every tab is closed (Tickets is the always-available safe
+   *  section). Restores the section tab. */
+  private _goInbox(): void {
+    this.sectionTabClosed.set(false);
+    this.subNavOpen = true;
+    this.router.navigate(['tickets']);
+  }
+
+  // ── Tab overflow ("…" collapse) ──────────────────────────────────────────────
+  /**
+   * Collapse agent tabs that don't fit the strip width into the "…" overflow tab. Collapsed tabs
+   * stay in the DOM with `visibility: hidden` (boxes preserved) so this measurement stays stable —
+   * never `display: none`, which would zero their width and oscillate.
+   */
+  private recomputeTabOverflow(): void {
+    const strip = this.tabStrip?.nativeElement;
+    if (!strip) return;
+    const agentEls = Array.from(strip.querySelectorAll<HTMLElement>('.ds-nav-tab--agent'));
+    let hidden: string[] = [];
+    if (agentEls.length > 0) {
+      const stripWidth = strip.clientWidth;
+      const last = agentEls[agentEls.length - 1];
+      const fitsAll = last.offsetLeft + last.offsetWidth <= stripWidth;
+      if (!fitsAll) {
+        const MORE_WIDTH = 52; // room reserved for the "…" tab (estimate; tune if it overlaps)
+        const limit = stripWidth - MORE_WIDTH;
+        for (const el of agentEls) {
+          const id = el.dataset['tabId'];
+          if (id && el.offsetLeft + el.offsetWidth > limit) hidden.push(id);
+        }
+      }
+    }
+    const cur = this.hiddenAgentIds();
+    if (cur.length !== hidden.length || hidden.some((id, i) => id !== cur[i])) {
+      this.hiddenAgentIds.set(hidden);
+    }
+    if (hidden.length === 0 && this.overflowPanelOpen()) this.overflowPanelOpen.set(false);
+  }
+
+  /** Toggle the "…" overflow panel, anchoring it (fixed) under the trigger. */
+  toggleOverflowPanel(): void {
+    if (!this.overflowPanelOpen()) {
+      const r = this.overflowTrigger?.nativeElement.getBoundingClientRect();
+      if (r) {
+        this.overflowPanelTop.set(Math.round(r.bottom + 4));
+        this.overflowPanelRight.set(Math.round(window.innerWidth - r.right));
+      }
+    }
+    this.overflowPanelOpen.update((v) => !v);
+  }
+
+  /** "Close all tabs" — clears every open agent tab and returns to the Inbox home (prod behavior). */
+  closeAllTabs(): void {
+    this.tabs.closeAll();
+    this.overflowPanelOpen.set(false);
+    this._goInbox();
   }
 
   /** Keep the highlighted settings item in sync with the URL (mirrors _syncNavFromUrl). */
@@ -275,15 +450,26 @@ export class App implements AfterViewInit, OnDestroy {
 
   @HostListener('document:click', ['$event'])
   closeProfileMenuOnOutsideClick(event: MouseEvent): void {
-    if (!this.profileMenuOpen) return;
-    if (!(event.target as HTMLElement).closest('.profile-menu')) {
+    const target = event.target as HTMLElement;
+    if (this.profileMenuOpen && !target.closest('.profile-menu')) {
       this.profileMenuOpen = false;
+    }
+    if (this.overflowPanelOpen() && !target.closest('.tnav-overflow')) {
+      this.overflowPanelOpen.set(false);
     }
   }
 
   @HostListener('document:keydown.escape')
   closeProfileMenuOnEscape(): void {
     this.profileMenuOpen = false;
+    this.overflowPanelOpen.set(false);
+  }
+
+  // The overflow panel is fixed-positioned from the trigger's rect, so a viewport resize would
+  // detach it — close it (the ResizeObserver re-measures the strip separately).
+  @HostListener('window:resize')
+  closeOverflowPanelOnResize(): void {
+    if (this.overflowPanelOpen()) this.overflowPanelOpen.set(false);
   }
 
   // ── Tickets ──────────────────────────────────────────────────────────────

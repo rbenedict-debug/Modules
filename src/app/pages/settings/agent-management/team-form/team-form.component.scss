@@ -12,11 +12,14 @@
   background: var(--color-surface-scrim);
 }
 
-/* Narrower than the agent form — this is a short, single-column form. Cap the height so the
-   body scrolls between the sticky header/footer if it ever overflows. */
+/* Narrower than the agent form — a single-column form. A fixed height (matching the agent form
+   modal's tall, stable feel) keeps the modal from growing/shrinking with the member-list length;
+   capped to the viewport on short screens, with the body scrolling between the sticky header and
+   footer. */
 .team-form__modal.ds-modal {
   width: 100%;
   max-width: 560px;
+  height: 680px;
   max-height: calc(100vh - (var(--spacing-xl) * 2));
 }
 
@@ -62,5 +65,54 @@
 }
 
 .team-form__empty {
+  color: var(--color-text-secondary);
+}
+
+/* Add-agents control: a select-style trigger + an inline dropdown panel. Custom (not .ds-select),
+   so the design-system `select.js` runtime leaves it alone; the panel expands inline (rather than
+   floating) so the modal's scrolling body can't clip it. */
+.team-form__add {
+  width: 100%;
+  // Containing block for the absolutely-positioned dropdown panel below.
+  position: relative;
+}
+
+.team-form__add .ds-autocomplete__field,
+.team-form__add .ds-autocomplete__control {
+  cursor: pointer;
+}
+
+.team-form__add-panel {
+  // Float over the content below (like a normal dropdown) rather than expanding the modal:
+  // absolute means opening it never changes the modal's height or pushes the chips down.
+  position: absolute;
+  top: calc(100% + var(--spacing-xs));
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 16rem;
+  overflow-y: auto;
+
+  /* Pin the in-panel search while the list scrolls. */
+  .ds-menu__search {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
+
+  /* DS scrollbar — matches the modal body. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-surface-scroll) transparent;
+
+  &::-webkit-scrollbar { width: var(--spacing-sm); }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-surface-scroll);
+    border-radius: var(--radius-full);
+  }
+}
+
+.team-form__add-empty {
+  padding: var(--spacing-sm) var(--spacing-md);
   color: var(--color-text-secondary);
 }

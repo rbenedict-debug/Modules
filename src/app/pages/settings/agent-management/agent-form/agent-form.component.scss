@@ -128,6 +128,10 @@
   flex: none;
   display: flex;
   flex-direction: column;
+  // Mirror the ds-select column's own label→control gap (--spacing-xs). With the invisible
+  // label spacer above, this drops the 42px button by exactly label-height + this gap — the
+  // same offset that puts the 42px select control below its label — so the two line up.
+  gap: var(--spacing-xs);
 }
 
 /* Invisible clone of a field label — reserves the same height above the button as the
