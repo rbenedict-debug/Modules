@@ -21,7 +21,7 @@ let selectUid = 0;
   styles: [':host { display: block; } .ds-select { width: 100%; }'],
   template: `
     <div class="ds-select" [class.ds-select--multi]="multiple" [class.is-disabled]="disabled">
-      <label class="ds-select__label" [attr.for]="inputId">
+      <label class="ds-select__label" [class.ds-sr-only]="hideLabel" [attr.for]="inputId">
         {{ label }}@if (required) {<span class="ds-select__required" aria-hidden="true">*</span>}
       </label>
       <div class="ds-select__field-row">
@@ -60,6 +60,9 @@ let selectUid = 0;
 })
 export class FormSelectComponent {
   @Input() label = '';
+  /** Visually hide the label (still announced to screen readers + drives the control's aria-label).
+   *  Use when surrounding context — e.g. a section heading — already names the single control. */
+  @Input() hideLabel = false;
   @Input() options: string[] = [];
   @Input() multiple = false;
   /** Initial selection — a label (single) or labels (multi). */

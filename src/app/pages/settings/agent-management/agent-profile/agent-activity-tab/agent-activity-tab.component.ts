@@ -6,7 +6,9 @@ import {
   ElementRef,
   OnDestroy,
   ViewChild,
+  input,
 } from '@angular/core';
+import { UserStatus } from '../../../../../data/models';
 
 // table-init.js is loaded globally via angular.json `scripts` and exposes this on window.
 declare const OnfloTableInit: { initTable: (config: unknown) => void };
@@ -49,9 +51,20 @@ interface ActivityRow {
 export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
   constructor(private cdr: ChangeDetectorRef) {}
 
+  /** The agent's status, passed from the parent profile. A Pending agent hasn't done anything
+   *  yet (→ empty Activity state); Active and Inactive agents have history (an inactive agent
+   *  was active at some point, so its history stands). */
+  readonly agentStatus = input.required<UserStatus>();
+
+  /** Rows to render: none for a Pending agent, the full audit history otherwise. Drives both
+   *  the table / empty-state switch in the template and the engine-boot guard in ngAfterViewInit. */
+  get rows(): ActivityRow[] {
+    return this.agentStatus() === 'Pending' ? [] : this.ALL_ROWS;
+  }
+
   // Mock audit history, newest first — read once during the initial render, after which
   // table-init.js owns the DOM. TODO eng: source from the real audit log for this agent.
-  readonly rows: ActivityRow[] = [
+  private readonly ALL_ROWS: ActivityRow[] = [
     { id: 'a1',  timestamp: '2026-06-20T09:14:00', activity: 'Signed in',                            type: 'Auth',       detail: 'Safari on macOS',                       performedBy: 'This agent' },
     { id: 'a2',  timestamp: '2026-06-19T16:42:00', activity: 'Closed ticket INC-1045',               type: 'Ticket',     detail: 'Monitor flickering — Room 102',         performedBy: 'This agent' },
     { id: 'a3',  timestamp: '2026-06-19T13:30:00', activity: 'Commented on ticket INC-1044',         type: 'Ticket',     detail: 'Awaiting replacement part from vendor', performedBy: 'This agent' },
@@ -114,6 +127,11 @@ export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
+    // No recorded activity → the DS empty state renders instead of the table (template @else).
+    // Skip booting the engine, and DON'T detach change detection, so the static empty state
+    // renders normally.
+    if (!this.rows.length) return;
+
     // table-init.js relocates #cp-picker-overlay to <body> and never removes it, so a prior
     // table instance (the Tickets tab, or a /tickets page visit) can leave a stale duplicate.
     // The engine resolves elements by hardcoded id, so clear any orphan first to be sure it

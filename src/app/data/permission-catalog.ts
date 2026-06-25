@@ -158,7 +158,7 @@ export const ACTIONS_SECTIONS: PermissionSection[] = [
 ];
 
 // ══════════════════════════════════════════════
-// SETTINGS catalog — Global, Integration Hub, Workflows, Tickets, Assets, Call Center (matches the product settings nav)
+// SETTINGS catalog — Global, Integration Hub, Automations, Tickets, Assets, Call Center (matches the product settings nav)
 // ══════════════════════════════════════════════
 export const SETTINGS_SECTIONS: PermissionSection[] = [
   {
@@ -204,11 +204,11 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
   },
   {
     id: 'workflows',
-    label: 'Workflows',
+    label: 'Automations',
     icon: 'conversion_path',
     perms: [
-      { id: 'wf-tickets', label: 'Tickets', description: 'Controls visibility and management of ticket workflow automation rules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
-      { id: 'wf-assets', label: 'Assets', description: 'Controls visibility and management of asset workflow automation rules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
+      { id: 'wf-tickets', label: 'Legacy Workflows', description: 'Controls visibility and management of legacy workflow automation rules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
+      { id: 'wf-assets', label: 'Workflows', description: 'Controls visibility and management of workflow automation rules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'wf-lookup-tables', label: 'Lookup Tables', description: 'Controls visibility and management of lookup table definitions used for dynamic workflows', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
     ],
   },
@@ -270,7 +270,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
  * The sections a GLOBAL permission set's editor shows: keep only 'global'-tier sections, and within
  * each only its 'global'-tier perms (a perm's own `tier` overrides the section's; omitted inherits
  * the section, which defaults to 'department'). Department-tier sections — every ACTIONS section,
- * plus Integration Hub/Workflows/Tickets/Assets/Call Center in SETTINGS — have zero global perms and drop out, so
+ * plus Integration Hub/Automations/Tickets/Assets/Call Center in SETTINGS — have zero global perms and drop out, so
  * running this over ACTIONS_SECTIONS yields []. Over SETTINGS_SECTIONS it yields just Global, minus
  * its one department-tier row (Department Locations). Pure; returns shallow-cloned sections.
  */

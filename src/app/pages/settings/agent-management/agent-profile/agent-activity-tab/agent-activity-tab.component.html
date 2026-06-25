@@ -1,6 +1,9 @@
 <!-- Canonical Design System table (driven by table-init.js, wired in angular.json).
      Scaffold mirrors the Agent Tickets table; the toolbar is trimmed to Search / Filter /
-     Tool panel / Download. Do NOT rename any id — table-init.js resolves elements by id. -->
+     Tool panel / Download. Do NOT rename any id — table-init.js resolves elements by id.
+     Data-driven: the table (and its engine) mount only when the agent has activity. With no
+     activity the @else below renders the DS empty state instead — see the ngAfterViewInit guard. -->
+@if (rows.length) {
 <div class="agent-activity-table" #tableRoot>
   <div class="ds-page-content__main ds-page-content__main--table">
     <div class="table-container">
@@ -23,7 +26,7 @@
         </button>
         <button class="ds-icon-button ds-icon-button-toggle ds-icon-button--outlined"
                 type="button" aria-pressed="false" aria-label="Tool panel" id="btn-columns">
-          <span class="ds-icon ds-icon--filled" aria-hidden="true">view_column</span>
+          <span class="ds-icon ds-icon--filled" aria-hidden="true">settings</span>
         </button>
         <button class="ds-icon-button ds-icon-button--outlined"
                 type="button" aria-label="Download" (click)="downloadCsv()">
@@ -35,8 +38,8 @@
         <button class="ds-icon-button ds-icon-button--outlined"
                 type="button" aria-pressed="false" aria-label="Expand table to full screen"
                 #fsBtn (click)="toggleFullscreen()">
-          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--open" aria-hidden="true">fullscreen</span>
-          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--close" aria-hidden="true">fullscreen_exit</span>
+          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--open" aria-hidden="true">expand_content</span>
+          <span class="ds-icon ds-icon--filled agent-activity-table__fs-icon agent-activity-table__fs-icon--close" aria-hidden="true">collapse_content</span>
         </button>
       </div>
 
@@ -448,6 +451,23 @@
     Excel Export (.xlsx)
   </button>
 </div>
+} @else {
+  <!-- No recorded activity for this agent — the DS empty state stands in for the table,
+       consistent with the Permissions tab's empty state (same graphic treatment + copy rhythm). -->
+  <div class="ds-card ds-card--elevated agent-activity-empty">
+    <div class="ds-card__body">
+      <div class="ds-empty-state">
+        <div class="ds-empty-state__graphic agent-activity-empty__graphic" aria-hidden="true">
+          <span class="ds-icon ds-icon--lg">history</span>
+        </div>
+        <div class="ds-empty-state__body">
+          <p class="ds-empty-state__heading">No activity yet</p>
+          <p class="ds-empty-state__description">This agent hasn’t performed any actions yet. Activity will appear here as they sign in and work in Onflo.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+}
 
 <!-- table-init.js is loaded via angular.json `scripts`; OnfloTableInit.initTable(config)
      is called from agent-activity-tab.component.ts ngAfterViewInit() (see AGENT-GUIDE-DESIGN.md §7). -->

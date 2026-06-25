@@ -54,7 +54,7 @@ export class AgentManagementComponent {
     if (!id) return null;
     const s = this.setsSvc.sets().find((x) => x.id === id);
     return s
-      ? { name: s.name, readOnly: s.isLocked || s.type === 'System', isGlobalOnly: s.isGlobalOnly === true }
+      ? { name: s.name, type: s.type, readOnly: s.isLocked || s.type === 'System', isGlobalOnly: s.isGlobalOnly === true }
       : null;
   });
 

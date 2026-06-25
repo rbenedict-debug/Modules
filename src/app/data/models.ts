@@ -1,4 +1,4 @@
-export type UserStatus = 'Active' | 'Unverified' | 'Inactive' | 'Pending';
+export type UserStatus = 'Active' | 'Pending' | 'Inactive';
 export type UserSource = 'Manual' | 'SIS' | 'Active Directory' | 'Google' | 'Azure';
 export type UserRole = 'Agent' | 'District Admin' | 'School Admin' | 'Staff' | 'Teacher' | 'Parent' | 'Student';
 
@@ -45,7 +45,7 @@ export interface Module {
 
 /** The capability areas a module can include. The active context's capabilities decide which
  *  side-nav items and Settings sections are visible. Derived from `Module.features` (the
- *  documented source of truth — see docs/engineering-architecture.md) via FEATURE_CAPABILITY. */
+ *  documented source of truth — see docs/ENGINEERING.md) via FEATURE_CAPABILITY. */
 export type Capability = 'ticketing' | 'analytics' | 'workflow' | 'assets';
 
 /** Maps each canonical "What's included" feature label to the capability it grants. Keeps

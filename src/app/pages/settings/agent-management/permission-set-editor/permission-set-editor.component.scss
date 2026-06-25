@@ -150,7 +150,7 @@
 }
 
 .psets-editor__section-title {
-  @include ds.type-title-h4;
+  @include ds.type-title-h3;
   margin: 0;
   color: var(--color-text-primary);
 }
@@ -462,23 +462,65 @@
 .psets-editor__details-section + .psets-editor__details-section {
   margin-top: var(--spacing-xl);
 }
-.psets-editor__details-head {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-}
 .psets-editor__details-name { max-width: 440px; }
 .psets-editor__details-desc { max-width: 600px; margin-top: var(--spacing-md); }
 
-.psets-editor__assign-head {
+// Both Details sections use the shared .psets-editor__section-head (icon + title), matching Data
+// Visibility / Actions / Settings. The "Add Agents" action lives in the toolbar below the heading
+// (.psets-editor__assign-toolbar), not in the section head.
+
+// Toolbar above the chip list: chip-filter search (grows) + the "Add Agents" menu trigger (right).
+.psets-editor__assign-toolbar {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
 }
-.psets-editor__assign-counts { display: inline-flex; gap: var(--spacing-xs); }
-.psets-editor__assign-add { margin-left: auto; }
+// The chip-filter search fills the row; the Add button keeps its natural size on the right.
+.psets-editor__assign-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+// "Add Agents" trigger + its dropdown (anchored below-right of the button).
+.psets-editor__add {
+  margin-left: auto;       // keep the button right when the search isn't shown (empty list)
+  flex: 0 0 auto;
+}
+.psets-editor__add-menu {
+  // Fixed (coords set on the element from the trigger) so the dropdown isn't clipped by the
+  // scrollable tab body. Outside-click close is handled in the component (document:click).
+  position: fixed;
+  z-index: 1001;
+  width: 320px;
+  max-height: 340px;
+  overflow-y: auto;
+
+  // Sticky search stays pinned while the list scrolls; fill the menu width.
+  .ds-menu__search {
+    position: sticky;
+    top: 0;
+    .ds-input { width: 100%; }
+  }
+}
+.psets-editor__add-empty {
+  @include ds.type-body-small;
+  color: var(--color-text-secondary);
+  margin: 0;
+  padding: var(--spacing-sm) var(--spacing-md) var(--spacing-md);
+}
+
+// Shown when a search yields no matches among the assigned members — plain text under the search.
+.psets-editor__assign-noresults {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md) 0;
+  color: var(--color-text-secondary);
+  @include ds.type-body-small;
+
+  .ds-icon { color: var(--color-icon-subtle); }
+}
 
 .psets-editor__assign-empty {
   display: flex;
@@ -495,39 +537,23 @@
 .psets-editor__assign-empty-title { @include ds.type-body-medium; margin: var(--spacing-xs) 0 0; color: var(--color-text-secondary); }
 .psets-editor__assign-empty-help { @include ds.type-body-small; margin: 0; color: var(--color-text-secondary); }
 
-// Assigned members card: a bordered region on the page surface holding the Teams/Users chip lists.
-.psets-editor__assign-list {
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-lg);
-  background-color: var(--color-surface-page);
-  padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
-}
+// Assigned members sit directly on the page (no card) under the search — Teams/Users chip groups.
 .psets-editor__assign-divider {
+  // Matches the ds-input / ds-textarea field labels above: label-small, prominent (bold) weight,
+  // primary text color.
   @include ds.type-label-small;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
-  margin: 0;
-  padding: var(--spacing-md) 0 var(--spacing-sm);
-}
-
-// Round avatar used in the Add Assignment modal rows (assign-members-modal); the Details tab itself
-// now shows assigned members as chips, so these are scoped to that modal's user/team rows.
-.psets-editor__assign-avatar {
-  display: inline-flex;
+  font-weight: var(--ref-typescale-label-small-weight-prominent);
+  display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  background-color: var(--color-surface-subtle);
-  color: var(--color-text-secondary);
-  @include ds.type-label-small;
-}
-.psets-editor__assign-avatar--team {
-  background-color: var(--color-surface-accent-purple, var(--color-surface-subtle));
+  gap: var(--spacing-xs);
   color: var(--color-text-primary);
+  margin: 0;
+  // Top padding is the vertical gap between consecutive groups (Teams → Agents) — generous so the
+  // two read as distinct. Bottom is the tighter label→chips gap.
+  padding: var(--spacing-xl) 0 var(--spacing-sm);
+
+  // The first group's label sits directly under the search, so it needs no top gap.
+  &:first-child { padding-top: 0; }
 }
 
 // A child perm whose parent (disabledByKey) is off is dimmed + inert (the control is also disabled).

@@ -1,8 +1,9 @@
 <div class="ds-page-content__heading">
   @if (editingSet(); as es) {
-    <!-- Full-area permission-set editor: the set name becomes the page title (with a System
-         badge for read-only sets), and a back arrow beside it returns to the list — the editor's
-         own header bar was removed. Save / Cancel now live in the save bar at the bottom. -->
+    <!-- Full-area permission-set editor: the set name becomes the page title (with a System/Custom
+         type pill matching the colors on the sets table — blue System, grey Custom), and a back
+         arrow beside it returns to the list — the editor's own header bar was removed. Save / Cancel
+         now live in the save bar at the bottom. -->
     <div class="am-editor-titlebar">
       <button type="button" class="am-editor-back"
               aria-label="Back to Agent Management" (click)="editingSetId.set(null)">
@@ -10,8 +11,10 @@
       </button>
       <h1 class="ds-page-content__title am-editor-title">
         {{ es.name }}
-        @if (es.readOnly) {
-          <span class="ds-label ds-label--grey ds-label--xs ds-label--pill ds-label--outline">System</span>
+        @if (es.type === 'System') {
+          <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--blue">System</span>
+        } @else {
+          <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--grey">Custom</span>
         }
       </h1>
     </div>

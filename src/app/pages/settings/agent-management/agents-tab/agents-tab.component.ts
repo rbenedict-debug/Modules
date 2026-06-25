@@ -98,7 +98,7 @@ export class AgentsTabComponent implements AfterViewInit {
     { name: 'Email',           width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Permission Sets', width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Status',          width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
-      { l: 'Active', c: 'green' }, { l: 'Pending', c: 'purple' }, { l: 'Unverified', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
+      { l: 'Active', c: 'green' }, { l: 'Pending', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
     ]},
     { name: 'Module(s)',       width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Teams',           width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
@@ -154,8 +154,6 @@ export class AgentsTabComponent implements AfterViewInit {
       case 'Active':
         return 'green';
       case 'Pending':
-        return 'purple';
-      case 'Unverified':
         return 'yellow';
       case 'Inactive':
       default:

@@ -126,12 +126,16 @@
   min-width: 0;
 }
 
-/* Edit action — pinned to the hero's top-right corner (the hero row is
-   centered, so opt this one child out to the top). */
-.agent-detail__hero-edit {
+/* Hero actions (Edit, plus Resend activation email for a pending account) — pinned to
+   the hero's top-right corner (the hero row is centered, so opt this group out to the top)
+   and laid out as a row so the two buttons sit side by side. */
+.agent-detail__hero-actions {
   margin-left: auto;
   align-self: flex-start;
   flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
 }
 
 .agent-detail__hero-name-row {

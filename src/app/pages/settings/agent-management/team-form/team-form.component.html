@@ -54,10 +54,10 @@
         <!-- Read-only members: static chips resolved from the synced team. -->
         <div class="team-form__members-readonly">
           <span class="ds-input__label">Members</span>
-          <div class="ds-tag-list" role="list" aria-label="Team members">
+          <div class="ds-chip-list" role="list" aria-label="Team members">
             @for (m of members(); track m.id) {
-              <div class="ds-tag is-disabled" role="listitem">
-                <span class="ds-tag__label">{{ m.name }}</span>
+              <div class="ds-chip is-disabled" role="listitem">
+                <span class="ds-chip__label">{{ m.name }}</span>
               </div>
             } @empty {
               <span class="team-form__empty">No members.</span>
@@ -78,13 +78,13 @@
             </div>
           </div>
           @if (members().length) {
-            <div class="ds-tag-list" role="listbox" aria-label="Team members">
+            <div class="ds-chip-list" role="listbox" aria-label="Team members">
               @for (m of members(); track m.id) {
-                <div class="ds-tag" role="option">
-                  <span class="ds-tag__label">{{ m.name }}</span>
-                  <button class="ds-tag__remove" type="button" aria-label="Remove {{ m.name }}"
+                <div class="ds-chip" role="option" tabindex="0">
+                  <span class="ds-chip__label">{{ m.name }}</span>
+                  <button class="ds-chip__remove" type="button" aria-label="Remove {{ m.name }}"
                           (click)="removeMember(m.id)">
-                    <span class="ds-icon ds-icon--xs">close</span>
+                    <span class="ds-icon ds-icon--sm">close</span>
                   </button>
                 </div>
               }

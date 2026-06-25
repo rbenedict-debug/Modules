@@ -34,18 +34,35 @@
             <!-- Line 1: name + status. -->
             <div class="agent-detail__hero-name-row">
               <p class="agent-detail__hero-name">{{ fullName() }}</p>
-              <span class="ds-label ds-label--pill ds-label--sm ds-label--outline ds-label--has-dot ds-label--{{ statusColor() }}">
+              <span class="ds-label ds-label--pill ds-label--xs ds-label--outline ds-label--has-dot ds-label--{{ statusColor() }}">
                 <span class="ds-label__dot" aria-hidden="true"></span>{{ u.status }}
               </span>
             </div>
             <!-- Line 2: source · email (plain text — raw source word, no icon). -->
             <p class="agent-detail__hero-sub">{{ u.source }} · {{ u.email }}</p>
           </div>
-          <!-- Top-right hero action. TODO eng: wire edit behavior. -->
-          <button class="ds-button ds-button--outlined ds-button--leading-icon agent-detail__hero-edit" type="button" (click)="editOpen.set(true)">
-            <span class="ds-icon">edit</span>
-            Edit
-          </button>
+          <!-- Top-right hero actions. Resend shows only for a Pending account (the yellow
+               status pill above is the indicator); Edit is always present. -->
+          <div class="agent-detail__hero-actions">
+            @if (isPending()) {
+              <button class="ds-button ds-button--filled ds-button--sm" type="button"
+                      [class.ds-button--leading-icon]="!resending()"
+                      [class.is-loading]="resending()"
+                      (click)="resendActivation($event)">
+                @if (resending()) {
+                  Sending…
+                } @else {
+                  <span class="ds-icon">forward_to_inbox</span>
+                  Resend activation email
+                }
+              </button>
+            }
+            <!-- TODO eng: wire edit behavior. -->
+            <button class="ds-button ds-button--outlined ds-button--sm ds-button--leading-icon" type="button" (click)="editOpen.set(true)">
+              <span class="ds-icon">edit</span>
+              Edit
+            </button>
+          </div>
         </div>
       </div>
     </section>
@@ -138,7 +155,7 @@
             <div class="ds-card__body">
               <div class="agent-detail__section-head agent-detail__section-head--count">
                 <h2 class="agent-detail__section-title" id="ap-perms-title">Permissions</h2>
-                @if (isAgent()) {
+                @if (isAgent() && modulePermissionCards().length) {
                   <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ modulePermissionCards().length }}</span>
                 }
               </div>
@@ -185,8 +202,8 @@
                         <span class="ds-icon ds-icon--lg">badge</span>
                       </div>
                       <div class="ds-empty-state__body">
-                        <p class="ds-empty-state__heading">No module permissions</p>
-                        <p class="ds-empty-state__description">This agent is not assigned to any module yet.</p>
+                        <p class="ds-empty-state__heading">No permissions assigned</p>
+                        <p class="ds-empty-state__description">This agent hasn’t been assigned permissions in any module yet.</p>
                       </div>
                     </div>
                   }
@@ -197,7 +214,8 @@
                     <span class="ds-icon ds-icon--lg">badge</span>
                   </div>
                   <div class="ds-empty-state__body">
-                    <p class="ds-empty-state__description">Non-agent users are not assigned module-level permissions.</p>
+                    <p class="ds-empty-state__heading">No module permissions</p>
+                    <p class="ds-empty-state__description">Module-level permissions apply to agents only.</p>
                   </div>
                 </div>
               }
@@ -213,7 +231,7 @@
       @case ('activity') {
         <div class="agent-detail__panel agent-detail__panel--activity" role="tabpanel"
              id="ap-panel-activity" aria-labelledby="ap-tab-activity">
-          <app-agent-activity-tab />
+          <app-agent-activity-tab [agentStatus]="u.status" />
         </div>
       }
     }

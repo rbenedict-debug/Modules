@@ -110,11 +110,16 @@ export class AgentFormComponent implements OnInit {
     for (const u of this.usersSvc.users()) for (const loc of u.locations) seen.add(loc);
     return [...seen].sort();
   });
-  readonly statusOptions = ['Active', 'Unverified', 'Inactive', 'Pending'];
+  readonly statusOptions = ['Active', 'Pending', 'Inactive'];
 
   /** Agent's current values (edit pre-fill). */
   readonly editing = computed(() => this.agentSig());
   readonly currentLocations = computed(() => this.agentSig()?.locations ?? []);
+
+  /** A pending account hasn't activated yet — gates the Resend activation action beside the status. */
+  readonly isPending = computed(() => this.editing()?.status === 'Pending');
+  /** True while a resend-activation request is in flight — drives the Resend button's loading state. */
+  readonly resending = signal(false);
 
   readonly customFields: CustomFieldDef[] = [
     { key: 'room', label: 'Office / Room', type: 'text', placeholder: 'e.g. B-214' },
@@ -170,6 +175,25 @@ export class AgentFormComponent implements OnInit {
     this.msg.success(this.isEdit() ? 'Agent updated.' : 'Agent created.');
     this.saved.emit();
     this.close.emit();
+  }
+
+  /** Resend the activation email to a pending agent — mirrors the profile hero action. Design-mode
+   *  mock: brief loading state on the button, then a result toast (shift-click demos the failure
+   *  path + Retry). TODO eng: call the real resend-activation endpoint and drive loading + result
+   *  off its response. */
+  resendActivation(event?: MouseEvent): void {
+    const u = this.editing();
+    if (!u || this.resending()) return;
+    const fail = event?.shiftKey === true; // Shift-click → demo the error toast
+    this.resending.set(true);
+    setTimeout(() => {
+      this.resending.set(false);
+      if (fail) {
+        this.msg.error(`Couldn’t resend the activation email to ${u.email}.`, () => this.resendActivation());
+      } else {
+        this.msg.success(`Activation email resent to ${u.email}.`);
+      }
+    }, 1200);
   }
 
   @HostListener('document:keydown.escape')

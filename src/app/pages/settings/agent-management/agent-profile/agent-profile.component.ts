@@ -8,6 +8,7 @@ import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
 import { ChromeService } from '../../../../data/chrome.service';
+import { MessagingService } from '../../../../data/messaging.service';
 import { AgentActivityTabComponent } from './agent-activity-tab/agent-activity-tab.component';
 import { AgentFormComponent } from '../agent-form/agent-form.component';
 
@@ -36,11 +37,10 @@ type TabId = 'details' | 'permissions' | 'activity';
 interface ProfileTab { id: TabId; label: string; }
 
 // Status → DS label colour (matches the agents table + the former drawer).
-const STATUS_COLOR: Record<UserStatus, 'green' | 'yellow' | 'grey' | 'purple'> = {
+const STATUS_COLOR: Record<UserStatus, 'green' | 'yellow' | 'grey'> = {
   Active: 'green',
-  Unverified: 'yellow',
+  Pending: 'yellow',
   Inactive: 'grey',
-  Pending: 'purple',
 };
 
 /**
@@ -68,6 +68,7 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   // Collapses the section subnav while this full-area profile is on screen and restores it
   // on leave — the same shell mechanism the permission-set editor uses for its takeover view.
   private readonly chrome = inject(ChromeService);
+  private readonly msg = inject(MessagingService);
 
   // Agent id from the route; reactive so navigating between profiles updates the view.
   private readonly agentId = toSignal(
@@ -89,6 +90,9 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
 
   /** True while the Edit Agent form is open (this page is not detached, so a signal drives it). */
   readonly editOpen = signal(false);
+
+  /** True while a resend-activation request is in flight — drives the Resend button's loading state. */
+  readonly resending = signal(false);
   // The Activity tab hosts the canonical table-init.js engine, which takes over the DOM,
   // detaches change detection, and binds every element by GLOBAL id. It renders only while
   // active (inside the @switch) so the engine mounts lazily and never shares the DOM with
@@ -120,7 +124,29 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     return u ? STATUS_COLOR[u.status] : 'grey';
   });
 
+  /** A pending account hasn't activated yet — drives the hero's Resend activation action. */
+  readonly isPending = computed(() => this.user()?.status === 'Pending');
+
   readonly isAgent = computed(() => !!this.user()?.roles.includes('Agent'));
+
+  /** Resend the activation email to a pending agent. Design-mode mock: show a brief loading
+   *  state on the button, then a result toast. Shift-clicking demos the failure path (error
+   *  toast + Retry, where Retry re-runs the success path). TODO eng: call the real
+   *  resend-activation endpoint and drive the loading + result off its response. */
+  resendActivation(event?: MouseEvent): void {
+    const u = this.user();
+    if (!u || this.resending()) return;
+    const fail = event?.shiftKey === true; // Shift-click → demo the error toast
+    this.resending.set(true);
+    setTimeout(() => {
+      this.resending.set(false);
+      if (fail) {
+        this.msg.error(`Couldn’t resend the activation email to ${u.email}.`, () => this.resendActivation());
+      } else {
+        this.msg.success(`Activation email resent to ${u.email}.`);
+      }
+    }, 1200);
+  }
 
   // ── Basic Information ─────────────────────────────────────────────────────────
   // The 12 standard fields, data-driven from the User model. Integration provenance is shown
@@ -183,6 +209,14 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
     const modules = this.modulesSvc.modules();
     const sets = this.permissionSetsSvc.sets();
     const teams = this.teamsSvc.teams();
+
+    // No permission set assigned in any module → no permissions (a Pending agent not yet
+    // provisioned, or an Inactive agent whose access was revoked). Return no cards so the
+    // Permissions tab falls through to its "No permissions assigned" empty state.
+    const hasAnyPermissionSet = Object.values(u.permissionSetByModule).some((id) =>
+      sets.some((s) => s.id === id),
+    );
+    if (!hasAnyPermissionSet) return [];
 
     return u.modules.map((moduleId) => {
       const mod = modules.find((m) => m.id === moduleId);

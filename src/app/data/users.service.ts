@@ -62,7 +62,7 @@ export class UsersService {
     },
     {
       id: 'u7', firstName: 'Sofia', lastName: 'Rossi', email: 'sofia.rossi@district.edu',
-      phone: '555-0107', status: 'Unverified', source: 'Manual', roles: ['Agent'],
+      phone: '555-0107', status: 'Pending', source: 'Manual', roles: ['Agent'],
       modules: ['hr'], teams: ['t4'], locations: ['Roosevelt Middle'],
       jobTitle: 'HR Coordinator', employeeId: 'E1007', pronouns: 'she/her',
       permissionSetByModule: { hr: 'ps-recorder' },
@@ -161,7 +161,7 @@ export class UsersService {
     },
     {
       id: 'u19', firstName: 'Isabella', lastName: 'Reyes', email: 'isabella.reyes@district.edu',
-      phone: '555-0119', status: 'Unverified', source: 'Google', roles: ['Teacher'],
+      phone: '555-0119', status: 'Pending', source: 'Google', roles: ['Teacher'],
       modules: ['classic'], teams: [], locations: ['Lincoln High'],
       jobTitle: 'English Teacher', employeeId: 'E1019', pronouns: 'she/her',
       permissionSetByModule: { classic: 'ps-readonly' },
@@ -265,12 +265,25 @@ export class UsersService {
     },
     {
       id: 'u32', firstName: 'Logan', lastName: 'Price', email: 'logan.price@students.district.edu',
-      status: 'Unverified', source: 'SIS', roles: ['Student'],
+      status: 'Pending', source: 'SIS', roles: ['Student'],
       modules: ['classic'], teams: [], locations: ['Roosevelt Middle'],
       grade: 8, permissionSetByModule: { classic: 'ps-readonly' },
       dateAdded: '2026-06-02T09:00:00Z',
     },
   ]);
+
+  constructor() {
+    // Demo lifecycle rule: only Active agents hold permissions. A Pending agent hasn't been
+    // provisioned yet, and an Inactive agent has had access revoked — so neither has a
+    // permission set assigned. Clear it at seed time so every surface that reads it stays
+    // consistent from one source: the agent profile's Permissions tab (empty state), the
+    // agents-table Permission Sets column, the permission-set member counts, and the set
+    // editor's assigned-members list. (Activity is independent and handled in the profile's
+    // Activity tab: Inactive agents keep their history, Pending agents show an empty state.)
+    this.users.update((list) =>
+      list.map((u) => (u.status === 'Active' ? u : { ...u, permissionSetByModule: {} })),
+    );
+  }
 
   add(u: Omit<User, 'id'>): void {
     const id = `u-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;

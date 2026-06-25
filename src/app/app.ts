@@ -336,7 +336,7 @@ export class App implements AfterViewInit, OnDestroy {
   private readonly _settingsSectionLabels: Record<string, string> = {
     'global':           'Global',
     'integration-hub':  'Integration Hub',
-    'workflows':        'Workflows',
+    'workflows':        'Automations',
     'tickets-settings': 'Tickets',
     'assets-settings':  'Assets',
     'call-center':      'Call Center',
@@ -377,8 +377,8 @@ export class App implements AfterViewInit, OnDestroy {
     { id: 'marketplace',            label: 'Marketplace',            section: 'integration-hub' },
     { id: 'installed-apps',         label: 'Installed Apps',         section: 'integration-hub' },
     // Workflows
-    { id: 'workflows-tickets',      label: 'Tickets',                section: 'workflows' },
-    { id: 'workflows-assets',       label: 'Assets',                 section: 'workflows' },
+    { id: 'workflows-tickets',      label: 'Legacy Workflows',       section: 'workflows' },
+    { id: 'workflows-assets',       label: 'Workflows',              section: 'workflows' },
     { id: 'lookup-tables',          label: 'Lookup Tables',          section: 'workflows' },
     // Tickets Settings
     { id: 'portals',                label: 'Portals',                section: 'tickets-settings', isSubheader: true },

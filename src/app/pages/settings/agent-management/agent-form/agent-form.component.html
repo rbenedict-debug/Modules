@@ -196,14 +196,32 @@
         <section class="agent-form__section" role="group"
                  aria-labelledby="af-account-title" aria-describedby="af-account-hint">
           <div class="agent-form__section-head">
-            <h3 id="af-account-title" class="ds-form-section-title agent-form__section-title">Account</h3>
+            <h3 id="af-account-title" class="ds-form-section-title agent-form__section-title">Account Status</h3>
             <p id="af-account-hint" class="agent-form__section-hint">Manage this agent’s account status.</p>
           </div>
           <div class="agent-form__section-fields">
-            <div class="agent-form__field-block--narrow">
-              <app-form-select label="Account Status" [options]="statusOptions"
-                [selected]="editing()?.status" [disabled]="locked('status')"
-                [helper]="locked('status') ? 'Managed by ' + source() : undefined" />
+            <!-- Resend shows only for a Pending account; it sits to the right of the status dropdown.
+                 Same action as the profile hero, but the modal uses the text variant at --md.
+                 TODO eng: wire real resend endpoint. -->
+            <div class="agent-form__account-row">
+              <div class="agent-form__field-block--narrow">
+                <app-form-select label="Account Status" [hideLabel]="true" [options]="statusOptions"
+                  [selected]="editing()?.status" [disabled]="locked('status')"
+                  [helper]="locked('status') ? 'Managed by ' + source() : undefined" />
+              </div>
+              @if (isPending()) {
+                <button class="ds-button ds-button--text ds-button--md" type="button"
+                        [class.ds-button--leading-icon]="!resending()"
+                        [class.is-loading]="resending()"
+                        (click)="resendActivation($event)">
+                  @if (resending()) {
+                    Sending…
+                  } @else {
+                    <span class="ds-icon">forward_to_inbox</span>
+                    Resend activation email
+                  }
+                </button>
+              }
             </div>
           </div>
         </section>

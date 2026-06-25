@@ -1,6 +1,6 @@
 <!-- General information -->
 <div class="psets-editor__details-section">
-  <div class="psets-editor__details-head">
+  <div class="psets-editor__section-head">
     <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">edit_note</span>
     <h3 class="psets-editor__section-title">General Information</h3>
   </div>
@@ -25,51 +25,123 @@
   </div>
 </div>
 
-<!-- Assigned users & teams -->
+<!-- Assigned teams & agents -->
 <div class="psets-editor__details-section">
-  <div class="psets-editor__assign-head">
-    <h3 class="psets-editor__section-title">Assigned Users &amp; Teams</h3>
-    <span class="psets-editor__assign-counts">
-      <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedUsers().length }} {{ assignedUsers().length === 1 ? 'user' : 'users' }}</span>
-      <span class="ds-label ds-label--grey ds-label--xs ds-label--pill">{{ assignedTeams().length }} {{ assignedTeams().length === 1 ? 'team' : 'teams' }}</span>
-    </span>
-    <button class="ds-button ds-button--filled ds-button--sm psets-editor__assign-add" type="button" (click)="showAssign.set(true)">
-      <span class="ds-icon ds-icon--sm" aria-hidden="true">person_add</span>Add Assignment
-    </button>
+  <div class="psets-editor__section-head">
+    <span class="ds-icon ds-icon--sm psets-editor__section-icon" aria-hidden="true">group</span>
+    <h3 class="psets-editor__section-title">Assigned Teams and Agents</h3>
+  </div>
+
+  <!-- Toolbar: chip-filter search (left, only when there are members to filter) + the "Add Agents"
+       dropdown trigger (right). The dropdown searches the directory for teams/agents not yet assigned;
+       clicking one adds it to the chips below and stays open for more. -->
+  <div class="psets-editor__assign-toolbar">
+    @if (assignedTeams().length || assignedUsers().length) {
+      <div class="ds-input ds-search psets-editor__assign-search" role="search">
+        <div class="ds-input__field">
+          <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+          <input #assignSearchInput class="ds-input__control" type="search"
+                 placeholder="Search assigned teams and agents…"
+                 aria-label="Search assigned teams and agents"
+                 [ngModel]="assignSearch()" (ngModelChange)="assignSearch.set($event)" />
+          <button class="ds-input__action" type="button" aria-label="Clear search"
+                  [style.display]="assignSearch() ? 'flex' : 'none'"
+                  (click)="clearAssignSearch(assignSearchInput)">
+            <span class="ds-icon ds-icon--sm" aria-hidden="true">close</span>
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="psets-editor__add">
+      <button #addTrigger class="ds-button ds-button--filled ds-button--leading-icon" type="button"
+              aria-haspopup="menu" [attr.aria-expanded]="addMenuOpen()" (click)="toggleAddMenu(addTrigger)">
+        <span class="ds-icon ds-icon--sm" aria-hidden="true">add</span>Add Agents
+      </button>
+
+      @if (addMenuOpen()) {
+        <div class="ds-menu psets-editor__add-menu" role="menu" aria-label="Add teams and agents"
+             [style.top.px]="addMenuPos().top" [style.right.px]="addMenuPos().right">
+          <div class="ds-menu__search">
+            <div class="ds-input ds-search" role="search">
+              <div class="ds-input__field">
+                <span class="ds-icon ds-icon--sm ds-input__icon" aria-hidden="true">search</span>
+                <input class="ds-input__control" type="search"
+                       placeholder="Search teams and agents…" aria-label="Search teams and agents to add"
+                       [ngModel]="addSearch()" (ngModelChange)="addSearch.set($event)"
+                       (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()" />
+              </div>
+            </div>
+          </div>
+
+          @if (addableTeams().length === 0 && addableUsers().length === 0) {
+            <p class="psets-editor__add-empty">{{ addSearch() ? 'No teams or agents match.' : 'Everyone is already assigned.' }}</p>
+          } @else {
+            @if (addableTeams().length) {
+              <div class="ds-menu__section-label">Teams</div>
+              @for (t of addableTeams(); track t.id) {
+                <button class="ds-menu__item ds-menu__item--indent" role="menuitem" type="button"
+                        (click)="addTeam(t.id)">{{ t.name }}</button>
+              }
+            }
+            @if (addableUsers().length) {
+              <div class="ds-menu__section-label">Agents</div>
+              @for (u of addableUsers(); track u.id) {
+                <button class="ds-menu__item ds-menu__item--indent" role="menuitem" type="button"
+                        (click)="addUser(u.id)">{{ fullName(u) }}</button>
+              }
+            }
+          }
+        </div>
+      }
+    </div>
   </div>
 
   @if (assignedUsers().length === 0 && assignedTeams().length === 0) {
     <div class="psets-editor__assign-empty">
       <span class="ds-icon ds-icon--lg psets-editor__assign-empty-icon" aria-hidden="true">group</span>
-      <p class="psets-editor__assign-empty-title">No users or teams are assigned yet.</p>
-      <p class="psets-editor__assign-empty-help">Click “Add Assignment” to add users or teams to this permission set.</p>
+      <p class="psets-editor__assign-empty-title">No agents or teams are assigned yet.</p>
+      <p class="psets-editor__assign-empty-help">Use “Add Agents” above to add agents or teams to this permission set.</p>
+    </div>
+  } @else if (filteredTeams().length === 0 && filteredUsers().length === 0) {
+    <div class="psets-editor__assign-noresults" role="status">
+      <span class="ds-icon ds-icon--sm" aria-hidden="true">search_off</span>
+      <span>No assigned teams or agents match “{{ assignSearch() }}”.</span>
     </div>
   } @else {
-    <!-- Assigned members as removable chips (same chip style as the team modal). × → remove-confirm. -->
+    <!-- Assigned members as removable ds-chips (the blue --color-surface-brand removable-input chip).
+         × → remove. Each group label carries a blue count badge; a group only renders when it has
+         matches, so a zero-count group (and its badge) never shows. -->
     <div class="psets-editor__assign-list">
-      @if (assignedTeams().length) {
-        <p class="psets-editor__assign-divider">Teams</p>
-        <div class="ds-tag-list" role="listbox" aria-label="Assigned teams">
-          @for (t of assignedTeams(); track t.id) {
-            <div class="ds-tag" role="option">
-              <span class="ds-tag__label">{{ t.name }}</span>
-              <button class="ds-tag__remove" type="button" aria-label="Remove {{ t.name }}"
+      @if (filteredTeams().length) {
+        <p class="psets-editor__assign-divider">
+          Teams
+          <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ filteredTeams().length }}</span>
+        </p>
+        <div class="ds-chip-list" role="listbox" [attr.aria-label]="'Assigned teams, ' + filteredTeams().length">
+          @for (t of filteredTeams(); track t.id) {
+            <div class="ds-chip" role="option" tabindex="0">
+              <span class="ds-chip__label">{{ t.name }}</span>
+              <button class="ds-chip__remove" type="button" aria-label="Remove {{ t.name }}"
                       (click)="state.removeTeam(t.id)">
-                <span class="ds-icon ds-icon--xs">close</span>
+                <span class="ds-icon ds-icon--sm">close</span>
               </button>
             </div>
           }
         </div>
       }
-      @if (assignedUsers().length) {
-        <p class="psets-editor__assign-divider">Users</p>
-        <div class="ds-tag-list" role="listbox" aria-label="Assigned users">
-          @for (u of assignedUsers(); track u.id) {
-            <div class="ds-tag" role="option">
-              <span class="ds-tag__label">{{ fullName(u) }}</span>
-              <button class="ds-tag__remove" type="button" aria-label="Remove {{ fullName(u) }}"
+      @if (filteredUsers().length) {
+        <p class="psets-editor__assign-divider">
+          Agents
+          <span class="ds-badge-indicator ds-badge-indicator--blue" aria-hidden="true">{{ filteredUsers().length }}</span>
+        </p>
+        <div class="ds-chip-list" role="listbox" [attr.aria-label]="'Assigned agents, ' + filteredUsers().length">
+          @for (u of filteredUsers(); track u.id) {
+            <div class="ds-chip" role="option" tabindex="0">
+              <span class="ds-chip__label">{{ fullName(u) }}</span>
+              <button class="ds-chip__remove" type="button" aria-label="Remove {{ fullName(u) }}"
                       (click)="state.removeUser(u.id)">
-                <span class="ds-icon ds-icon--xs">close</span>
+                <span class="ds-icon ds-icon--sm">close</span>
               </button>
             </div>
           }
@@ -78,10 +150,3 @@
     </div>
   }
 </div>
-
-@if (showAssign()) {
-  <!-- Buffered edits: picks add to the working list; the save bar commits/discards. -->
-  <app-assign-members-modal
-    [assignedUserIds]="displayedUserIds()" [assignedTeamIds]="displayedTeamIds()"
-    (assign)="onAssign($event)" (close)="showAssign.set(false)" />
-}

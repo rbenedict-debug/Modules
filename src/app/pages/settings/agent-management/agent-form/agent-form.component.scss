@@ -140,6 +140,15 @@
   max-width: 280px;
 }
 
+/* Status dropdown with its (Pending-only) Resend button to the right. flex-start top-aligns the
+   button with the select control, so a synced agent's "Managed by …" helper below the dropdown
+   doesn't drag the button down. */
+.agent-form__account-row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
 /* Activation radios sit in a row (the DS group stacks by default). */
 .agent-form__activation.ds-radio-group {
   display: flex;
