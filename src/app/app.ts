@@ -87,6 +87,8 @@ export class App implements AfterViewInit, OnDestroy {
   readonly overflowPanelOpen = signal(false);
   readonly overflowPanelTop = signal(0);
   readonly overflowPanelRight = signal(0);
+  /** Left offset (px, within the strip) where the "…" tab sits — right after the last visible tab. */
+  readonly moreTabLeft = signal(0);
   /** The collapsed agent tabs, listed in the overflow panel. */
   readonly overflowTabs = computed(() => {
     const hidden = new Set(this.hiddenAgentIds());
@@ -294,7 +296,12 @@ export class App implements AfterViewInit, OnDestroy {
         const limit = stripWidth - MORE_WIDTH;
         for (const el of agentEls) {
           const id = el.dataset['tabId'];
-          if (id && el.offsetLeft + el.offsetWidth > limit) hidden.push(id);
+          if (id && el.offsetLeft + el.offsetWidth > limit) {
+            // The first collapsed tab's left edge = the right edge of the last visible tab, so the
+            // "…" tab tucks right after it (no gap to the strip's right edge).
+            if (hidden.length === 0) this.moreTabLeft.set(Math.round(el.offsetLeft));
+            hidden.push(id);
+          }
         }
       }
     }

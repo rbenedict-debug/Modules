@@ -102,8 +102,9 @@
         <!-- "…" overflow tab + panel — shown when one or more agent tabs don't fit. The panel is
              position:fixed (see app.scss) so the strip's overflow:hidden can't clip it. -->
         @if (hiddenAgentIds().length > 0) {
-          <div class="tnav-overflow">
+          <div class="tnav-overflow" [style.left.px]="moreTabLeft()">
             <div class="ds-nav-tab ds-nav-tab--more" #overflowTrigger
+                 [class.is-active]="overflowPanelOpen()"
                  role="button" tabindex="0"
                  [attr.aria-label]="hiddenAgentIds().length + ' more tabs'"
                  aria-haspopup="menu" [attr.aria-expanded]="overflowPanelOpen()"

@@ -131,10 +131,10 @@
 // The "…" overflow tab sits at the right edge of the strip, out of the tab flow, so collapsing
 // tabs never shifts the visible ones.
 .tnav-overflow {
+  // Sits on the tab row (bottom-aligned, browser-style) immediately after the last visible tab —
+  // the left offset is computed in app.ts (moreTabLeft) so there's no gap to the strip's right edge.
   position: absolute;
-  top: 0;
-  right: 0;
-  height: 100%;
+  bottom: 0;
 
   // The panel is position:fixed (coords set in app.ts from the trigger) so the strip's
   // overflow:hidden can't clip it.
