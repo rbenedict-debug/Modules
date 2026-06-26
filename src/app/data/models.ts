@@ -83,12 +83,20 @@ export const CUSTOM_MODULE_DEFAULTS: Pick<Module, 'icon' | 'accent' | 'tagline' 
  *  shell: which modules are accessible (and the role in each), whether the top-nav module
  *  switcher appears, and which nav areas are visible. Role per module lives here, not on Module. */
 export interface PersonaModuleAccess { moduleId: string; role: ModuleRole; }
+/** An optional demo "world state" a persona loads on selection. Undefined = the default,
+ *  fully-configured district (every existing persona). 'fresh-it-setup' = a brand-new account
+ *  the moment after first setup: only the IT module enabled, agents synced from Active Directory
+ *  with no teams, permission sets, or custom fields yet, and no manual entries. ScenarioService
+ *  swaps the seed data when the active scenario changes; see fresh-setup.data.ts. */
+export type PersonaScenario = 'fresh-it-setup';
 export interface Persona {
   id: string;
   name: string;
   title: string;
   isGlobalAdmin: boolean;
   moduleAccess: PersonaModuleAccess[];
+  /** When set, selecting this persona loads a demo world state (see PersonaScenario). */
+  scenario?: PersonaScenario;
 }
 
 export type TeamSource = 'Manual' | 'Active Directory' | 'Azure' | 'Google';

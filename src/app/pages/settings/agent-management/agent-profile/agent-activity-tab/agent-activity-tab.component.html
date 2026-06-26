@@ -73,7 +73,7 @@
             <table class="ds-table" id="main-table" [style.min-width.px]="totalWidth">
               <thead>
                 <tr>
-                  <th style="width:200px">
+                  <th style="width:170px">
                     <div class="ds-table__header-content">
                       <span class="ds-table__header-label">Date</span>
                       <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Date">
@@ -82,37 +82,28 @@
                     </div>
                     <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                   </th>
-                  <th style="width:280px">
+                  <th style="width:120px">
                     <div class="ds-table__header-content">
-                      <span class="ds-table__header-label">Activity</span>
-                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Activity">
+                      <span class="ds-table__header-label">Time</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Time">
                         <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                       </button>
                     </div>
                     <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                   </th>
-                  <th style="width:140px">
+                  <th style="width:320px">
                     <div class="ds-table__header-content">
-                      <span class="ds-table__header-label">Type</span>
-                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Type">
+                      <span class="ds-table__header-label">Action</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Action">
                         <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                       </button>
                     </div>
                     <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
                   </th>
-                  <th style="width:300px">
+                  <th style="width:380px">
                     <div class="ds-table__header-content">
-                      <span class="ds-table__header-label">Details</span>
-                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Details">
-                        <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
-                      </button>
-                    </div>
-                    <div class="ds-table__resize-handle"><div class="ds-table__resize-bar"></div></div>
-                  </th>
-                  <th style="width:170px">
-                    <div class="ds-table__header-content">
-                      <span class="ds-table__header-label">Performed by</span>
-                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Performed by">
+                      <span class="ds-table__header-label">Description</span>
+                      <button class="ds-icon-button ds-icon-button--icon ds-icon-button--sm ds-table__sort-btn" aria-label="Sort by Description">
                         <span class="ds-icon ds-table__sort-icon--none">arrow_upward_alt</span>
                       </button>
                     </div>
@@ -123,13 +114,10 @@
               <tbody>
                 @for (row of rows; track row.id) {
                   <tr>
-                    <td>{{ formatTimestamp(row.timestamp) }}</td>
+                    <td>{{ formatDate(row.timestamp) }}</td>
+                    <td>{{ formatTime(row.timestamp) }}</td>
                     <td>{{ row.activity }}</td>
-                    <td>
-                      <span class="ds-label ds-label--xs ds-label--pill ds-label--outline ds-label--{{ typeColor(row.type) }}">{{ row.type }}</span>
-                    </td>
                     <td>{{ row.detail }}</td>
-                    <td>{{ row.performedBy }}</td>
                   </tr>
                 }
               </tbody>

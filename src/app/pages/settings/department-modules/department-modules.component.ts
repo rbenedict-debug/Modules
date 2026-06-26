@@ -2,6 +2,7 @@ import { Component, signal, computed, inject, HostListener } from '@angular/core
 import { FormsModule } from '@angular/forms';
 import { Module, ModuleColor, CUSTOM_MODULE_DEFAULTS } from '../../../data/models';
 import { ModulesService } from '../../../data/modules.service';
+import { PersonaService } from '../../../data/persona.service';
 import { MessagingService } from '../../../data/messaging.service';
 
 // A rendered card is a catalog Module (single source of truth = ModulesService) plus the
@@ -24,6 +25,9 @@ export class DepartmentModulesComponent {
   // Single source of truth for every real module's identity + catalog copy. Adding a module here
   // makes it appear both in this page and in the top-nav switcher — they can no longer drift.
   private readonly modulesSvc = inject(ModulesService);
+  // The active persona's scenario decides demo state: a brand-new account (first-time setup) starts
+  // with nothing pending.
+  private readonly persona = inject(PersonaService);
 
   // The requestable "Custom module" card is a request CTA, not a real catalog module, so it stays
   // local and never reaches the switcher. Requesting it spawns a named pending copy (confirmRequest).
@@ -35,12 +39,17 @@ export class DepartmentModulesComponent {
     ...CUSTOM_MODULE_DEFAULTS,
   };
 
-  // Pending requests awaiting review — page UI state layered over the catalog, shown in Active
-  // under the "Under review" overlay. Seeded with one example; requesting a real module below adds
-  // its id to `pendingIds`; requesting the custom card appends a named copy here.
-  private readonly localPending = signal<ModuleCard[]>([
-    { ...this.customTemplate, id: 'pending-custom', pending: true },
-  ]);
+  // One example "under review" custom module, layered over the catalog to demo the pending state in
+  // Active. A brand-new account (the first-time-setup scenario) has nothing pending yet, so it's
+  // hidden there — only genuine in-session requests (localPending) show.
+  private readonly seededPending = computed<ModuleCard[]>(() =>
+    this.persona.current().scenario === 'fresh-it-setup'
+      ? []
+      : [{ ...this.customTemplate, id: 'pending-custom', pending: true }],
+  );
+  // Custom modules requested in-session — requesting the custom card appends a named copy here.
+  private readonly localPending = signal<ModuleCard[]>([]);
+  // Requesting a real catalog module adds its id here (moves it into Active under the overlay).
   private readonly pendingIds = signal<ReadonlySet<string>>(new Set<string>());
 
   // Active = owned (catalog `active`) or pending; Available = the rest + the custom-request card.
@@ -49,7 +58,7 @@ export class DepartmentModulesComponent {
   readonly sections = computed<ModuleSection[]>(() => {
     const real = this.modulesSvc.modules();
     const pending = this.pendingIds();
-    const localPend = this.localPending();
+    const localPend = [...this.seededPending(), ...this.localPending()];
     return [
       {
         title: 'Active modules',
@@ -215,6 +224,7 @@ export class DepartmentModulesComponent {
     if (!name) return this.submitted() ? 'Module name is required.' : null;
     const taken = new Set<string>([
       ...this.modulesSvc.modules().map(m => m.name.trim().toLowerCase()),
+      ...this.seededPending().map(m => m.name.trim().toLowerCase()),
       ...this.localPending().map(m => m.name.trim().toLowerCase()),
     ]);
     return taken.has(name.toLowerCase())

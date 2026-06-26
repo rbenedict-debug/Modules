@@ -42,4 +42,25 @@ export class ModulesService {
       icon: 'music_note', color: 'magenta',
     },
   ]);
+
+  /** The default catalog, captured so ScenarioService can restore it when leaving a demo scenario. */
+  private readonly defaultModules = this.modules();
+
+  /** Replace the catalog (ScenarioService uses this on a scenario swap). */
+  load(list: Module[]): void {
+    this.modules.set(list);
+  }
+
+  /** Restore the default catalog. */
+  resetToDefault(): void {
+    this.modules.set(this.defaultModules);
+  }
+
+  /** A brand-new account's catalog: only IT enabled, every prebuilt module still available to add,
+   *  and no custom modules created yet (drops the example custom 'Music' module). */
+  freshItSetup(): Module[] {
+    return this.defaultModules
+      .filter((m) => m.id !== 'music')
+      .map((m) => ({ ...m, active: m.id === 'it' }));
+  }
 }

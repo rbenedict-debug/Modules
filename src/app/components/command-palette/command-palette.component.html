@@ -18,7 +18,7 @@
                   (click)="selectPersona(p)">
             <span class="cmdk__avatar" aria-hidden="true">{{ initials(p) }}</span>
             <span class="cmdk__text">
-              <span class="cmdk__name">{{ p.name }}</span>
+              <span class="cmdk__name">{{ p.name }}@if (p.scenario === 'fresh-it-setup') {<span class="cmdk__name-note">(First time setup)</span>}</span>
               <span class="cmdk__meta">{{ p.title }} · {{ accessSummary(p) }}</span>
             </span>
             @if (p.id === currentId()) {

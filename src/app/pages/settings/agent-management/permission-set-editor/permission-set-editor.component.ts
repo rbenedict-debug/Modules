@@ -76,9 +76,10 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   readonly activeTab = input<EditorTab>('details');
 
   constructor() {
-    // Single owner of the shell's bottom save bar. Docks it only while there are unsaved changes
-    // (state.dirty() clears after save/discard); the shell renders it outside the page. Save Changes
-    // persists and stays here, Discard reverts — neither leaves the editor.
+    // Single owner of the contextual save bar config. Sets it only while there are unsaved changes
+    // (state.dirty() clears after save/discard); the Agent Management page renders it inside its
+    // .ds-page-content, below this editor card. Save Changes persists and stays here, Discard
+    // reverts — neither leaves the editor.
     //
     // The bar's error variant is derived purely from validity: it goes red whenever the user has
     // attempted a Save (submitted) AND the required Name is still blank, and reverts to the normal

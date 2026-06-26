@@ -39,6 +39,15 @@ export class PersonaService {
       id: 'hannah', name: 'Hannah Cohen', title: 'Facilities Manager', isGlobalAdmin: false,
       moduleAccess: [{ moduleId: 'facilities', role: 'Agent' }],
     },
+    // First-time global admin: a brand-new account set up with only the IT module. Selecting this
+    // persona loads the 'fresh-it-setup' world (see ScenarioService) — agents synced from Active
+    // Directory with no teams, permission sets, or custom fields yet, only IT enabled, and no
+    // manual entries. Aligns with the founding-admin row (Priya Nair) in fresh-setup.data.ts.
+    {
+      id: 'priya', name: 'Priya Nair', title: 'Director of Technology', isGlobalAdmin: true,
+      moduleAccess: [{ moduleId: 'it', role: 'Admin' }],
+      scenario: 'fresh-it-setup',
+    },
   ]);
 
   // Default to the Global Admin so the app opens in the full-access view.

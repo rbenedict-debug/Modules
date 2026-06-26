@@ -90,12 +90,42 @@ export class TeamsTabComponent implements AfterViewInit {
   }
 
   // Column config for table-init.js. `name` MUST match the <th> header labels exactly.
+  // Permission Set and Source are NOT _categorical: the engine's auto-facet for a text column
+  // fills from an internal demo pool (placeholder names), so their realistic options are supplied
+  // in `extraFilterGroups` below (trade-off chosen with the designer: those columns aren't
+  // drag-to-group). Agents auto-derives a numeric-range slider; Last Updated a date-range picker.
   readonly columns = [
     { name: 'Team Name',      width: 220, type: 'text',   _categorical: false, _badgeOptions: null },
     { name: 'Agents',         width: 110, type: 'number', _categorical: false, _badgeOptions: null },
-    { name: 'Permission Set', width: 200, type: 'text',   _categorical: true,  _badgeOptions: null },
-    { name: 'Source',         width: 160, type: 'text',   _categorical: true,  _badgeOptions: null },
+    { name: 'Permission Set', width: 200, type: 'text',   _categorical: false, _badgeOptions: null },
+    { name: 'Source',         width: 160, type: 'text',   _categorical: false, _badgeOptions: null },
     { name: 'Last Updated',   width: 140, type: 'date',   _categorical: false, _badgeOptions: null },
+  ];
+
+  // ── Filter modal facets (design-mode UI simulation; eng wires the actual row-hiding) ──────
+  // Real values mirrored from PermissionSetsService and the TeamSource type so the modal reads
+  // like production rather than the engine's placeholder pool.
+  readonly extraFilterGroups = [
+    { id: 'fg-permset', label: 'Permission Set', icon: 'badge', tiers: [
+      { id: 'ft-permset', label: 'Permission Set', options: [
+        { id: 'fc-ps-classic-triage',   label: 'Classic Triage' },
+        { id: 'fc-ps-department-admin', label: 'Department Admin' },
+        { id: 'fc-ps-global-admin',     label: 'Global Admin' },
+        { id: 'fc-ps-global-user',      label: 'Global User' },
+        { id: 'fc-ps-it-desk-lead',     label: 'IT Desk Lead' },
+        { id: 'fc-ps-read-only',        label: 'Read Only' },
+        { id: 'fc-ps-recorder',         label: 'Recorder' },
+        { id: 'fc-ps-team-member',      label: 'Team Member' },
+      ] },
+    ] },
+    { id: 'fg-source', label: 'Source', icon: 'cloud_sync', tiers: [
+      { id: 'ft-source', label: 'Source', options: [
+        { id: 'fc-src-manual', label: 'Manual' },
+        { id: 'fc-src-ad',     label: 'Active Directory' },
+        { id: 'fc-src-azure',  label: 'Azure' },
+        { id: 'fc-src-google', label: 'Google' },
+      ] },
+    ] },
   ];
 
   get totalWidth(): number {
@@ -112,7 +142,7 @@ export class TeamsTabComponent implements AfterViewInit {
         filter: true, columnPanel: true, contextMenu: true, paginator: false,
       },
       rows: [], // always empty — table-init.js reads rows from the rendered DOM
-      extraFilterGroups: [],
+      extraFilterGroups: this.extraFilterGroups,
     });
     // Hand full DOM control to table-init.js after Angular's initial render.
     this.cdr.detach();

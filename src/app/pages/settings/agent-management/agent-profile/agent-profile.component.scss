@@ -96,6 +96,25 @@
   flex-shrink: 0;
 }
 
+/* Exception: the Activity tab hosts the full table engine, which is built to fill its
+   height and scroll its body internally (like a standalone table page). Let that panel
+   grow to fill the space below the tabs so the table reaches the bottom of the page
+   instead of holding a fixed height that stops short. The other panels keep their
+   natural height (above) and let .agent-detail scroll. */
+.agent-detail > .agent-detail__panel--activity {
+  flex: 1;
+  min-height: 0;
+}
+
+/* That fill-to-bottom table makes .agent-detail's --spacing-lg bottom padding stack on top
+   of the page body's bottom inset (--spacing-md), pushing the table up. The other tabs need
+   that padding so their elevated cards' shadows don't clip at the scroll edge; the table
+   doesn't. Trim it to --spacing-xs on the Activity tab so the table's bottom gap reads as a
+   clean ~16px, matching the other table pages instead of sitting short. */
+.agent-detail:has(> .agent-detail__panel--activity) {
+  padding-bottom: var(--spacing-xs);
+}
+
 /* Tab bar sits tight under the hero — pull it up so the hero→tabs gap is ~4px
    (--spacing-xs) instead of the column's --spacing-lg, leaving the tabs→panel rhythm intact. */
 .agent-detail > .ds-tabs {

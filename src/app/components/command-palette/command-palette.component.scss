@@ -120,6 +120,13 @@
   color: var(--color-text-primary);
 }
 
+// Parenthetical note beside a persona's name (e.g. the first-time-setup demo persona) so the
+// switcher makes clear what the persona is. Muted so it reads as a note, not part of the name.
+.cmdk__name-note {
+  margin-left: var(--spacing-xs);
+  color: var(--color-text-secondary);
+}
+
 .cmdk__meta {
   @include ds.type-body-small;
   color: var(--color-text-secondary);

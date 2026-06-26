@@ -106,16 +106,6 @@
   font-weight: var(--ref-typescale-label-medium-weight);
 }
 
-// Contextual save bar docked at the bottom of the content column (outside the routed page).
-// ds-page-layout__content is a flex column (top-nav + body), so flex-shrink:0 pins this to the
-// bottom edge and the body flexes above it. The ds-save-bar brings its own border/radius/elevation.
-.app-save-bar {
-  flex-shrink: 0;
-  // Tighter top gap (sm) between the page card and the save bar; keeps the larger
-  // side/bottom inset so the bar still reads as floating off the content edge.
-  margin: var(--spacing-sm) var(--spacing-lg) var(--spacing-lg);
-}
-
 // Top-nav document tabs — the section tab plus one per open agent profile. Tabs that don't fit the
 // strip width collapse into the DS "…" overflow tab (see app.ts recomputeTabOverflow). Collapsed
 // tabs stay in the DOM (visibility:hidden) so their widths stay measurable; overflow:hidden keeps

@@ -90,24 +90,87 @@ export class AgentsTabComponent implements AfterViewInit {
   }
 
   // ── Column config for table-init.js ─────────────────────────────────────────────
-  // `name` MUST match the <th> header labels exactly. Name/Permission Sets cells hold
-  // rich markup, so those columns stay non-categorical (auto-derived filters read cell
-  // textContent and would otherwise pick up emails / "+N" overflow text).
+  // `name` MUST match the <th> header labels exactly. Only Status (badge) is _categorical —
+  // its facet comes from real _badgeOptions and it stays drag-to-group. The other facetable
+  // columns (Permission Sets, Module(s), Teams, Locations, Source) are deliberately NOT
+  // _categorical: the engine's auto-facet for a text column fills from an internal demo pool
+  // (placeholder names), not real data — so their realistic options are supplied in
+  // `extraFilterGroups` below. Trade-off (chosen with the designer): those columns are no
+  // longer drag-to-group. Last Login / Date Added auto-derive date-range pickers.
   readonly columns = [
     { name: 'Name',            width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Email',           width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Permission Sets', width: 240, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Permission Sets', width: 240, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Status',          width: 130, type: 'badge', _categorical: true,  _badgeOptions: [
       { l: 'Active', c: 'green' }, { l: 'Pending', c: 'yellow' }, { l: 'Inactive', c: 'grey' },
     ]},
-    { name: 'Module(s)',       width: 180, type: 'text',  _categorical: true,  _badgeOptions: null },
-    { name: 'Teams',           width: 180, type: 'text',  _categorical: true,  _badgeOptions: null },
-    { name: 'Locations',       width: 170, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Module(s)',       width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Teams',           width: 180, type: 'text',  _categorical: false, _badgeOptions: null },
+    { name: 'Locations',       width: 170, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Phone',           width: 150, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Source',          width: 150, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Source',          width: 150, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Job Title',       width: 160, type: 'text',  _categorical: false, _badgeOptions: null },
     { name: 'Last Login',      width: 140, type: 'date',  _categorical: false, _badgeOptions: null },
     { name: 'Date Added',      width: 130, type: 'date',  _categorical: false, _badgeOptions: null },
+  ];
+
+  // ── Filter modal facets (design-mode UI simulation; eng wires the actual row-hiding) ──────
+  // Real values mirrored from the seed data (PermissionSetsService / ModulesService /
+  // TeamsService / user source + locations) so the modal reads like production rather than the
+  // engine's placeholder pool. Status + the two date columns auto-derive from the column config.
+  readonly extraFilterGroups = [
+    { id: 'fg-permsets', label: 'Permission Sets', icon: 'badge', tiers: [
+      { id: 'ft-permsets', label: 'Permission Sets', options: [
+        { id: 'fc-ps-classic-triage',   label: 'Classic Triage' },
+        { id: 'fc-ps-department-admin', label: 'Department Admin' },
+        { id: 'fc-ps-global-admin',     label: 'Global Admin' },
+        { id: 'fc-ps-global-user',      label: 'Global User' },
+        { id: 'fc-ps-it-desk-lead',     label: 'IT Desk Lead' },
+        { id: 'fc-ps-read-only',        label: 'Read Only' },
+        { id: 'fc-ps-recorder',         label: 'Recorder' },
+        { id: 'fc-ps-team-member',      label: 'Team Member' },
+      ] },
+    ] },
+    { id: 'fg-modules', label: 'Module(s)', icon: 'apps', tiers: [
+      { id: 'ft-modules', label: 'Module(s)', options: [
+        { id: 'fc-mod-classic',        label: 'Classic' },
+        { id: 'fc-mod-facilities',     label: 'Facilities' },
+        { id: 'fc-mod-hr',             label: 'HR' },
+        { id: 'fc-mod-it',             label: 'IT' },
+        { id: 'fc-mod-music',          label: 'Music' },
+        { id: 'fc-mod-transportation', label: 'Transportation' },
+      ] },
+    ] },
+    { id: 'fg-teams', label: 'Teams', icon: 'groups', tiers: [
+      { id: 'ft-teams', label: 'Teams', options: [
+        { id: 'fc-team-classic-triage',        label: 'Classic Triage' },
+        { id: 'fc-team-district-leadership',   label: 'District Leadership' },
+        { id: 'fc-team-district-service-desk', label: 'District Service Desk' },
+        { id: 'fc-team-emergency-response',    label: 'Emergency Response Team' },
+        { id: 'fc-team-facilities-maint',      label: 'Facilities Maintenance' },
+        { id: 'fc-team-hr-casework',           label: 'HR Casework' },
+        { id: 'fc-team-it-help-desk',          label: 'IT Help Desk' },
+        { id: 'fc-team-support',               label: 'Support' },
+        { id: 'fc-team-transport-dispatch',    label: 'Transportation Dispatch' },
+      ] },
+    ] },
+    { id: 'fg-locations', label: 'Locations', icon: 'location_on', tiers: [
+      { id: 'ft-locations', label: 'Locations', options: [
+        { id: 'fc-loc-district-office',  label: 'District Office' },
+        { id: 'fc-loc-lincoln-high',     label: 'Lincoln High' },
+        { id: 'fc-loc-roosevelt-middle', label: 'Roosevelt Middle' },
+        { id: 'fc-loc-transport-depot',  label: 'Transport Depot' },
+      ] },
+    ] },
+    { id: 'fg-source', label: 'Source', icon: 'cloud_sync', tiers: [
+      { id: 'ft-source', label: 'Source', options: [
+        { id: 'fc-src-manual', label: 'Manual' },
+        { id: 'fc-src-sis',    label: 'SIS' },
+        { id: 'fc-src-ad',     label: 'Active Directory' },
+        { id: 'fc-src-google', label: 'Google' },
+        { id: 'fc-src-azure',  label: 'Azure' },
+      ] },
+    ] },
   ];
 
   get totalWidth(): number {
@@ -124,7 +187,7 @@ export class AgentsTabComponent implements AfterViewInit {
         filter: true, columnPanel: true, contextMenu: true, paginator: false,
       },
       rows: [], // always empty — table-init.js reads rows from the rendered DOM
-      extraFilterGroups: [],
+      extraFilterGroups: this.extraFilterGroups,
     });
     // Hand full DOM control to table-init.js after Angular's initial render.
     this.cdr.detach();

@@ -272,6 +272,10 @@ export class UsersService {
     },
   ]);
 
+  /** The normalized default directory (the Active-only-holds-permissions rule already applied),
+   *  captured at startup so ScenarioService can restore it when leaving a demo scenario. */
+  private defaultUsers: User[] = [];
+
   constructor() {
     // Demo lifecycle rule: only Active agents hold permissions. A Pending agent hasn't been
     // provisioned yet, and an Inactive agent has had access revoked — so neither has a
@@ -280,9 +284,19 @@ export class UsersService {
     // agents-table Permission Sets column, the permission-set member counts, and the set
     // editor's assigned-members list. (Activity is independent and handled in the profile's
     // Activity tab: Inactive agents keep their history, Pending agents show an empty state.)
-    this.users.update((list) =>
-      list.map((u) => (u.status === 'Active' ? u : { ...u, permissionSetByModule: {} })),
-    );
+    this.load(this.users());
+    this.defaultUsers = this.users();
+  }
+
+  /** Replace the whole directory (ScenarioService uses this on a scenario swap). Re-applies the
+   *  Active-only-holds-permissions rule so every surface stays consistent from one source. */
+  load(list: User[]): void {
+    this.users.set(list.map((u) => (u.status === 'Active' ? u : { ...u, permissionSetByModule: {} })));
+  }
+
+  /** Restore the default district directory (when leaving a demo scenario). */
+  resetToDefault(): void {
+    this.users.set(this.defaultUsers);
   }
 
   add(u: Omit<User, 'id'>): void {

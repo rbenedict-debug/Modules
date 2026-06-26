@@ -206,7 +206,16 @@
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-lg);
   background-color: var(--color-surface-page);
-  padding: 0 var(--spacing-lg);
+  // No horizontal padding: rows and the tinted header bands pad themselves, so the bands bleed
+  // edge-to-edge. overflow:hidden clips the first/last child (band or row) to the rounded corners.
+  overflow: hidden;
+
+  // One hairline between every adjacent child — rows AND header bands alike — for a uniform
+  // grouped-table look. Angular control-flow anchors are comment nodes, so :first-child / the
+  // adjacent-sibling combinator still target the real row/band elements.
+  > * + * {
+    border-top: 1px solid var(--color-border-subtle);
+  }
 }
 
 .psets-editor__row {
@@ -214,11 +223,9 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--spacing-lg);
-  padding: var(--spacing-md) 0;
-
-  & + & {
-    border-top: 1px solid var(--color-border-subtle);
-  }
+  // Horizontal padding lives on the row now (the card dropped its own padding so bands can bleed);
+  // the card's > * + * rule draws the dividers between rows.
+  padding: var(--spacing-md) var(--spacing-lg);
 }
 
 .psets-editor__row-text {
@@ -314,60 +321,35 @@
   gap: var(--spacing-md);
 }
 
-// ── Collapsible sub-group ──
-.psets-editor__group {
-  & + & {
+// ── Sub-section (non-collapsible) ──
+// A quiet sentence-case label sits above its rows; the rows indent under a left accent rail that
+// spans ONLY them (.psets-editor__group-body). The rail starts beneath the label and ends at the
+// last grouped row, so its ending — not a header band — is what bounds the group and keeps it
+// distinct from the ungrouped rows that follow. Label text comes straight from the data.
+.psets-editor__group-head {
+  @include ds.type-label-small;
+  margin: 0;
+  // More top than bottom padding so the label hugs its rows but breathes below the divider above it.
+  padding: var(--spacing-md) var(--spacing-lg) var(--spacing-sm);
+  font-weight: var(--ref-typescale-label-small-weight-prominent);
+  color: var(--color-text-secondary);
+}
+
+// The railed, indented body holding the grouped rows. margin-left insets the rail so it sits under
+// the label; the rows' own left padding drops to md so their text steps a little past the rail while
+// their right edge / controls still line up with the ungrouped rows above and below the group.
+.psets-editor__group-body {
+  margin-left: var(--spacing-lg);
+  border-left: 2px solid var(--color-border-default, var(--color-border-subtle));
+
+  // Hairline between grouped rows, matching the section card's row dividers.
+  > * + * {
     border-top: 1px solid var(--color-border-subtle);
   }
-}
 
-.psets-editor__group-head {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  width: 100%;
-  padding: var(--spacing-md) 0;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-
-  &:focus { outline: none; }
-  &:focus-visible { box-shadow: 0 0 0 3px var(--color-border-ada-focus-ring); }
-}
-
-.psets-editor__group-chevron {
-  color: var(--color-icon-subtle);
-  transition: transform 120ms ease;
-
-  &.is-collapsed {
-    transform: rotate(-90deg);
+  .psets-editor__row {
+    padding-left: var(--spacing-md);
   }
-}
-
-.psets-editor__group-label {
-  @include ds.type-label-small;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-secondary);
-  flex-shrink: 0;
-}
-
-.psets-editor__group-rule {
-  flex: 1 1 auto;
-  height: 1px;
-  background-color: var(--color-border-subtle);
-}
-
-// Sub-group rows indent under a left rule, matching the source prototype.
-.psets-editor__group-body {
-  margin-left: var(--spacing-sm);
-  padding-left: var(--spacing-md);
-  border-left: 2px solid var(--color-border-subtle);
-}
-
-// First row inside a group needs no top border (the group head already separates it).
-.psets-editor__group-body .psets-editor__row:first-child {
-  border-top: none;
 }
 
 // ── Data Visibility pane ──
@@ -400,8 +382,7 @@
 .psets-editor__dv-sublabel {
   @include ds.type-label-small;
   margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: var(--ref-typescale-label-small-weight-prominent);
   color: var(--color-text-secondary);
 }
 
@@ -640,8 +621,7 @@
 }
 .assign-modal__divider {
   @include ds.type-label-small;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-weight: var(--ref-typescale-label-small-weight-prominent);
   color: var(--color-text-secondary);
   margin: var(--spacing-sm) 0 var(--spacing-xs);
 }

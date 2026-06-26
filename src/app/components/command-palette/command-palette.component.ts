@@ -12,6 +12,7 @@ import {
 import { Persona } from '../../data/models';
 import { PersonaService } from '../../data/persona.service';
 import { ModulesService } from '../../data/modules.service';
+import { ScenarioService } from '../../data/scenario.service';
 
 /**
  * ⌘K (Mac) / Ctrl+K (Windows) persona swapper. Always mounted in the shell; listens for the
@@ -29,6 +30,9 @@ import { ModulesService } from '../../data/modules.service';
 export class CommandPaletteComponent {
   private readonly personaSvc = inject(PersonaService);
   private readonly modulesSvc = inject(ModulesService);
+  // Persona selection routes through ScenarioService so a persona that carries a demo scenario
+  // (e.g. the first-time setup) swaps its world data synchronously, before the shell re-renders.
+  private readonly scenarioSvc = inject(ScenarioService);
 
   readonly open = signal(false);
   readonly highlighted = signal(0);
@@ -60,10 +64,18 @@ export class CommandPaletteComponent {
     return ((parts[0]?.[0] ?? '') + (parts[parts.length - 1]?.[0] ?? '')).toUpperCase();
   }
 
-  /** Human summary of a persona's access, e.g. "Global admin · all modules" or "IT Agent". */
+  /** Human summary of a persona's access, e.g. "Global admin · all modules", "Global admin · IT"
+   *  (a freshly set-up account with one module), or "IT Agent". */
   accessSummary(p: Persona): string {
-    if (p.isGlobalAdmin) return 'Global admin · all modules';
     const mods = this.modulesSvc.modules();
+    if (p.isGlobalAdmin) {
+      // A global admin sees the whole district. Say "all modules" when they cover the full catalog,
+      // otherwise name the enabled one(s) — a first-time account may have only one.
+      const coversAll = mods.every(m => p.moduleAccess.some(a => a.moduleId === m.id));
+      if (coversAll) return 'Global admin · all modules';
+      const names = p.moduleAccess.map(a => mods.find(m => m.id === a.moduleId)?.name ?? a.moduleId);
+      return `Global admin · ${names.join(', ')}`;
+    }
     return p.moduleAccess
       .map(a => `${mods.find(m => m.id === a.moduleId)?.name ?? a.moduleId} ${a.role}`)
       .join(' · ');
@@ -78,7 +90,7 @@ export class CommandPaletteComponent {
   }
 
   selectPersona(p: Persona): void {
-    this.personaSvc.select(p.id);
+    this.scenarioSvc.selectPersona(p.id);
     this.close();
   }
 

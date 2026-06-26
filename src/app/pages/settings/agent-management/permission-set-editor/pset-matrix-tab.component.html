@@ -78,22 +78,17 @@
             @if (run.kind === 'item') {
               <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm: run.perm }" />
             } @else {
+              <!-- Sub-section (non-collapsible): a quiet label above its rows, which indent under a
+                   left accent rail that spans ONLY the grouped rows. The rail (and the indent) ending
+                   is what marks where the group stops, so it stays distinct from the ungrouped rows
+                   that follow it. -->
               <div class="psets-editor__group">
-                <button class="psets-editor__group-head" type="button"
-                        [attr.aria-expanded]="!isCollapsed(v.section.id, run.label)"
-                        (click)="toggleGroup(v.section.id, run.label)">
-                  <span class="ds-icon ds-icon--sm psets-editor__group-chevron"
-                        [class.is-collapsed]="isCollapsed(v.section.id, run.label)" aria-hidden="true">expand_more</span>
-                  <span class="psets-editor__group-label">{{ run.label }}</span>
-                  <span class="psets-editor__group-rule" aria-hidden="true"></span>
-                </button>
-                @if (!isCollapsed(v.section.id, run.label)) {
-                  <div class="psets-editor__group-body">
-                    @for (perm of run.perms; track perm.id) {
-                      <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
-                    }
-                  </div>
-                }
+                <h4 class="psets-editor__group-head">{{ run.label }}</h4>
+                <div class="psets-editor__group-body">
+                  @for (perm of run.perms; track perm.id) {
+                    <ng-container [ngTemplateOutlet]="permRow" [ngTemplateOutletContext]="{ perm }" />
+                  }
+                </div>
               </div>
             }
           }

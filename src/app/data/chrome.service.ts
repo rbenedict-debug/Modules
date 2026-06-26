@@ -42,8 +42,10 @@ export class ChromeService {
   }
 
   // ── Contextual save bar ──────────────────────────────────────────────────────────
-  // A takeover view (the permission-set editor) asks the shell to dock a save bar at the bottom
-  // of the content area — outside the routed page — and supplies the button handlers. null = hidden.
+  // A takeover view (the permission-set editor) supplies the save-bar config + button handlers; the
+  // hosting page (Agent Management) renders it inside its .ds-page-content, as a sibling of the
+  // editor's __main card, so it docks at the bottom of the content column (right of the subnav).
+  // This signal carries the config across the editor's provider boundary to that page. null = hidden.
   readonly saveBar = signal<SaveBarConfig | null>(null);
 
   showSaveBar(config: SaveBarConfig): void { this.saveBar.set(config); }

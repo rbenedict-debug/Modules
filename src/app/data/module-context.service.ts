@@ -52,6 +52,12 @@ export class ModuleContextService {
     () => this.availableModules().find(m => m.id === this._currentModuleId()) ?? null,
   );
 
+  /** A re-mount key for the Agent Management tabs: changes on a module-context change OR a persona
+   *  swap. A persona swap can keep the same context (one global admin to another) yet load a
+   *  different data scenario, so those tables — which detach change detection and only re-read their
+   *  rows on a keyed re-create — must re-mount on either. */
+  readonly contextKey = computed(() => `${this._currentModuleId() ?? 'global'}:${this.personaSvc.current().id}`);
+
   /** Agent context = a non-global context whose persona role is Agent. Global admins are never agents. */
   readonly isAgentRole = computed(() => !this.isGlobal() && this.currentModule()?.role === 'Agent');
 

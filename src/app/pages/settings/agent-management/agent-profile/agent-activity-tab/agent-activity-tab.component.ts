@@ -99,27 +99,60 @@ export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
     return this.TYPE_COLOR[type];
   }
 
-  // Date cell display — "Jun 17, 2026 · 3:24 PM" from the ISO timestamp.
-  formatTimestamp(iso: string): string {
+  // Date / Time cells — split from the one ISO timestamp so each gets its own column.
+  // Date → "Jun 17, 2026"; Time → "3:24 PM".
+  formatDate(iso: string): string {
     const d = new Date(iso);
     if (isNaN(d.getTime())) return iso;
-    const date = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-    return `${date} · ${time}`;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  formatTime(iso: string): string {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   }
 
   // ── Column config for table-init.js (`name` MUST match each <th> label exactly) ───
-  // Type is a badge column (checkbox filter from _badgeOptions); Performed by is a
-  // low-cardinality text column flagged categorical so it also gets a checkbox filter;
-  // Date generates a date-range filter. Activity/Details stay searchable free text.
+  // The starting set: Date (date-range filter) and Time, split from the one timestamp;
+  // Action and Description stay free text. No column is flagged _categorical — the engine's
+  // auto-facet for a text column lists raw cell values (here every distinct time / ticket-
+  // specific action), so realistic Time and Action filters are supplied as curated facets in
+  // `extraFilterGroups` below instead. TODO eng: add columns as the audit schema grows.
   readonly columns = [
-    { name: 'Date',         width: 200, type: 'date',  _categorical: false, _badgeOptions: null },
-    { name: 'Activity',     width: 280, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Type',         width: 140, type: 'badge', _categorical: true,  _badgeOptions: [
-      { l: 'Ticket', c: 'blue' }, { l: 'Auth', c: 'purple' }, { l: 'Permission', c: 'yellow' }, { l: 'Account', c: 'green' }, { l: 'Profile', c: 'grey' },
-    ]},
-    { name: 'Details',      width: 300, type: 'text',  _categorical: false, _badgeOptions: null },
-    { name: 'Performed by', width: 170, type: 'text',  _categorical: true,  _badgeOptions: null },
+    { name: 'Date',        width: 170, type: 'date', _categorical: false, _badgeOptions: null },
+    { name: 'Time',        width: 120, type: 'text', _categorical: false, _badgeOptions: null },
+    { name: 'Action',      width: 320, type: 'text', _categorical: false, _badgeOptions: null },
+    { name: 'Description', width: 380, type: 'text', _categorical: false, _badgeOptions: null },
+  ];
+
+  // ── Filter modal facets (design-mode UI simulation; eng wires the actual row-hiding) ──────
+  // Date auto-derives a date-range picker from its 'date' column. Time and Action have no native
+  // control, so they're curated checkbox facets here: Time as time-of-day buckets, Action mapped
+  // to the underlying activity `type` categories. Description is intended as a free-text "contains
+  // words" filter, but the engine has no text-input control — in design mode the toolbar Search
+  // (matches text across columns) stands in for it.
+  // TODO eng: wire a dedicated "Description contains…" text filter on handoff.
+  readonly extraFilterGroups = [
+    {
+      id: 'fg-time', label: 'Time of day', icon: 'schedule',
+      tiers: [{ id: 'ft-time', label: 'Time of day', options: [
+        { id: 'fc-time-morning',   label: 'Morning (6 AM–12 PM)' },
+        { id: 'fc-time-afternoon', label: 'Afternoon (12–5 PM)' },
+        { id: 'fc-time-evening',   label: 'Evening (5–9 PM)' },
+        { id: 'fc-time-overnight', label: 'Overnight (9 PM–6 AM)' },
+      ] }],
+    },
+    {
+      id: 'fg-action', label: 'Action type', icon: 'category',
+      tiers: [{ id: 'ft-action', label: 'Action type', options: [
+        { id: 'fc-action-auth',       label: 'Sign-in & security' },
+        { id: 'fc-action-ticket',     label: 'Ticket activity' },
+        { id: 'fc-action-permission', label: 'Permission changes' },
+        { id: 'fc-action-account',    label: 'Account changes' },
+        { id: 'fc-action-profile',    label: 'Profile updates' },
+      ] }],
+    },
   ];
 
   get totalWidth(): number {
@@ -147,7 +180,7 @@ export class AgentActivityTabComponent implements AfterViewInit, OnDestroy {
         filter: true, columnPanel: true, contextMenu: true, paginator: false,
       },
       rows: [], // always empty — table-init.js reads rows from the rendered DOM
-      extraFilterGroups: [],
+      extraFilterGroups: this.extraFilterGroups,
     });
     // Hand full DOM control to table-init.js. Detaches THIS component only, so the parent
     // profile's tabs and change detection keep working.

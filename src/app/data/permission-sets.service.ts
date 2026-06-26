@@ -150,6 +150,25 @@ export class PermissionSetsService {
   readonly actionsSections: PermissionSection[] = ACTIONS_SECTIONS;
   readonly settingsSections: PermissionSection[] = SETTINGS_SECTIONS;
 
+  /** The default seed, captured so ScenarioService can restore it when leaving a demo scenario. */
+  private readonly defaultSets = this.sets();
+
+  /** Replace all permission sets (ScenarioService uses this on a scenario swap). */
+  load(list: PermissionSet[]): void {
+    this.sets.set(list);
+  }
+
+  /** Restore the default permission sets. */
+  resetToDefault(): void {
+    this.sets.set(this.defaultSets);
+  }
+
+  /** Just the built-in System sets — what a brand-new account starts with, before any custom
+   *  sets have been created. */
+  systemSets(): PermissionSet[] {
+    return this.defaultSets.filter((s) => s.type === 'System');
+  }
+
   add(s: Omit<PermissionSet, 'id' | 'updatedAt'>): void {
     const id = `ps-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
     this.sets.update(list => [...list, { ...s, id, updatedAt: new Date().toISOString() }]);

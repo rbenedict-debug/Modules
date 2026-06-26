@@ -656,28 +656,12 @@
 
       </nav>
 
-      <!-- Routed page content -->
+      <!-- Routed page content. The permission-set editor's contextual save bar is NOT rendered here:
+           it docks inside the routed page's .ds-page-content (as a sibling of the editor's __main
+           card) so it stays scoped to the content column instead of spanning under the subnav —
+           see agent-management.component.html. -->
       <router-outlet />
     </div>
-
-    <!-- Contextual save bar for full-area takeover views (the permission-set editor). It docks here
-         at the bottom of the content column — OUTSIDE the routed page — so it spans the editor width
-         and sits at the bottom edge instead of floating inside the page card. Driven by
-         ChromeService; the editor supplies the handlers. -->
-    @if (saveBar; as sb) {
-      <div class="ds-save-bar app-save-bar" [class.ds-save-bar--error]="sb.error"
-           [attr.role]="sb.error ? 'alert' : 'status'"
-           [attr.aria-live]="sb.error ? 'assertive' : 'polite'">
-        <div class="ds-save-bar__message">
-          <span class="ds-save-bar__dot" aria-hidden="true"></span>
-          <span class="ds-save-bar__text">{{ sb.message || 'You have unsaved changes' }}</span>
-        </div>
-        <div class="ds-save-bar__actions">
-          <button class="ds-button ds-button--text ds-button--sm" type="button" (click)="sb.onCancel()">Discard</button>
-          <button class="ds-button ds-button--filled ds-button--sm" type="button" (click)="sb.onSave()">Save Changes</button>
-        </div>
-      </div>
-    }
   </div>
 
   <button class="ds-nav-expand"

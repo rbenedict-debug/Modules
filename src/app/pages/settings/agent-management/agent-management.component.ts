@@ -36,7 +36,10 @@ type AgentMgmtTab = 'agents' | 'authentication' | 'teams' | 'permission-sets';
 })
 export class AgentManagementComponent {
   private readonly router = inject(Router);
-  private readonly chrome = inject(ChromeService);
+  // Public so the template can read chrome.saveBar(): the editor's contextual save bar is rendered
+  // here, inside this page's ds-page-content (as a sibling of the editor's __main card), so it stays
+  // scoped to the page-content column instead of spanning under the section subnav.
+  protected readonly chrome = inject(ChromeService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly setsSvc = inject(PermissionSetsService);
 

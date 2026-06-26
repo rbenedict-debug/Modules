@@ -1,15 +1,22 @@
 // The canonical table engine (table-init.js + table-sim.css) is built to fill a full-height
-// page shell. Embedded inside a profile tab there's no page height to inherit, so we give
-// the table a bounded, viewport-relative height and let the engine's flex chain
-// (.table-container → .table-content-row → .table-body) fill it and scroll internally.
+// page shell. Embedded inside a profile tab it can't be a direct flex child of ds-page-content
+// like a standalone table page, so we thread the same fill-height chain through the tab: the
+// activity panel grows (flex:1) inside the scrolling .agent-detail, this host fills the panel,
+// and .agent-activity-table fills the host — so the engine's own flex chain
+// (.table-container → .table-content-row → .table-body) reaches the bottom of the page and
+// scrolls internally, exactly like a full table page (instead of a fixed height that stops short).
 :host {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .agent-activity-table {
   display: flex;
   flex-direction: column;
-  height: clamp(440px, 62vh, 760px);
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 // Card shell fills the bounded height; cancel any page-main margin it carries.
@@ -60,7 +67,7 @@
 // table, because table-init.js resolves every element by global id and two would collide.
 // position:fixed escapes to the viewport here (no transformed ancestor; .agent-detail only
 // sets overflow, which doesn't trap fixed) — the engine's own filter overlay relies on the
-// same. height:auto is required so inset:0 (not the base clamp height) drives the size.
+// same. height:auto is required so inset:0 (not the base fill height) drives the size.
 .agent-activity-table.is-fullscreen {
   position: fixed;
   inset: 0;

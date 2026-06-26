@@ -73,12 +73,32 @@
      ids from colliding. -->
 @if (editingSetId(); as setId) {
   <app-permission-set-editor [setId]="setId" [activeTab]="editorTab()" (openSet)="openEditor($event)" />
+
+  <!-- Contextual save bar for the editor. It sits here — a sibling of the editor's
+       .ds-page-content__main card, inside this page's .ds-page-content column — so it docks at the
+       bottom of the content area and stays scoped to the page width (to the right of the section
+       subnav), per the DS layout contract (save bar = sibling of __main). State is owned by
+       ChromeService (the editor sets it while there are unsaved changes); this page only renders it. -->
+  @if (chrome.saveBar(); as sb) {
+    <div class="ds-save-bar am-save-bar" [class.ds-save-bar--error]="sb.error"
+         [attr.role]="sb.error ? 'alert' : 'status'"
+         [attr.aria-live]="sb.error ? 'assertive' : 'polite'">
+      <div class="ds-save-bar__message">
+        <span class="ds-save-bar__dot" aria-hidden="true"></span>
+        <span class="ds-save-bar__text">{{ sb.message || 'You have unsaved changes' }}</span>
+      </div>
+      <div class="ds-save-bar__actions">
+        <button class="ds-button ds-button--text ds-button--sm" type="button" (click)="sb.onCancel()">Discard</button>
+        <button class="ds-button ds-button--filled ds-button--sm" type="button" (click)="sb.onSave()">Save Changes</button>
+      </div>
+    </div>
+  }
 } @else {
   @switch (activeTab()) {
     @case ('agents') {
       <!-- Re-mount on context change so table-init.js re-reads the context-scoped rows (the tab
            detaches change detection; a keyed re-create is what swaps the data for the new context). -->
-      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+      @for (ctx of [moduleCtx.contextKey()]; track ctx) {
         <app-agents-tab (viewProfile)="openProfile($event)" (createAgent)="creatingAgent.set(true)" />
       }
     }
@@ -88,7 +108,7 @@
     @case ('teams') {
       <!-- Re-mount on context change so the module-scoped team rows re-resolve (same reason as the
            Agents / Permission Sets tabs). -->
-      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+      @for (ctx of [moduleCtx.contextKey()]; track ctx) {
         <app-teams-tab (createTeam)="creatingTeam.set(true)" (editTeam)="openTeam($event)" />
       }
     }
@@ -96,7 +116,7 @@
       <!-- Re-mount the tab when the module switcher changes so table-init.js re-reads the
            context-filtered rows. The tab detaches change detection after its first render, so
            a keyed re-create (not a signal update) is what swaps the rows for the new context. -->
-      @for (ctx of [moduleCtx.currentModuleId()]; track ctx) {
+      @for (ctx of [moduleCtx.contextKey()]; track ctx) {
         <app-permission-sets-tab (editSet)="openEditor($event)" (create)="creatingSet.set(true)" />
       }
     }

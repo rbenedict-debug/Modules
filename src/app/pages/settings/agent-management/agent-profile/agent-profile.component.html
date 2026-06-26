@@ -118,28 +118,32 @@
                 </div>
               </section>
 
-              <hr class="ds-divider agent-detail__section-divider" />
-
-              <!-- Custom Fields: district-defined fields beyond the 12 standard ones. Dynamic per
-                   district; each agent's value shows here ("—" when unset).
+              <!-- Custom Fields: district-defined fields beyond the 12 standard ones. The defs live
+                   in CustomFieldsService; a brand-new account that hasn't defined any (the
+                   fresh-it-setup scenario) shows no section at all. Each agent's value shows here
+                   ("—" when unset).
                    TODO eng: render the district's configured custom fields + this agent's stored values. -->
-              <section aria-labelledby="ap-custom-title">
-                <div class="agent-detail__section-head">
-                  <h2 class="agent-detail__section-title" id="ap-custom-title">Custom Fields</h2>
-                </div>
-                <div class="agent-detail__info">
-                  @for (field of customFields(); track field.label) {
-                    <div class="agent-detail__info-item">
-                      <span class="agent-detail__info-label">{{ field.label }}</span>
-                      <div class="agent-detail__info-values">
-                        @for (v of fieldValues(field); track $index) {
-                          <span class="agent-detail__info-value">{{ v }}</span>
-                        }
+              @if (customFields().length) {
+                <hr class="ds-divider agent-detail__section-divider" />
+
+                <section aria-labelledby="ap-custom-title">
+                  <div class="agent-detail__section-head">
+                    <h2 class="agent-detail__section-title" id="ap-custom-title">Custom Fields</h2>
+                  </div>
+                  <div class="agent-detail__info">
+                    @for (field of customFields(); track field.label) {
+                      <div class="agent-detail__info-item">
+                        <span class="agent-detail__info-label">{{ field.label }}</span>
+                        <div class="agent-detail__info-values">
+                          @for (v of fieldValues(field); track $index) {
+                            <span class="agent-detail__info-value">{{ v }}</span>
+                          }
+                        </div>
                       </div>
-                    </div>
-                  }
-                </div>
-              </section>
+                    }
+                  </div>
+                </section>
+              }
 
             </div>
           </div>

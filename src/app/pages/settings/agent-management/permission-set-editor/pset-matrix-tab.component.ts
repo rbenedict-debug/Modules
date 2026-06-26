@@ -151,15 +151,6 @@ export class PsetMatrixTabComponent implements AfterViewInit, OnDestroy {
     return runs;
   }
 
-  private readonly collapsed = signal<Record<string, boolean>>({});
-  isCollapsed(sectionId: string, label: string): boolean {
-    return this.collapsed()[`${sectionId}::${label}`] ?? false;
-  }
-  toggleGroup(sectionId: string, label: string): void {
-    const key = `${sectionId}::${label}`;
-    this.collapsed.update(c => ({ ...c, [key]: !(c[key] ?? false) }));
-  }
-
   noteIcon(type: 'info' | 'warning' | 'auto'): string {
     return type === 'warning' ? 'warning' : type === 'auto' ? 'auto_awesome' : 'info';
   }

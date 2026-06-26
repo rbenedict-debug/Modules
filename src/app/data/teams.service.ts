@@ -74,6 +74,19 @@ export class TeamsService {
     },
   ]);
 
+  /** The default seed, captured so ScenarioService can restore it when leaving a demo scenario. */
+  private readonly defaultTeams = this.teams();
+
+  /** Replace all teams (ScenarioService uses this on a scenario swap — e.g. [] for a fresh account). */
+  load(list: Team[]): void {
+    this.teams.set(list);
+  }
+
+  /** Restore the default teams. */
+  resetToDefault(): void {
+    this.teams.set(this.defaultTeams);
+  }
+
   add(t: Omit<Team, 'id'>): void {
     const id = `t-${Date.now().toString(36)}-${Math.floor(Math.random() * 1e6).toString(36)}`;
     this.teams.update(list => [...list, { ...t, id }]);

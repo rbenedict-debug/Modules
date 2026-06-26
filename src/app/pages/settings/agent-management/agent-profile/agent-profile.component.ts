@@ -7,6 +7,7 @@ import { UsersService } from '../../../../data/users.service';
 import { ModulesService } from '../../../../data/modules.service';
 import { TeamsService } from '../../../../data/teams.service';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
+import { CustomFieldsService } from '../../../../data/custom-fields.service';
 import { ChromeService } from '../../../../data/chrome.service';
 import { OpenAgentTabsService } from '../../../../data/open-agent-tabs.service';
 import { MessagingService } from '../../../../data/messaging.service';
@@ -66,6 +67,7 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   private readonly modulesSvc = inject(ModulesService);
   private readonly teamsSvc = inject(TeamsService);
   private readonly permissionSetsSvc = inject(PermissionSetsService);
+  private readonly customFieldsSvc = inject(CustomFieldsService);
   // Collapses the section subnav while this full-area profile is on screen and restores it
   // on leave — the same shell mechanism the permission-set editor uses for its takeover view.
   private readonly chrome = inject(ChromeService);
@@ -192,22 +194,17 @@ export class AgentProfileComponent implements OnInit, OnDestroy {
   }
 
   // ── Custom Fields ──────────────────────────────────────────────────────────────
-  // District-defined custom fields, shown in their own section below Basic Information.
-  // Anything beyond the 12 standard fields lives here. Definitions mirror the Create/Edit
-  // Agent form's set; each renders this agent's value (or "—" when unset).
-  // TODO eng: load these definitions from the district's custom-field schema (an integration
-  // can toggle individual fields on/off) and read values from User.customFields — not a static list.
-  private readonly customFieldDefs: { key: string; label: string }[] = [
-    { key: 'room', label: 'Office / Room' },
-    { key: 'shift', label: 'Shift' },
-    { key: 'badge', label: 'Badge ID' },
-  ];
-
+  // District-defined custom fields, shown in their own section below Basic Information. The
+  // definitions live in CustomFieldsService — the single source — so a brand-new account (the
+  // fresh-it-setup scenario) that hasn't defined any shows no Custom Fields section at all. Each
+  // def renders this agent's value (or "—" when unset).
+  // TODO eng: load these definitions from the district's custom-field schema (an integration can
+  // toggle individual fields on/off) and read values from User.customFields.
   readonly customFields = computed<InfoField[]>(() => {
     const u = this.user();
     if (!u) return [];
     const values = u.customFields ?? {};
-    return this.customFieldDefs.map((def) => ({
+    return this.customFieldsSvc.defs().map((def) => ({
       label: def.label,
       value: values[def.key] || '—',
     }));

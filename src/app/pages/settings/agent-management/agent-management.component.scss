@@ -47,3 +47,15 @@
   vertical-align: middle;
   margin-left: var(--spacing-sm);
 }
+
+// Contextual save bar docked at the bottom of the page-content column (a sibling of the editor's
+// .ds-page-content__main card — see the template comment). .ds-page-content is a flex column with
+// gap --spacing-lg, so flex-shrink:0 pins the bar to the bottom while the editor card flexes above
+// it (the gap supplies the space between them). No margins: the bar fills the page-content box just
+// like the card, so its left/right edges line up with the card, and its bottom sits flush with the
+// page-content edge — which the shell's .ds-page-layout__body already insets 16px (--spacing-lg)
+// from the window bottom. An explicit bottom margin here stacked on that and doubled the gap.
+// The ds-save-bar brings its own border/radius/elevation.
+.am-save-bar {
+  flex-shrink: 0;
+}
