@@ -168,27 +168,39 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
     tier: 'global',
     perms: [
       { id: 'gl-district-profile', label: 'District Profile', description: 'Controls visibility and management of district profile settings', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
-      { id: 'gl-activity-log-onflo', label: 'Onflo', description: 'Controls access to view Onflo system activity logs', controlType: 'segment', segmentOptions: ['Hide', 'View'], subGroup: 'Activity Log' },
-      { id: 'gl-activity-log-assets', label: 'Assets', description: 'Controls access to view asset (ITAM) activity logs', controlType: 'segment', segmentOptions: ['Hide', 'View'], subGroup: 'Activity Log' },
       { id: 'gl-ai-training-resources', label: 'AI Training Resources', description: 'Controls visibility and management of training resources for the chatbot', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
-      { id: 'gl-chatbot', label: 'Chatbot', description: 'Controls visibility and management of chatbot configuration, scripts, profiles, and reports', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
-      { id: 'gl-cx-score-templates', label: 'CX Score Templates', description: 'Controls visibility and management of customer experience score survey templates', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Communications' },
-      { id: 'gl-email', label: 'Email', description: 'Controls visibility and management of inbound and outbound email settings', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'], subGroup: 'Communications' },
-      { id: 'gl-response-templates', label: 'Response Templates', description: 'Controls visibility and management of email response templates used in ticket communications', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Communications' },
       { id: 'gl-field-library', label: 'Field Library', description: 'Controls visibility and management of custom field definitions across the platform', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Custom Fields' },
       { id: 'gl-visibility-rules', label: 'Visibility Rules', description: 'Controls visibility and management of field visibility rules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'], subGroup: 'Custom Fields' },
       { id: 'gl-department-modules', label: 'Department Modules', description: 'Controls visibility and management of department module configuration', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
-      { id: 'gl-keyword-alerts', label: 'Keyword Alerts', description: 'Controls visibility and management of critical alert configuration', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'gl-labels', label: 'Labels', description: 'Controls visibility and management of label definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'gl-languages', label: 'Languages', description: 'Controls visibility and editability of language translator users to specific languages for ticket translation/routing', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
-      { id: 'gl-live-agents', label: 'Live Agent', description: 'Controls visibility and management of live agent configuration including enabling live chat, assigning agents, and configuring quick replies', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
       { id: 'gl-locations-physical', label: 'Physical Locations', description: 'Controls visibility and management of physical location records (buildings, rooms)', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations' },
       { id: 'gl-locations-containers', label: 'Containers', description: 'Controls visibility and management of container and storage-area location records', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations' },
       { id: 'gl-locations-configurations', label: 'Configurations', description: 'Controls visibility and management of location configuration settings', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Locations' },
       { id: 'gl-portal-branding', label: 'Portal Branding', description: 'Controls visibility and management of district portal branding', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
+    ],
+  },
+  {
+    // General — department-tier settings. No `tier` here (defaults to 'department'), so
+    // globalTierSections() drops it from a GLOBAL set's Settings editor while a department set gets
+    // the full catalog. Mirrors the product Settings nav's 'General' group 1:1 (ENGINEERING.md §3.6).
+    // Perm ids keep the historical `gl-` prefix so the system-set presets (ROLE_PRESET_STATES) stay
+    // valid unchanged — only the section grouping moved.
+    id: 'general',
+    label: 'General',
+    icon: 'tune',
+    perms: [
+      { id: 'gl-activity-log-onflo', label: 'Onflo', description: 'Controls access to view Onflo system activity logs', controlType: 'segment', segmentOptions: ['Hide', 'View'], subGroup: 'Activity Log' },
+      { id: 'gl-activity-log-assets', label: 'Assets', description: 'Controls access to view asset (ITAM) activity logs', controlType: 'segment', segmentOptions: ['Hide', 'View'], subGroup: 'Activity Log' },
+      { id: 'gl-agent-management', label: 'Agent Management', description: 'Controls visibility and management of agents, teams, and permission sets', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
+      { id: 'gl-chatbot', label: 'Chatbot', description: 'Controls visibility and management of chatbot configuration, scripts, profiles, and reports', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
+      { id: 'gl-cx-score-templates', label: 'CX Score Templates', description: 'Controls visibility and management of customer experience score survey templates', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Communications' },
+      { id: 'gl-email', label: 'Email', description: 'Controls visibility and management of inbound and outbound email settings', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'], subGroup: 'Communications' },
+      { id: 'gl-response-templates', label: 'Response Templates', description: 'Controls visibility and management of email response templates used in ticket communications', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Communications' },
+      { id: 'gl-keyword-alerts', label: 'Keyword Alerts', description: 'Controls visibility and management of critical alert configuration', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
+      { id: 'gl-live-agents', label: 'Live Agent', description: 'Controls visibility and management of live agent configuration including enabling live chat, assigning agents, and configuring quick replies', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Edit'] },
       { id: 'gl-tags-tickets', label: 'Tickets', description: 'Controls visibility and management of ticket tag definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Tags' },
       { id: 'gl-tags-assets', label: 'Assets', description: 'Controls visibility and management of asset tag definitions', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'], subGroup: 'Tags' },
-      { id: 'gl-agent-management', label: 'Agent Management', description: 'Controls visibility and management of agents, teams, and permission sets', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
     ],
   },
   {
@@ -270,9 +282,10 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
  * The sections a GLOBAL permission set's editor shows: keep only 'global'-tier sections, and within
  * each only its 'global'-tier perms (a perm's own `tier` overrides the section's; omitted inherits
  * the section, which defaults to 'department'). Department-tier sections — every ACTIONS section,
- * plus Integration Hub/Automations/Tickets/Assets/Call Center in SETTINGS — have zero global perms and drop out, so
- * running this over ACTIONS_SECTIONS yields []. Over SETTINGS_SECTIONS it yields just Global, minus
- * its one department-tier row (Department Locations). Pure; returns shallow-cloned sections.
+ * plus General/Integration Hub/Automations/Tickets/Assets/Call Center in SETTINGS — have zero global
+ * perms and drop out, so running this over ACTIONS_SECTIONS yields []. Over SETTINGS_SECTIONS it
+ * yields just the Global section (its district-wide rows); the department-tier General section and
+ * the rest fall away. Pure; returns shallow-cloned sections.
  */
 export function globalTierSections(sections: PermissionSection[]): PermissionSection[] {
   const out: PermissionSection[] = [];

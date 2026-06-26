@@ -507,6 +507,7 @@ export class App implements AfterViewInit, OnDestroy {
 
   settingsExpanded: Record<string, boolean> = {
     'global': true,
+    'general': true,
     'integration-hub': false,
     'workflows': false,
     'tickets-settings': false,
@@ -528,6 +529,7 @@ export class App implements AfterViewInit, OnDestroy {
 
   private readonly _settingsSectionLabels: Record<string, string> = {
     'global':           'Global',
+    'general':          'General',
     'integration-hub':  'Integration Hub',
     'workflows':        'Automations',
     'tickets-settings': 'Tickets',
@@ -536,34 +538,36 @@ export class App implements AfterViewInit, OnDestroy {
   };
 
   private readonly _settingsItems: SettingsItem[] = [
-    // Global
+    // Global — truly district-wide settings (shown only in the Global context)
     { id: 'district-profile',       label: 'District Profile',       section: 'global' },
-    { id: 'activity-log',           label: 'Activity Log',           section: 'global',           isSubheader: true },
-    { id: 'activity-log-onflo',     label: 'Onflo',                  section: 'global',           subheaderParent: 'activity-log' },
-    { id: 'activity-log-assets',    label: 'Assets',                 section: 'global',           subheaderParent: 'activity-log' },
     { id: 'ai-training',            label: 'AI Training Resources',  section: 'global' },
-    { id: 'chatbot',                label: 'Chatbot',                section: 'global' },
-    { id: 'communications',         label: 'Communications',         section: 'global',           isSubheader: true },
-    { id: 'cs-score-templates',     label: 'CX Score Templates',     section: 'global',           subheaderParent: 'communications' },
-    { id: 'email',                  label: 'Email',                  section: 'global',           subheaderParent: 'communications' },
-    { id: 'response-templates',     label: 'Response Templates',     section: 'global',           subheaderParent: 'communications' },
-    { id: 'custom-fields',          label: 'Custom Fields',          section: 'global',           isSubheader: true },
-    { id: 'custom-fields-field-library', label: 'Field Library',     section: 'global',           subheaderParent: 'custom-fields' },
-    { id: 'custom-fields-visibility-rules', label: 'Visibility Rules', section: 'global',         subheaderParent: 'custom-fields' },
+    { id: 'custom-fields',          label: 'Custom Fields',          section: 'global',            isSubheader: true },
+    { id: 'custom-fields-field-library', label: 'Field Library',     section: 'global',            subheaderParent: 'custom-fields' },
+    { id: 'custom-fields-visibility-rules', label: 'Visibility Rules', section: 'global',          subheaderParent: 'custom-fields' },
     { id: 'department-modules',     label: 'Department Modules',     section: 'global' },
-    { id: 'keyword-alerts',         label: 'Keyword Alerts',         section: 'global' },
     { id: 'labels',                 label: 'Labels',                 section: 'global' },
     { id: 'languages',              label: 'Languages',              section: 'global' },
-    { id: 'live-agent',             label: 'Live Agent',             section: 'global' },
-    { id: 'locations',              label: 'Locations',              section: 'global',           isSubheader: true },
-    { id: 'locations-physical',     label: 'Physical Locations',     section: 'global',           subheaderParent: 'locations' },
-    { id: 'locations-containers',   label: 'Containers',             section: 'global',           subheaderParent: 'locations' },
-    { id: 'locations-configurations', label: 'Configurations',       section: 'global',           subheaderParent: 'locations' },
+    { id: 'locations',              label: 'Locations',              section: 'global',            isSubheader: true },
+    { id: 'locations-physical',     label: 'Physical Locations',     section: 'global',            subheaderParent: 'locations' },
+    { id: 'locations-containers',   label: 'Containers',             section: 'global',            subheaderParent: 'locations' },
+    { id: 'locations-configurations', label: 'Configurations',       section: 'global',            subheaderParent: 'locations' },
     { id: 'portal-branding',        label: 'Portal Branding',        section: 'global' },
-    { id: 'tags',                   label: 'Tags',                   section: 'global',           isSubheader: true },
-    { id: 'tags-tickets',           label: 'Tickets',                section: 'global',           subheaderParent: 'tags' },
-    { id: 'tags-assets',            label: 'Assets',                 section: 'global',           subheaderParent: 'tags' },
-    { id: 'agent-management',       label: 'Agent Management',       section: 'global' },
+    // General — department-tier settings (shown for a department admin in their dept, and for a
+    // global admin in the Global context). Mirrors the catalog's 'general' SETTINGS_SECTIONS group.
+    { id: 'activity-log',           label: 'Activity Log',           section: 'general',           isSubheader: true },
+    { id: 'activity-log-onflo',     label: 'Onflo',                  section: 'general',           subheaderParent: 'activity-log' },
+    { id: 'activity-log-assets',    label: 'Assets',                 section: 'general',           subheaderParent: 'activity-log' },
+    { id: 'agent-management',       label: 'Agent Management',       section: 'general' },
+    { id: 'chatbot',                label: 'Chatbot',                section: 'general' },
+    { id: 'communications',         label: 'Communications',         section: 'general',           isSubheader: true },
+    { id: 'cs-score-templates',     label: 'CX Score Templates',     section: 'general',           subheaderParent: 'communications' },
+    { id: 'email',                  label: 'Email',                  section: 'general',           subheaderParent: 'communications' },
+    { id: 'response-templates',     label: 'Response Templates',     section: 'general',           subheaderParent: 'communications' },
+    { id: 'keyword-alerts',         label: 'Keyword Alerts',         section: 'general' },
+    { id: 'live-agent',             label: 'Live Agent',             section: 'general' },
+    { id: 'tags',                   label: 'Tags',                   section: 'general',           isSubheader: true },
+    { id: 'tags-tickets',           label: 'Tickets',                section: 'general',           subheaderParent: 'tags' },
+    { id: 'tags-assets',            label: 'Assets',                 section: 'general',           subheaderParent: 'tags' },
     // Integration Hub
     { id: 'api-tokens',             label: 'API Tokens',             section: 'integration-hub' },
     { id: 'webhooks',               label: 'Webhooks',               section: 'integration-hub' },
@@ -639,16 +643,17 @@ export class App implements AfterViewInit, OnDestroy {
     // Context/role gating, independent of the search box — which areas the current context exposes.
     // Global is the district-wide admin area: visible ONLY in the Global context (the Global switcher
     // selected). A global admin loses it the moment they scope into a module, and department admins —
-    // who can never enter Global context — never see it. Integration Hub is district-level like Global,
-    // except a department granted manager access to specific integrations (in the Marketplace) sees a
-    // scoped version. Workflows needs the module's workflow capability (off for custom modules); Assets
-    // needs Asset management. Tickets and Call Center stay on for every admin for now. Composed with the
-    // search filter below so you can never surface a section the context hides by searching for it.
+    // who can never enter Global context — never see it. General is the department-tier settings area:
+    // visible in the Global context AND for department admins (canAdminActions), so a department admin
+    // sees their own dept's General settings and a global admin sees it in Global context too.
+    // Integration Hub is district-level like Global, except a department granted manager access to
+    // specific integrations (in the Marketplace) sees a scoped version. Workflows needs the module's
+    // workflow capability (off for custom modules); Assets needs Asset management. Tickets and Call
+    // Center stay on for every admin for now. Composed with the search filter below so you can never
+    // surface a section the context hides by searching for it.
     const ctx = {
-      // The Global (district admin) section shows in the Global context AND for department admins
-      // (canAdminActions) — they get a slice of it (today: Agent Management; the rest is gated to
-      // the Global context inside the template).
-      global:          this.moduleCtx.isGlobal() || this.moduleCtx.canAdminActions(),
+      global:          this.moduleCtx.isGlobal(),
+      general:         this.moduleCtx.isGlobal() || this.moduleCtx.canAdminActions(),
       integrationHub:  this.moduleCtx.canSeeIntegrations(),
       workflows:       this.moduleCtx.hasWorkflow(),
       ticketsSettings: this.moduleCtx.hasTicketing(),
@@ -658,12 +663,9 @@ export class App implements AfterViewInit, OnDestroy {
     if (!f) return ctx;
     const hasAny = (section: string) =>
       this._settingsItems.some(item => item.section === section && f.has(item.id));
-    // Outside the Global context the only Global-section item shown is Agent Management, so the
-    // header's search visibility keys on just that item — never surface an empty "Global" header
-    // by searching for a district-only item a department admin can't see.
-    const globalFiltered = this.moduleCtx.isGlobal() ? hasAny('global') : f.has('agent-management');
     return {
-      global:          ctx.global && globalFiltered,
+      global:          ctx.global && hasAny('global'),
+      general:         ctx.general && hasAny('general'),
       integrationHub:  ctx.integrationHub && hasAny('integration-hub'),
       workflows:       ctx.workflows && hasAny('workflows'),
       ticketsSettings: ctx.ticketsSettings && hasAny('tickets-settings'),

@@ -301,6 +301,8 @@
             <div class="settings-subnav__list">
               <div class="settings-subnav__scroll">
 
+              <!-- Global — truly district-wide settings. Section visibility (vis.global) is gated to
+                   the Global context, so the per-item isGlobal() wrapper is no longer needed here. -->
               @if (vis.global) {
                 <div class="ds-subnav-header" [class.is-expanded]="settingsExpanded['global'] || !!filter">
                   <button class="ds-subnav-header__row" type="button" (click)="toggleSettings('global')">
@@ -309,58 +311,11 @@
                     <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ (settingsExpanded['global'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
                   </button>
                   <div class="ds-subnav-header__children">
-                    <!-- District-wide items: only in the Global context (global admin). Department
-                         admins see the Global section too, but only the item(s) below this block. -->
-                    @if (moduleCtx.isGlobal()) {
                     @if (!filter || filter.has('district-profile')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'district-profile'">District Profile</button>
                     }
-                    @if (!filter || filter.has('activity-log-onflo') || filter.has('activity-log-assets')) {
-                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['activity-log'] || !!filter">
-                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('activity-log')">
-                          <span class="ds-subnav-subheader__label">Activity Log</span>
-                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['activity-log'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
-                        </button>
-                        <div class="ds-subnav-subheader__children">
-                          <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
-                          <div class="ds-subnav-subheader__slot">
-                            @if (!filter || filter.has('activity-log-onflo')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-onflo'">Onflo</button>
-                            }
-                            @if (!filter || filter.has('activity-log-assets')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-assets'">Assets</button>
-                            }
-                          </div>
-                        </div>
-                      </div>
-                    }
                     @if (!filter || filter.has('ai-training')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'ai-training'">AI Training Resources</button>
-                    }
-                    @if (!filter || filter.has('chatbot')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'chatbot'">Chatbot</button>
-                    }
-                    @if (!filter || filter.has('cs-score-templates') || filter.has('email') || filter.has('response-templates')) {
-                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['communications'] || !!filter">
-                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('communications')">
-                          <span class="ds-subnav-subheader__label">Communications</span>
-                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['communications'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
-                        </button>
-                        <div class="ds-subnav-subheader__children">
-                          <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
-                          <div class="ds-subnav-subheader__slot">
-                            @if (!filter || filter.has('cs-score-templates')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'cs-score-templates'">CX Score Templates</button>
-                            }
-                            @if (!filter || filter.has('email')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'email'">Email</button>
-                            }
-                            @if (!filter || filter.has('response-templates')) {
-                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'response-templates'">Response Templates</button>
-                            }
-                          </div>
-                        </div>
-                      </div>
                     }
                     @if (!filter || filter.has('custom-fields-field-library') || filter.has('custom-fields-visibility-rules')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['custom-fields'] || !!filter">
@@ -384,17 +339,11 @@
                     @if (!filter || filter.has('department-modules')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'department-modules'" (click)="goSettings('department-modules')">Department Modules</button>
                     }
-                    @if (!filter || filter.has('keyword-alerts')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'">Keyword Alerts</button>
-                    }
                     @if (!filter || filter.has('labels')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'labels'">Labels</button>
                     }
                     @if (!filter || filter.has('languages')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'languages'">Languages</button>
-                    }
-                    @if (!filter || filter.has('live-agent')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'live-agent'">Live Agent</button>
                     }
                     @if (!filter || filter.has('locations-physical') || filter.has('locations-containers') || filter.has('locations-configurations')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['locations'] || !!filter">
@@ -421,6 +370,74 @@
                     @if (!filter || filter.has('portal-branding')) {
                       <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'portal-branding'">Portal Branding</button>
                     }
+                  </div>
+                </div>
+              }
+
+              <!-- General — department-tier settings. vis.general shows for a department admin in their
+                   dept AND for a global admin in the Global context. Mirrors the catalog's 'general'
+                   SETTINGS_SECTIONS group (kept 1:1 per ENGINEERING.md §3.6). -->
+              @if (vis.general) {
+                <div class="ds-subnav-header" [class.is-expanded]="settingsExpanded['general'] || !!filter">
+                  <button class="ds-subnav-header__row" type="button" (click)="toggleSettings('general')">
+                    <span class="ds-icon ds-subnav-header__icon" aria-hidden="true">tune</span>
+                    <span class="ds-subnav-header__label">General</span>
+                    <span class="ds-icon ds-icon--sm" aria-hidden="true">{{ (settingsExpanded['general'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                  </button>
+                  <div class="ds-subnav-header__children">
+                    @if (!filter || filter.has('activity-log-onflo') || filter.has('activity-log-assets')) {
+                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['activity-log'] || !!filter">
+                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('activity-log')">
+                          <span class="ds-subnav-subheader__label">Activity Log</span>
+                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['activity-log'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                        </button>
+                        <div class="ds-subnav-subheader__children">
+                          <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
+                          <div class="ds-subnav-subheader__slot">
+                            @if (!filter || filter.has('activity-log-onflo')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-onflo'">Onflo</button>
+                            }
+                            @if (!filter || filter.has('activity-log-assets')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'activity-log-assets'">Assets</button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                    @if (!filter || filter.has('agent-management')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'agent-management'" (click)="goSettings('agent-management')">Agent Management</button>
+                    }
+                    @if (!filter || filter.has('chatbot')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'chatbot'">Chatbot</button>
+                    }
+                    @if (!filter || filter.has('cs-score-templates') || filter.has('email') || filter.has('response-templates')) {
+                      <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['communications'] || !!filter">
+                        <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('communications')">
+                          <span class="ds-subnav-subheader__label">Communications</span>
+                          <span class="ds-icon" aria-hidden="true">{{ (settingsExpanded['communications'] || !!filter) ? 'arrow_drop_down' : 'arrow_right' }}</span>
+                        </button>
+                        <div class="ds-subnav-subheader__children">
+                          <div class="ds-subnav-subheader__line" aria-hidden="true"></div>
+                          <div class="ds-subnav-subheader__slot">
+                            @if (!filter || filter.has('cs-score-templates')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'cs-score-templates'">CX Score Templates</button>
+                            }
+                            @if (!filter || filter.has('email')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'email'">Email</button>
+                            }
+                            @if (!filter || filter.has('response-templates')) {
+                              <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'response-templates'">Response Templates</button>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                    @if (!filter || filter.has('keyword-alerts')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'keyword-alerts'">Keyword Alerts</button>
+                    }
+                    @if (!filter || filter.has('live-agent')) {
+                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'live-agent'">Live Agent</button>
+                    }
                     @if (!filter || filter.has('tags-tickets') || filter.has('tags-assets')) {
                       <div class="ds-subnav-subheader" [class.is-expanded]="settingsExpanded['tags'] || !!filter">
                         <button class="ds-subnav-subheader__row" type="button" (click)="toggleSettings('tags')">
@@ -439,13 +456,6 @@
                           </div>
                         </div>
                       </div>
-                    }
-                    }
-                    <!-- Agent Management: ungated within the section — shown for any admin (the
-                         global admin in Global, and a department admin in their department). Future
-                         default-access items for department admins go here too, beside it. -->
-                    @if (!filter || filter.has('agent-management')) {
-                      <button class="ds-subnav-button" [class.is-selected]="settingsNavItem === 'agent-management'" (click)="goSettings('agent-management')">Agent Management</button>
                     }
                   </div>
                 </div>
