@@ -13,7 +13,7 @@ import {
   input,
 } from '@angular/core';
 import { PermissionSetsService } from '../../../../data/permission-sets.service';
-import { globalTierSections } from '../../../../data/permission-catalog';
+import { globalTierSections, departmentTierSections } from '../../../../data/permission-catalog';
 import { ChromeService } from '../../../../data/chrome.service';
 import { MessagingService } from '../../../../data/messaging.service';
 import { PermissionEditorStateService } from './permission-editor-state.service';
@@ -62,13 +62,14 @@ export class PermissionSetEditorComponent implements OnInit, OnDestroy {
   readonly state = inject(PermissionEditorStateService);
 
   readonly actionsSections = this.setsSvc.actionsSections;
-  /** A global set can't hold department-scoped config, so its Settings tab shows only the Global
-   *  section (minus its one department-tier row, Department Locations). Department sets get the full
-   *  catalog. The Actions tab is hidden entirely for global sets (filtered in agent-management). */
+  /** A global set holds only district config, so its Settings tab shows the district-wide sections
+   *  (Global, Integration Hub, Call Center). A department set shows only the department-tier sections
+   *  (General, Automations, Tickets, Assets) — never the district ones. The Actions tab is hidden
+   *  entirely for global sets (filtered in agent-management). */
   readonly settingsSections = computed(() =>
     this.state.isGlobalOnly()
       ? globalTierSections(this.setsSvc.settingsSections)
-      : this.setsSvc.settingsSections,
+      : departmentTierSections(this.setsSvc.settingsSections),
   );
 
   /** Active tab — owned by the parent now (the tab bar moved to the page heading). */

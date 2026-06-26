@@ -51,6 +51,18 @@ export class AgentManagementComponent {
       const target = this.editorTabs().find((t) => t.id === req.tab);
       if (target) this.editorTab.set(target.id);
     });
+
+    // Keep the active tab valid for the context: Teams is department-scoped (hidden in the Global
+    // context — a global admin has no single dept to scope teams to); Authentication (2FA) is
+    // district-level (shown only in the Global context). If the active tab isn't available in the
+    // current context, fall back to Agents (always present).
+    effect(() => {
+      const isGlobal = this.moduleCtx.isGlobal();
+      const tab = this.activeTab();
+      if ((tab === 'teams' && isGlobal) || (tab === 'authentication' && !isGlobal)) {
+        this.activeTab.set('agents');
+      }
+    });
   }
 
   /** Exposed to the template so the Permission Sets tab can be re-mounted when the module
@@ -82,8 +94,8 @@ export class AgentManagementComponent {
     { id: 'settings', label: 'Settings' },
   ];
   /** A global set holds no department-scoped config, so its editor drops Data Visibility + Actions —
-   *  only Details (incl. assignments) and Settings (the Global section) apply. `openEditor` always
-   *  resets to Details, so a hidden tab can never be the active one. */
+   *  only Details (incl. assignments) and Settings (the district-wide sections) apply. `openEditor`
+   *  always resets to Details, so a hidden tab can never be the active one. */
   readonly editorTabs = computed(() =>
     this.editingSet()?.isGlobalOnly
       ? this.allEditorTabs.filter((t) => t.id === 'details' || t.id === 'settings')

@@ -57,7 +57,8 @@ export class PermissionEditorStateService {
   readonly nameInvalid = computed(() => !this.readOnly() && this.name().trim() === '');
   /** Whether the loaded set is a global-tier set (isGlobalOnly). Fixed per set — never edited here,
    *  so it's not part of the dirty snapshot. Drives the editor's tab/section filtering: global sets
-   *  hide Data Visibility + Actions and show only the Global section in Settings. */
+   *  hide Data Visibility + Actions and show only the district-wide Settings sections (Global,
+   *  Integration Hub, Call Center); department sets show only the department-tier Settings sections. */
   readonly isGlobalOnly = signal(false);
 
   // Working capabilities: perm id → toggle bool or segment option string.

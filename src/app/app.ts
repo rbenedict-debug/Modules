@@ -648,9 +648,10 @@ export class App implements AfterViewInit, OnDestroy {
     // sees their own dept's General settings and a global admin sees it in Global context too.
     // Integration Hub is district-level like Global, except a department granted manager access to
     // specific integrations (in the Marketplace) sees a scoped version. Workflows needs the module's
-    // workflow capability (off for custom modules); Assets needs Asset management. Tickets and Call
-    // Center stay on for every admin for now. Composed with the search filter below so you can never
-    // surface a section the context hides by searching for it.
+    // workflow capability (off for custom modules); Assets needs Asset management. Tickets stays on
+    // for every admin for now; Call Center is district-level, so like Global it shows only in the
+    // Global context. Composed with the search filter below so you can never surface a section the
+    // context hides by searching for it.
     const ctx = {
       global:          this.moduleCtx.isGlobal(),
       general:         this.moduleCtx.isGlobal() || this.moduleCtx.canAdminActions(),
@@ -658,7 +659,7 @@ export class App implements AfterViewInit, OnDestroy {
       workflows:       this.moduleCtx.hasWorkflow(),
       ticketsSettings: this.moduleCtx.hasTicketing(),
       assetsSettings:  this.moduleCtx.hasAssets(),
-      callCenter:      true,
+      callCenter:      this.moduleCtx.isGlobal(),
     };
     if (!f) return ctx;
     const hasAny = (section: string) =>

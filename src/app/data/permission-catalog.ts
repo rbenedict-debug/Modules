@@ -207,6 +207,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
     id: 'integrations',
     label: 'Integration Hub',
     icon: 'apps',
+    tier: 'global',
     perms: [
       { id: 'in-api-tokens', label: 'API Tokens', description: 'Controls visibility and management of API tokens', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'in-webhooks', label: 'Webhooks', description: 'Controls visibility and management of webhook configurations', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
@@ -262,6 +263,7 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
     label: 'Call Center',
     icon: 'headset_mic',
     iconFilled: true,
+    tier: 'global',
     perms: [
       { id: 'cc-business-hours', label: 'Business Hours', description: 'Controls visibility and management of call center business hours and holiday schedules', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
       { id: 'cc-calendar', label: 'Calendar', description: 'Controls visibility and management of the call center calendar and on-call scheduling', controlType: 'segment', segmentOptions: ['Hide', 'View', 'Manage'] },
@@ -281,17 +283,32 @@ export const SETTINGS_SECTIONS: PermissionSection[] = [
 /**
  * The sections a GLOBAL permission set's editor shows: keep only 'global'-tier sections, and within
  * each only its 'global'-tier perms (a perm's own `tier` overrides the section's; omitted inherits
- * the section, which defaults to 'department'). Department-tier sections — every ACTIONS section,
- * plus General/Integration Hub/Automations/Tickets/Assets/Call Center in SETTINGS — have zero global
- * perms and drop out, so running this over ACTIONS_SECTIONS yields []. Over SETTINGS_SECTIONS it
- * yields just the Global section (its district-wide rows); the department-tier General section and
- * the rest fall away. Pure; returns shallow-cloned sections.
+ * the section, which defaults to 'department'). Over SETTINGS_SECTIONS this yields the district-wide
+ * sections — Global, Integration Hub, Call Center; the department-tier sections (General, Automations,
+ * Tickets, Assets) fall away. Over ACTIONS_SECTIONS it yields [] (all Actions are department-tier).
+ * `departmentTierSections` is the complement, used for a department set's editor. Pure; shallow-clones.
  */
 export function globalTierSections(sections: PermissionSection[]): PermissionSection[] {
   const out: PermissionSection[] = [];
   for (const section of sections) {
     const sectionTier = section.tier ?? 'department';
     const perms = section.perms.filter(p => (p.tier ?? sectionTier) === 'global');
+    if (perms.length > 0) out.push({ ...section, perms });
+  }
+  return out;
+}
+
+/**
+ * The Settings sections a DEPARTMENT permission set's editor shows — the complement of
+ * globalTierSections: keep each section's 'department'-tier perms and drop the district-wide sections
+ * (Global, Integration Hub, Call Center) entirely, so a department set never sees district config.
+ * Pure; returns shallow-cloned sections.
+ */
+export function departmentTierSections(sections: PermissionSection[]): PermissionSection[] {
+  const out: PermissionSection[] = [];
+  for (const section of sections) {
+    const sectionTier = section.tier ?? 'department';
+    const perms = section.perms.filter(p => (p.tier ?? sectionTier) === 'department');
     if (perms.length > 0) out.push({ ...section, perms });
   }
   return out;

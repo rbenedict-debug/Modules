@@ -41,16 +41,23 @@
               [attr.aria-selected]="activeTab() === 'agents'"
               [attr.tabindex]="activeTab() === 'agents' ? 0 : -1"
               (click)="setTab('agents')">Agents</button>
-      <button class="ds-tabs__tab" role="tab"
-              [class.is-selected]="activeTab() === 'authentication'"
-              [attr.aria-selected]="activeTab() === 'authentication'"
-              [attr.tabindex]="activeTab() === 'authentication' ? 0 : -1"
-              (click)="setTab('authentication')">Authentication</button>
-      <button class="ds-tabs__tab" role="tab"
-              [class.is-selected]="activeTab() === 'teams'"
-              [attr.aria-selected]="activeTab() === 'teams'"
-              [attr.tabindex]="activeTab() === 'teams' ? 0 : -1"
-              (click)="setTab('teams')">Teams</button>
+      <!-- Authentication (2FA) is district-level — only in the Global context. -->
+      @if (moduleCtx.isGlobal()) {
+        <button class="ds-tabs__tab" role="tab"
+                [class.is-selected]="activeTab() === 'authentication'"
+                [attr.aria-selected]="activeTab() === 'authentication'"
+                [attr.tabindex]="activeTab() === 'authentication' ? 0 : -1"
+                (click)="setTab('authentication')">Authentication</button>
+      }
+      <!-- Teams is department-scoped — hidden in the Global context (a global admin has no single
+           department to scope teams to). -->
+      @if (!moduleCtx.isGlobal()) {
+        <button class="ds-tabs__tab" role="tab"
+                [class.is-selected]="activeTab() === 'teams'"
+                [attr.aria-selected]="activeTab() === 'teams'"
+                [attr.tabindex]="activeTab() === 'teams' ? 0 : -1"
+                (click)="setTab('teams')">Teams</button>
+      }
       <button class="ds-tabs__tab" role="tab"
               [class.is-selected]="activeTab() === 'permission-sets'"
               [attr.aria-selected]="activeTab() === 'permission-sets'"
