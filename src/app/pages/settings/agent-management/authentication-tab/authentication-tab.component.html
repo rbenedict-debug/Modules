@@ -13,35 +13,33 @@
   </label>
 
   <!-- TODO eng: wire 2FA verification-channel selection -->
-  @if (enabled()) {
-    <section class="auth-tab__method">
-      <h3 id="auth-method-title" class="auth-tab__heading">Verification method</h3>
-      <p id="auth-method-hint" class="auth-tab__text auth-tab__method-hint">
-        Choose where agents receive their login verification code.
-      </p>
-      <div class="ds-radio-group" role="radiogroup"
-           aria-labelledby="auth-method-title" aria-describedby="auth-method-hint">
-        <label class="ds-radio">
-          <input type="radio" class="ds-radio__control" name="auth-method" value="email"
-                 [checked]="method() === 'email'" (change)="setMethod('email')" />
-          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-          <span class="ds-radio__label">Email</span>
-        </label>
-        <label class="ds-radio">
-          <input type="radio" class="ds-radio__control" name="auth-method" value="sms"
-                 [checked]="method() === 'sms'" (change)="setMethod('sms')" />
-          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-          <span class="ds-radio__label">SMS</span>
-        </label>
-        <label class="ds-radio">
-          <input type="radio" class="ds-radio__control" name="auth-method" value="both"
-                 [checked]="method() === 'both'" (change)="setMethod('both')" />
-          <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
-          <span class="ds-radio__label">Both</span>
-        </label>
-      </div>
-    </section>
-  }
+  <section class="auth-tab__method">
+    <h3 id="auth-method-title" class="auth-tab__heading">Verification method</h3>
+    <p id="auth-method-hint" class="auth-tab__text auth-tab__method-hint">
+      Choose where agents receive their login verification code.
+    </p>
+    <div class="ds-radio-group" role="radiogroup"
+         aria-labelledby="auth-method-title" aria-describedby="auth-method-hint">
+      <label class="ds-radio" [class.is-disabled]="!enabled()">
+        <input type="radio" class="ds-radio__control" name="auth-method" value="email"
+               [checked]="method() === 'email'" [disabled]="!enabled()" (change)="setMethod('email')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">Email</span>
+      </label>
+      <label class="ds-radio" [class.is-disabled]="!enabled()">
+        <input type="radio" class="ds-radio__control" name="auth-method" value="sms"
+               [checked]="method() === 'sms'" [disabled]="!enabled()" (change)="setMethod('sms')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">SMS</span>
+      </label>
+      <label class="ds-radio" [class.is-disabled]="!enabled()">
+        <input type="radio" class="ds-radio__control" name="auth-method" value="both"
+               [checked]="method() === 'both'" [disabled]="!enabled()" (change)="setMethod('both')" />
+        <span class="ds-radio__touch"><span class="ds-radio__dot"></span></span>
+        <span class="ds-radio__label">Both</span>
+      </label>
+    </div>
+  </section>
 
   <section class="auth-tab__section">
     <h3 class="auth-tab__heading">What Is Two Factor Authentication?</h3>

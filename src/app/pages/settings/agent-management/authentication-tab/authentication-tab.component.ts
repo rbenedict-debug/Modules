@@ -15,7 +15,7 @@ export class AuthenticationTabComponent {
   /** Demo-only 2FA state — drives the toggle label. Not persisted (design mode). */
   readonly enabled = signal(false);
 
-  /** Demo-only delivery channel for the verification code, shown only when 2FA is enabled. Not persisted. */
+  /** Demo-only delivery channel for the verification code. Always shown; the options are disabled until 2FA is enabled. Not persisted. */
   readonly method = signal<'email' | 'sms' | 'both'>('email');
 
   toggle(): void {
