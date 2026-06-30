@@ -75,7 +75,7 @@ export function moduleCapabilities(m: Pick<Module, 'features'>): Set<Capability>
 export const CUSTOM_MODULE_DEFAULTS: Pick<Module, 'icon' | 'accent' | 'tagline' | 'features'> = {
   icon: 'settings',
   accent: 'grey',
-  tagline: "For the occasional need the prebuilt modules don't cover, you can add a custom one of your own. It's intentionally lightweight, with ticketing and asset management, so the prebuilt modules stay your first choice whenever one fits what your team does.",
+  tagline: 'A lightweight service desk for any team of your own, shaped to fit what they do.',
   features: ['Service desk ticketing', 'Asset management'],
 };
 

@@ -11,22 +11,22 @@ export class ModulesService {
   readonly modules = signal<Module[]>([
     {
       id: 'classic', name: 'Classic', icon: 'star', accent: 'blue', ticketCount: 24, active: true,
-      tagline: 'The Onflo service desk your district already runs on, and the foundation every other module is built from.',
+      tagline: 'The classic Onflo service desk, handling tickets for your whole district in one shared space.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
     {
       id: 'transportation', name: 'Transportation', icon: 'directions_bus', accent: 'yellow', ticketCount: 8, active: false, comingSoon: true,
-      tagline: 'A space built around how your transportation team works, ready to go with the data you already have.',
+      tagline: 'A service desk built around how your transportation team works, ready when you need it.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
     {
       id: 'it', name: 'IT', icon: 'computer', accent: 'purple', ticketCount: 12, active: false,
-      tagline: "Your IT team gets a service desk of its own, running on the setup you've already done.",
+      tagline: 'A dedicated service desk for your IT team, with asset and device tracking built in.',
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing', 'Asset management'],
     },
     {
       id: 'hr', name: 'HR', icon: 'groups', accent: 'orange', ticketCount: 3, active: false, comingSoon: true,
-      tagline: 'A private space for HR, with restricted queues for cases that need to stay confidential.',
+      tagline: "A space of its own for HR, where cases stay contained and out of your other teams' view.",
       features: ['Service desk ticketing', 'Dashboard analytics', 'Workflow automation and routing'],
     },
     {
